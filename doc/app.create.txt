@@ -1,0 +1,15 @@
+Create options
+
+    --template ........... Use JET app predefined template
+                           [blank, basic[:web|:hybrid], navbar[:web|:hybrid], navdrawer[:web|:hybrid], or <URL to zip file>]
+
+    Hybrid only:
+
+    --platform ........... Alias for --platforms if the user wishes to specify a single hybrid platform
+                           [android, ios, windows]
+    --platforms .......... Alias for --platforms if the user wishes to specify a single hybrid platform
+                           [android, ios, windows]
+    --appid .............. Specify the app ID for scaffolded hybrid app
+                           Default: org.oraclejet.<app-name>
+    --appname ............ Specify the app name for scaffolded hybrid app
+                           Default: <current-working-directory>
