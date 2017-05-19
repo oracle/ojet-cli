@@ -1,4 +1,4 @@
-# ojet-cli 3.1.0
+# ojet-cli 3.1.1
 
 ## About the module
 This module contains a command line interface for Oracle JET web and hybrid mobile application development.
@@ -20,7 +20,7 @@ npm install -g ojet-cli
 ## Usage
 The Oracle JET command line interface observes the following syntax:
 ```bash
-ojet &lt;task> [scope] [parameter(s)] [options]
+ojet <task> [scope] [parameter(s)] [options]
 ```
 The available tasks are:
 ```
@@ -48,7 +48,7 @@ ojet help
 ```
 For more detailed help, you can invoke:
 ```
-ojet help &lt;task> [&lt;scope>]
+ojet help <task> [<scope>]
 ```
 For example, to view help on adding a plugin:
 ```
