@@ -40,6 +40,15 @@ describe('ojet: Web test', () => {
         done();
       });
     });
+
+    it('Use \'create app\' syntax alias', function (done) {
+      this.timeout(300000);
+      exec(`ojet create app ${appName}`, execTestDir, (error, stdout) => {
+        const errLogCorrect = /path already exists and is not empty/.test(stdout);
+        assert.equal(errLogCorrect, true, error);
+        done();
+      });
+    });
   });
 
   describe('Check essential files', function () {

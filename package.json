@@ -1,6 +1,6 @@
 {
   "name": "ojet-cli",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Oracle JET Command Line Interface",
   "license": "UPL-1.0",
   "homepage": "http://oraclejet.org",
@@ -8,7 +8,7 @@
     "ojet": "./ojet.js"
   },
   "dependencies": {
-    "generator-oraclejet": "~3.0.0",
+    "generator-oraclejet": "~3.1.0",
     "minimist": "^1.2.0",
     "yeoman-environment": "^1.6.5"
   },
@@ -23,6 +23,6 @@
     "load-grunt-tasks": "^3.5.2"
   },
   "preferGlobal": true,
-  "jetversion": "3.0.0",
-  "jetdocversion": "300"
+  "jetversion": "3.1.0",
+  "jetdocversion": "310"
 }

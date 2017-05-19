@@ -45,12 +45,21 @@ describe('ojet: Hybrid test', function () {
     it('Generate android/ios app', function (done) {
       const timeOutLimit = utils.isNoRestoreTest() ? 120000 : 520000;
       this.timeout(timeOutLimit);
-      let command = `ojet create ${appName} --hybrid --template=navbar --appid=my.id --appName=testcase --platforms=${platform}`;
+      let command = `ojet create ${appName} --hybrid --template=navbar --appid=my.id --appName=testcase --platform=${platform}`;
       command = utils.isNoRestoreTest() ? `${command} --norestore` : command;
       exec(command, execTestDir, (error, stdout) => {
         filelist = fs.readdirSync(appDir);
         hybridFileList = fs.readdirSync(appHybridDir);
         assert.equal(utils.norestoreSuccess(stdout), true, error);
+        done();
+      });
+    });
+
+    it('Use \'create app\' syntax alias', function (done) {
+      this.timeout(300000);
+      exec(`ojet create app ${appName}`, execTestDir, (error, stdout) => {
+        const errLogCorrect = /path already exists and is not empty/.test(stdout);
+        assert.equal(errLogCorrect, true, error);
         done();
       });
     });
@@ -68,7 +77,7 @@ describe('ojet: Hybrid test', function () {
 
     it('Complain about unsupported platform', function (done) {
       this.timeout(150000);
-      exec('ojet build --platform=android1', execAppDir, (error, stdout) => {
+      exec('ojet build android1', execAppDir, (error, stdout) => {
         const errLogCorrect = /Invalid platform/i.test(stdout);
         assert.equal(errLogCorrect, true, stdout);
         done();
@@ -86,7 +95,7 @@ describe('ojet: Hybrid test', function () {
 
     it('Complain about unsupported server port value', function (done) {
       this.timeout(20000);
-      exec(`ojet serve --platform=${platform} --serverPort=we12`, execAppDir, (error, stdout) => {
+      exec(`ojet serve ${platform} --serverPort=we12`, execAppDir, (error, stdout) => {
         const errLogCorrect = /is not valid/.test(stdout);
         assert.equal(errLogCorrect, true, stdout);
         done();
@@ -103,24 +112,6 @@ describe('ojet: Hybrid test', function () {
     });
   });
 
-  describe('Build', function () {
-    it(`Build ${platform}`, function (done) {
-      this.timeout(2400000);
-      exec(`ojet build --platform=${platform}`, execAppDir, (error, stdout) => {
-        assert.equal(utils.buildSuccess(stdout), true, error);
-        done();
-      });
-    });
-
-    it(`Build ${platform} for device`, function (done) {
-      this.timeout(2400000);
-      exec(`ojet build --platform=${platform} --destination=device`, execAppDir, (error, stdout) => {
-        assert.equal(utils.buildSuccess(stdout), true, error);
-        done();
-      });
-    });
-  });
-
   describe('Check essential files', function () {
     it('config.xml exists and is correct', function () {
       const configXML = `${appHybridDir}/config.xml`;
@@ -130,8 +121,8 @@ describe('ojet: Hybrid test', function () {
         // Check contents of config.xml
         const configRead = fs.readFileSync(`${configXML}`, 'utf-8');
         assert.equal(configRead.indexOf('<name>testcase</name>') > -1, true, 'config.xml missing <name>');
-        const idPresent = configRead.indexOf('id="my.id"') > -1 || configRead.indexOf('id=\'my.id\'') > -1;
-        assert.equal(idPresent, true, 'config.xml missing correct id value');
+        const isPresent = configRead.indexOf('id="my.id"') > -1 || configRead.indexOf('id=\'my.id\'') > -1;
+        assert.equal(isPresent, true, 'config.xml missing correct id value');
       }
     });
 
@@ -158,10 +149,44 @@ describe('ojet: Hybrid test', function () {
     }
   });
 
-  describe('Serve default', function () {
-    it(`ojet serve ${platform} without platform`, function (done) {
+  describe('Build', function () {
+    it(`Build ${platform}`, function (done) {
+      this.timeout(2400000);
+      exec(`ojet build ${platform}`, execAppDir, (error, stdout) => {
+        assert.equal(utils.buildSuccess(stdout), true, error);
+        done();
+      });
+    });
+
+    it(`Build ${platform} for device`, function (done) {
+      this.timeout(2400000);
+      exec(`ojet build ${platform} --destination=device`, execAppDir, (error, stdout) => {
+        assert.equal(utils.buildSuccess(stdout), true, error);
+        done();
+      });
+    });
+
+    it('Use \'build app\' syntax alias', function (done) {
+      this.timeout(2400000);
+      exec(`ojet build app ${platform}`, execAppDir, (error, stdout) => {
+        assert.equal(utils.buildSuccess(stdout), true, error);
+        done();
+      });
+    });
+  });
+
+  describe('Serve', function () {
+    it('ojet serve using the default platform', function (done) {
       this.timeout(2400000);
       exec('ojet serve', execAppDir2, (error, stdout) => {
+        assert.equal((utils.noError(stdout) || /Watching files/.test(stdout)), true, error);
+        done();
+      });
+    });
+
+    it('Use \'serve app\' syntax alias', function (done) {
+      this.timeout(2400000);
+      exec('ojet serve app', execAppDir2, (error, stdout) => {
         assert.equal((utils.noError(stdout) || /Watching files/.test(stdout)), true, error);
         done();
       });
@@ -181,7 +206,7 @@ describe('ojet: Hybrid test', function () {
   describe('Adding theme', function () {
     it('Add theme generator', function (done) {
       this.timeout(2400000);
-      exec('ojet theme add green', execAppDir2, (error, stdout) => {
+      exec('ojet add theme green', execAppDir2, (error, stdout) => {
         assert.equal(utils.noError(stdout), true, error);
         done();
       });
@@ -201,60 +226,91 @@ describe('ojet: Hybrid test', function () {
   describe('Platform management', function () {
     it(`Add cordova ${inversePlatform} platform`, function (done) {
       this.timeout(100000);
-      exec(`ojet platform add ${inversePlatform}`, execAppDir, (error, stdout) => {
+      exec(`ojet add platform ${inversePlatform}`, execAppDir, (error, stdout) => {
         const success = error ? false : true;
         assert.equal(success, true, error);
         done();
       });
+    });
+
+    it('Adding of a platform was saved', function () {
+      const configXML = `${appHybridDir}/config.xml`;
+      const configRead = fs.readFileSync(`${configXML}`, 'utf-8');
+      const isPresent = configRead.indexOf(`engine name="${inversePlatform}"`) > -1;
+      assert.equal(isPresent, true, 'Adding of a platform was not saved to config.xml');
     });
 
     it(`Remove cordova ${inversePlatform} platform`, function (done) {
       this.timeout(100000);
-      exec(`ojet platform remove ${inversePlatform}`, execAppDir, (error, stdout) => {
+      exec(`ojet remove platform ${inversePlatform}`, execAppDir, (error, stdout) => {
         const success = error ? false : true;
         assert.equal(success, true, error);
         done();
       });
+    });
+
+    it('Removing of a platform was saved', function () {
+      const configXML = `${appHybridDir}/config.xml`;
+      const configRead = fs.readFileSync(`${configXML}`, 'utf-8');
+      const isPresent = configRead.indexOf(`engine name="${inversePlatform}"`) === -1;
+      assert.equal(isPresent, true, 'Removing of a platform was not saved to config.xml');
     });
   });
 
   describe('Plugin management', function () {
+    const devicePlugin = 'cordova-plugin-device';
+
     it('Add cordova plugin', function (done) {
       this.timeout(100000);
-      exec('ojet plugin add cordova-plugin-device cordova-plugin-battery-status', execAppDir, (error, stdout) => {
+      exec(`ojet add plugin ${devicePlugin} cordova-plugin-battery-status`, execAppDir, (error, stdout) => {
         const success = error ? false : true;
         assert.equal(success, true, error);
         done();
       });
+    });
+
+    it('Adding of a plugin was saved', function () {
+      const configXML = `${appHybridDir}/config.xml`;
+      const configRead = fs.readFileSync(`${configXML}`, 'utf-8');
+      const isPresent = configRead.indexOf(`plugin name="${devicePlugin}"`) > -1;
+      assert.equal(isPresent, true, 'Adding of a plugin was not saved to config.xml');
     });
 
     it('Remove cordova plugin', function (done) {
       this.timeout(100000);
-      exec('ojet plugin remove cordova-plugin-device', execAppDir, (error, stdout) => {
+      exec(`ojet remove plugin ${devicePlugin}`, execAppDir, (error, stdout) => {
         const success = error ? false : true;
         assert.equal(success, true, error);
         done();
       });
     });
-  });
 
-  describe('Cleanup', function () {
-    it(`Clean ${platform} platform`, function (done) {
-      this.timeout(100000);
-      exec(`ojet clean ${platform}`, execAppDir, (error, stdout) => {
-        const errLogCorrect = /CLEAN SUCCEEDED/.test(stdout);
-        assert.equal(errLogCorrect, true, stdout);
-        done();
-      });
-    });
-
-    it('Clean all platforms', function (done) {
-      this.timeout(100000);
-      exec('ojet clean', execAppDir, (error, stdout) => {
-        const errLogCorrect = /CLEAN SUCCEEDED/.test(stdout);
-        assert.equal(errLogCorrect, true, stdout);
-        done();
-      });
+    it('Removing of a plugin was saved', function () {
+      const configXML = `${appHybridDir}/config.xml`;
+      const configRead = fs.readFileSync(`${configXML}`, 'utf-8');
+      const isPresent = configRead.indexOf(`plugin name="${devicePlugin}"`) === -1;
+      assert.equal(isPresent, true, 'Removing of a plugin was not saved to config.xml');
     });
   });
+
+  // To be add in v.4.0.0
+  // describe('Cleanup', function () {
+  //   it(`Clean ${platform} platform`, function (done) {
+  //     this.timeout(100000);
+  //     exec(`ojet clean ${platform}`, execAppDir, (error, stdout) => {
+  //       const errLogCorrect = /CLEAN SUCCEEDED/.test(stdout);
+  //       assert.equal(errLogCorrect, true, stdout);
+  //       done();
+  //     });
+  //   });
+  //
+  //   it('Clean all platforms', function (done) {
+  //     this.timeout(100000);
+  //     exec('ojet clean', execAppDir, (error, stdout) => {
+  //       const errLogCorrect = /CLEAN SUCCEEDED/.test(stdout);
+  //       assert.equal(errLogCorrect, true, stdout);
+  //       done();
+  //     });
+  //   });
+  // });
 });

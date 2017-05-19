@@ -16,12 +16,12 @@ module.exports = function (grunt) {
       src : "build/*.js"
     },
     pkg: grunt.file.readJSON("package.json"),
-    tooling_project: 'Tooling_V3.0.0',
+    tooling_project: 'Tooling_V3.1.0',
     build_urls: grunt.file.readJSON("buildconf.json"),
-    jet_version_token:'3.0.0',
-    jet_doc_version_token:'300',
-    version_token:'3.0.0',
-    tooling_project_token:'Tooling_V3.0.0',
+    jet_version_token:'3.1.0',
+    jet_doc_version_token:'310',
+    version_token:'3.1.0',
+    tooling_project_token:'Tooling_V3.1.0',
     current_year_token: '2017'    
   }
   var configs = require('load-grunt-configs')(grunt, options);
