@@ -1,15 +1,9 @@
-# ojet-cli 3.1.1
+# ojet-cli 3.1.2
 
 ## About the module
 This module contains a command line interface for Oracle JET web and hybrid mobile application development.
 
 This is an open source project maintained by Oracle Corp.
-
-## Dependencies
-This command line module invokes Yeoman generators and Grunt tasks that are installed as part of the Oracle JET tooling via:
-```bash
-npm install -g generator-oraclejet
-```
 
 ## Installation
 This module is installed as follows:
