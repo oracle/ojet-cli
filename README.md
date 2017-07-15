@@ -1,4 +1,4 @@
-# ojet-cli 3.1.2
+# ojet-cli 3.2.0
 
 ## About the module
 This module contains a command line interface for Oracle JET web and hybrid mobile application development.
@@ -6,9 +6,14 @@ This module contains a command line interface for Oracle JET web and hybrid mobi
 This is an open source project maintained by Oracle Corp.
 
 ## Installation
-This module is installed as follows:
+For web app development, install this module as follows:
 ```bash
 npm install -g ojet-cli
+```
+
+For hybrid mobile app development, install it together with Cordova:
+```bash
+npm install -g cordova ojet-cli
 ```
 
 ## Usage
@@ -18,11 +23,13 @@ ojet <task> [scope] [parameter(s)] [options]
 ```
 The available tasks are:
 ```
-add ........................... Adds platforms, plugins, themes and more to a JET app
+add ........................... Adds platforms, plugins and more to a JET app
 
 build ......................... Builds a JET app
 
-create ........................ Creates a new JET app
+clean ......................... Cleans the JET app build output
+
+create ........................ Creates a new JET app or a custom theme
 
 help .......................... Displays command line help
                                 Tasks: [add|build|create|help|list|remove|restore|serve]
@@ -34,6 +41,8 @@ remove ........................ Removes platforms and plugins from a JET app
 restore ....................... Restores a JET app
 
 serve ......................... Serves a JET app to an emulator, device or the browser
+
+strip ......................... Strips all non source files from the JET app
 
 ```
 You can view this information by invoking the help task:

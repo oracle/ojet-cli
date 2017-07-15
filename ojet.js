@@ -26,6 +26,8 @@ const help = require('./lib/tasks/help');
 const list = require('./lib/tasks/list');
 const remove = require('./lib/tasks/remove');
 const restore = require('./lib/tasks/restore');
+const clean = require('./lib/tasks/clean');
+const strip = require('./lib/tasks/strip');
 
 /**
  * # ojet CLI - Oracle JET command line interface
@@ -58,7 +60,9 @@ module.exports = (function () {
   const helpTaskNameUsed = commands.indexOf('help') === 0;
   const n = helpTaskNameUsed ? 1 : 0;
   commands[n] = _applyTaskAliases(commands[n]);
-  commands[n + 1] = _applyScopeAliases(commands[n], commands[n + 1]);
+  if (commands[n + 1]) {
+    commands[n + 1] = _applyScopeAliases(commands[n], commands[n + 1]);
+  }
 
   // Final user input
   if (utils.isVerbose(options)) {
@@ -103,6 +107,12 @@ module.exports = (function () {
         break;
       case tasksObj.restore.name:
         restore(scope, parameter);
+        break;
+      case tasksObj.clean.name:
+        clean(scope, parameters);
+        break;
+      case tasksObj.strip.name:
+        strip(scope, parameter);
         break;
       // Help
       case tasksObj.help.name:
@@ -160,8 +170,8 @@ function _applyTaskAliases(task) {
  * E.g. ojet add boom > ojet add explosion
  *
  * @private
- * @param {Array} commands            - Array of all commands (arguments) from the command line
- * @returns {string} inputCommands[1] - default scope name, the noun || original input
+ * @param {string} task  - task name, the verb
+ * @param {string} scope - scope, the noun
  */
 function _applyScopeAliases(task, scope) {
   let inputScope = scope; // Make a 'copy' to pass eslint (no-param-reassign)

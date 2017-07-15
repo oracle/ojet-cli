@@ -20,7 +20,7 @@ const newLine = `\n${helpDescNewLineIndent}`;
 const config = {
   tasks: {
     add: {
-      description: 'Adds platforms, plugins, themes and more to a JET app',
+      description: 'Adds platforms, plugins and more to a JET app',
       scopes: {
         hybrid: {
           description: 'Adds a hybrid app target to the web app',
@@ -28,24 +28,24 @@ const config = {
         },
         platform: {
           aliases: ['platforms'],
-          description: 'Adds Cordova plugin(s) to the hybrid app',
+          description: 'Adds target platform(s) to the hybrid app',
           parameters: '<platform1> [<platform2>]',
           examples: ['ojet add platform ios']
         },
         plugin: {
           aliases: ['plugins'],
-          description: 'Adds target platform(s) to the hybrid app',
+          description: 'Adds Cordova plugin(s) to the hybrid app',
           parameters: '<plugin1> [<plugin2>]',
-          examples: ['ojet add plugins cordova-plugin-camera cordova-plugin-file']
+          examples: ['ojet add plugins cordova-plugin-camera cordova-plugin-file --variable 1234'],
+          options: {
+            variable: {
+              description: 'Specify a plugin\'s required variables'
+            }
+          }
         },
         sass: {
           description: 'Adds SASS compilation and watch to the app',
           examples: ['ojet add sass']
-        },
-        theme: {
-          description: 'Adds a custom theme to the app',
-          parameters: '<theme-name>',
-          examples: ['ojet add theme red']
         }
       },
     },
@@ -57,6 +57,10 @@ const config = {
           parameters: '[android|ios|windows|web]',
           isParameterOptional: true,
           options: {
+            release: {
+              description: 'Build in release mode',
+              parameters: '[true|false]',
+            },
             'build-config': {
               description: 'Specify the build config file for signing the hybrid app',
               parameters: '<build_config_file>'
@@ -100,7 +104,7 @@ const config = {
           examples: [
             'ojet build',
             'ojet build ios --no-sass',
-            'ojet build app android',
+            'ojet build app android --release',
             'ojet build ios --device --build-config ./buildConfig.json --theme myCustomTheme',
             'ojet build web --theme alta:android',
             'ojet build windows --platform-options "--archs=\\"x86 x64 arm\\""'
@@ -108,8 +112,17 @@ const config = {
         }
       },
     },
+    clean: {
+      description: 'Cleans the JET app build output',
+      scopes: {
+        platform: {
+          description: 'Clean the project build output',
+          examples: ['ojet clean', 'ojet clean ios']
+        },
+      },
+    },
     create: {
-      description: 'Creates a new JET app',
+      description: 'Creates a new JET app or a custom theme',
       scopes: {
         app: {
           description: 'Creates an app with the specified name',
@@ -153,6 +166,11 @@ const config = {
             'ojet create myApp --web --template=basic:hybrid',
             'ojet create FixItFast --template http://www.oracle.com/webfolder/technetwork/jet/public_samples/FixItFast.zip'
           ]
+        },
+        theme: {
+          description: 'Creates a custom theme with the specified name',
+          parameters: '<theme-name>',
+          examples: ['ojet create theme red']
         }
       },
     },
@@ -193,10 +211,10 @@ const config = {
       },
     },
     restore: {
-      description: 'Restores a JET app',
+      description: 'Install missing dependencies, plugins, and libraries for a JET app',
       scopes: {
         app: {
-          description: 'Restores a JET app',
+          description: 'Install missing dependencies, plugins, and libraries for a JET app',
         }
       }
     },
@@ -208,6 +226,10 @@ const config = {
           parameters: '[android|ios|windows|web]',
           isParameterOptional: true,
           options: {
+            release: {
+              description: 'Serve in release mode',
+              parameters: '[true|false]',
+            },
             'build-config': {
               description: 'Specify the build config file for signing the hybrid app',
               parameters: '<build_config_file>'
@@ -285,7 +307,7 @@ const config = {
           examples: [
             'ojet serve',
             'ojet serve app ios --no-livereload --emulator="iPad-Air, 10.2"',
-            'ojet serve --device',
+            'ojet serve --device --release',
             'ojet serve windows --no-sass --livereload-port=357230',
             'ojet serve --platform android --browser',
             'ojet serve --browser=edge',
@@ -295,6 +317,15 @@ const config = {
           ]
         }
       }
+    },
+    strip: {
+      description: 'Strips all non source files from the JET app',
+      scopes: {
+        app: {
+          description: 'Remove all non source-controlled files',
+          examples: ['ojet strip']
+        },
+      },
     }
   },
   // Disabling line, can not use arrow function because it changes 'this' scope
