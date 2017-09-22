@@ -1,4 +1,4 @@
-# ojet-cli 3.2.0
+# @oracle/ojet-cli 4.0.0
 
 ## About the module
 This module contains a command line interface for Oracle JET web and hybrid mobile application development.
@@ -7,42 +7,44 @@ This is an open source project maintained by Oracle Corp.
 
 ## Installation
 For web app development, install this module as follows:
-```bash
-npm install -g ojet-cli
+```
+npm install -g @oracle/ojet-cli
 ```
 
 For hybrid mobile app development, install it together with Cordova:
-```bash
-npm install -g cordova ojet-cli
 ```
+npm install -g @oracle/ojet-cli cordova
+```
+
+On macOS, you will need to use 'sudo'.
 
 ## Usage
 The Oracle JET command line interface observes the following syntax:
-```bash
-ojet <task> [scope] [parameter(s)] [options]
 ```
-The available tasks are:
+ojet <command> [<scope>] [<parameter(s)>] [<options>]
 ```
-add ........................... Adds platforms, plugins and more to a JET app
+The available commands are:
+```
+add ................ Adds platforms, plugins and more to a JET app
 
-build ......................... Builds a JET app
+build .............. Builds a JET app
 
-clean ......................... Cleans the JET app build output
+clean .............. Cleans build output from a JET app
 
-create ........................ Creates a new JET app or a custom theme
+create ............. Creates a new JET app, custom theme, or component
 
-help .......................... Displays command line help
-                                Tasks: [add|build|create|help|list|remove|restore|serve]
+help ............... Displays command line help
+                     Commands: [add|build|clean|create|list|remove|restore|serve|strip]
 
-list .......................... Lists platforms and plugins within a JET app
+list ............... Lists platforms, plugins and more within a JET app
 
-remove ........................ Removes platforms and plugins from a JET app
+remove ............. Removes platforms, plugins and more from a JET app
 
-restore ....................... Restores a JET app
+restore ............ Restores missing dependencies, plugins and libraries to a JET app
 
-serve ......................... Serves a JET app to an emulator, device or the browser
+serve .............. Serves a JET app to an emulator, device or the browser
 
-strip ......................... Strips all non source files from the JET app
+strip .............. Strips all non source files from the JET app
 
 ```
 You can view this information by invoking the help task:
@@ -51,12 +53,18 @@ ojet help
 ```
 For more detailed help, you can invoke:
 ```
-ojet help <task> [<scope>]
+ojet help <command> [<scope>]
 ```
-For example, to view help on adding a plugin:
+For example, to view help on using the 'create' command:
+```
+ojet help create
+```
+Or view help on adding a plugin:
 ```
 ojet help add plugin
 ```
+
+For more information on the Oracle JET CLI, refer to the [Oracle JET Developers Guide](http://docs.oracle.com/middleware/jet400/jet/).
 
 ## [Contributing](https://github.com/oracle/ojet-cli/tree/master/CONTRIBUTING.md)
 Oracle JET is an open source project.  Pull Requests are currently not being accepted. See [CONTRIBUTING](https://github.com/oracle/ojet-cli/tree/master/CONTRIBUTING.md) for details.

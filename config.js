@@ -21,22 +21,30 @@ const config = {
   tasks: {
     add: {
       description: 'Adds platforms, plugins and more to a JET app',
+      // hideFromHelp: true,
       scopes: {
+        component: {
+          hideFromHelp: true,
+          aliases: ['components'],
+          description: 'Adds the specified component(s) to the hybrid app',
+          parameters: '<component1> [<component2>]',
+          examples: ['ojet add component flipcard']
+        },
         hybrid: {
           description: 'Adds a hybrid app target to the web app',
           examples: ['ojet add hybrid']
         },
         platform: {
           aliases: ['platforms'],
-          description: 'Adds target platform(s) to the hybrid app',
+          description: 'Adds the specified platform(s) to the hybrid app',
           parameters: '<platform1> [<platform2>]',
           examples: ['ojet add platform ios']
         },
         plugin: {
           aliases: ['plugins'],
-          description: 'Adds Cordova plugin(s) to the hybrid app',
+          description: 'Adds the specified plugin(s) to the hybrid app',
           parameters: '<plugin1> [<plugin2>]',
-          examples: ['ojet add plugins cordova-plugin-camera cordova-plugin-file --variable 1234'],
+          examples: ['ojet add plugins cordova-plugin-camera cordova-plugin-file --variable=1234'],
           options: {
             variable: {
               description: 'Specify a plugin\'s required variables'
@@ -105,24 +113,41 @@ const config = {
             'ojet build',
             'ojet build ios --no-sass',
             'ojet build app android --release',
-            'ojet build ios --device --build-config ./buildConfig.json --theme myCustomTheme',
-            'ojet build web --theme alta:android',
+            'ojet build ios --device --build-config=./buildConfig.json --theme=myCustomTheme',
+            'ojet build web --theme=alta:android',
             'ojet build windows --platform-options "--archs=\\"x86 x64 arm\\""'
           ]
         }
       },
     },
     clean: {
-      description: 'Cleans the JET app build output',
+      description: 'Cleans build output from a JET app',
       scopes: {
-        platform: {
-          description: 'Clean the project build output',
-          examples: ['ojet clean', 'ojet clean ios']
+        app: {
+          description: 'Cleans build output from a JET app for the specified platform',
+          parameters: 'android|ios|windows|web',
+          examples: ['ojet clean app android', 'ojet clean ios']
+        },
+      },
+    },
+    configure: {
+      hideFromHelp: true,
+      description: 'Configures tooling parameters for a JET app',
+      scopes: {
+        app: {
+          description: 'Configures the specified parameter for a JET app',
+          options: {
+            'catalog-url': {
+              description: 'Specify the URL for the catalog used by the app',
+              parameters: '<catalog_url>'
+            }
+          },
+          examples: ['ojet configure --catalog-url=myCatalog.org', 'ojet configure app --catalog-url=10.1.1.32:8010/v1/basepath/']
         },
       },
     },
     create: {
-      description: 'Creates a new JET app or a custom theme',
+      description: 'Creates a new JET app, custom theme, or component',
       scopes: {
         app: {
           description: 'Creates an app with the specified name',
@@ -162,12 +187,19 @@ const config = {
           },
           examples: [
             'ojet create myWebApp --template=navbar',
-            'ojet create myHybridApp --hybrid --appid "com.oracle.myApp" --appname "My App" --platforms=ios,android --template=navdrawer',
+            'ojet create myHybridApp --hybrid --appid="com.oracle.myApp" --appname="My App" --platforms=ios,android --template=navdrawer',
             'ojet create myApp --web --template=basic:hybrid',
-            'ojet create FixItFast --template http://www.oracle.com/webfolder/technetwork/jet/public_samples/FixItFast.zip'
+            'ojet create FixItFast --template=http://www.oracle.com/webfolder/technetwork/jet/public_samples/FixItFast.zip'
           ]
         },
+        component: {
+          aliases: ['components'],
+          description: 'Creates a component with the specified name in an existing app, or creates a component with a shell app',
+          parameters: '<component-name>',
+          examples: ['ojet create component demo-card']
+        },
         theme: {
+          aliases: ['themes'],
           description: 'Creates a custom theme with the specified name',
           parameters: '<theme-name>',
           examples: ['ojet create theme red']
@@ -176,11 +208,17 @@ const config = {
     },
     help: {
       description: 'Displays command line help',
-      tasks: '[add|build|create|help|list|remove|restore|serve]'
+      commands: '[add|build|clean|configure|create|list|remove|restore|serve|strip]'
     },
     list: {
-      description: 'Lists platforms and plugins within a JET app',
+      description: 'Lists platforms, plugins and more within a JET app',
       scopes: {
+        component: {
+          hideFromHelp: true,
+          aliases: ['components'],
+          description: 'Lists all installed components',
+          examples: ['ojet list component']
+        },
         platform: {
           aliases: ['platforms'],
           description: 'Lists all installed platforms',
@@ -193,17 +231,46 @@ const config = {
         }
       }
     },
-    remove: {
-      description: 'Removes platforms and plugins from a JET app',
+    publish: {
+      hideFromHelp: true,
+      description: 'Publishes components to the catalog',
       scopes: {
+        component: {
+          description: 'Publishes the specified component to the catalog',
+          aliases: ['components'],
+          parameters: '<component>',
+          options: {
+            username: {
+              description: 'The user\'s registered username'
+            },
+            password: {
+              description: 'The user\'s registered password'
+            },
+          },
+          examples: [
+            'ojet publish component flipcard'
+          ]
+        }
+      },
+    },
+    remove: {
+      description: 'Removes platforms, plugins and more from a JET app',
+      scopes: {
+        component: {
+          hideFromHelp: true,
+          description: 'Removes the specified component(s) from the app',
+          aliases: ['components'],
+          parameters: '<component1> [<component2>]',
+          examples: ['ojet remove components flipcard dv-gantt']
+        },
         platform: {
-          description: 'Removes a platform from the app',
+          description: 'Removes the specified platform(s) from the app',
           aliases: ['platforms'],
           parameters: '<platform1> [<platform2>]',
           examples: ['ojet remove platforms ios android']
         },
         plugin: {
-          description: 'Removes a plugin from the app',
+          description: 'Removes the specified plugin(s) from the app',
           aliases: ['plugins'],
           parameters: '<plugin1> [<plugin2>]',
           examples: ['ojet remove plugin cordova-plugin-camera']
@@ -211,18 +278,36 @@ const config = {
       },
     },
     restore: {
-      description: 'Install missing dependencies, plugins, and libraries for a JET app',
+      description: 'Restores missing dependencies, plugins, and libraries to a JET app',
       scopes: {
         app: {
-          description: 'Install missing dependencies, plugins, and libraries for a JET app',
+          description: 'Restores missing dependencies, plugins, and libraries to a JET app',
+          examples: [
+            'ojet restore',
+            'ojet restore app'
+          ]
         }
       }
+    },
+    search: {
+      hideFromHelp: true,
+      description: 'Searches for a component in the catalog based on the specified keyword',
+      scopes: {
+        catalog: {
+          description: 'Searches for a component in the catalog based on the specified keyword',
+          parameters: '<keyword>',
+          examples: [
+            'ojet search catalog flip-card',
+            'ojet search catalog flip-card dv-gantt'
+          ]
+        }
+      },
     },
     serve: {
       description: 'Serves a JET app to an emulator, device or the browser',
       scopes: {
         app: {
-          description: 'Serves a JET app to an emulator, device or the browser',
+          description: 'Serves a JET app for the specified platform',
           parameters: '[android|ios|windows|web]',
           isParameterOptional: true,
           options: {
@@ -309,7 +394,7 @@ const config = {
             'ojet serve app ios --no-livereload --emulator="iPad-Air, 10.2"',
             'ojet serve --device --release',
             'ojet serve windows --no-sass --livereload-port=357230',
-            'ojet serve --platform android --browser',
+            'ojet serve android --browser',
             'ojet serve --browser=edge',
             'ojet serve ios --device --build-config ./buildConfig.json --theme myCustomTheme',
             'ojet serve web --theme alta:android',
@@ -319,11 +404,11 @@ const config = {
       }
     },
     strip: {
-      description: 'Strips all non source files from the JET app',
+      description: 'Strips all non source files from a JET app',
       scopes: {
         app: {
-          description: 'Remove all non source-controlled files',
-          examples: ['ojet strip']
+          description: 'Strips all non source files from a JET app',
+          examples: ['ojet strip', 'ojet strip app']
         },
       },
     }
@@ -344,9 +429,13 @@ const config = {
   env: {
     test: 'test'
   },
-  help: {
-    titlePartLength: helpTitlePartLength,
-    descIndent: helpDescNewLineIndent,
+  components: {
+    dir: './src/js/jet-composites/'
+  },
+  configFile: './oraclejetconfig.json',
+  output: {
+    helpTitlePartLength,
+    helpDescNewLineIndent,
     indent: 4,
     dot: '.',
     space: helpSpace

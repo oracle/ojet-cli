@@ -7,9 +7,10 @@
 'use strict';
 
 const assert = require('assert');
-const fs = require('fs-extra');
-const path = require('path');
 const exec = require('child_process').exec;
+const fs = require('fs');
+const path = require('path');
+
 const utils = require('./utils');
 
 const appName = 'webTestApp';
@@ -20,20 +21,24 @@ const execOptions = { maxBuffer: 1024 * 20000 };
 const execTestDir = Object.assign({}, execOptions, { cwd: testDir });
 const execAppDir = Object.assign({}, execOptions, { cwd: appDir });
 
+const timeoutShort = 10000; // 10s
+const timeout = 300000; // 5 mins
+const timeoutLong = 1800000; // 0.5h
+
 let filelist;
 const platform = utils.getPlatform(process.env.OS);
 
 describe('ojet: Web test', () => {
   before(function (done) {
-    this.timeout(5000);
-    fs.ensureDirSync(appDir);
-    fs.emptyDirSync(appDir);
+    this.timeout(timeoutShort);
+    utils.deleteDir(appDir);
+    utils.ensureDir(testDir);
     done();
   });
 
   describe('Scaffold with norestore flag', () => {
     it('Generate web app', function (done) {
-      this.timeout(120000);
+      this.timeout(timeout);
       exec(`ojet create ${appName} --norestore=true`, execTestDir, function (error, stdout) {
         assert.equal(utils.norestoreSuccess(stdout), true, error);
         filelist = fs.readdirSync(appDir);
@@ -42,10 +47,9 @@ describe('ojet: Web test', () => {
     });
 
     it('Use \'create app\' syntax alias', function (done) {
-      this.timeout(300000);
-      exec(`ojet create app ${appName}`, execTestDir, (error, stdout) => {
-        const errLogCorrect = /path already exists and is not empty/.test(stdout);
-        assert.equal(errLogCorrect, true, error);
+      this.timeout(timeoutShort);
+      utils.spawn('ojet', ['create', 'app', appName], 'path already exists and is not empty', false, execTestDir, function(childProcess) {
+        childProcess.kill();
         done();
       });
     });
@@ -70,7 +74,7 @@ describe('ojet: Web test', () => {
 
   describe(`Extend to hybrid incl. ${platform} platform`, function () {
     it('Add hybrid', function (done) {
-      this.timeout(2400000);
+      this.timeout(timeoutLong);
       exec(`ojet add hybrid --platform=${platform}`, execAppDir, (error, stdout) => {
         filelist = fs.readdirSync(appDir);
         const inlist = filelist.indexOf('hybrid') > -1;

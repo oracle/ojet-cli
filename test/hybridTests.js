@@ -7,11 +7,13 @@
 'use strict';
 
 const env = process.env;
+
 const assert = require('assert');
-const config = require('../config');
-const fs = require('fs-extra');
-const path = require('path');
 const exec = require('child_process').exec;
+const fs = require('fs');
+const path = require('path');
+
+const config = require('../config');
 const utils = require('./utils');
 
 const appName = 'hybridTestApp';
@@ -23,10 +25,12 @@ const appHybridDir = `${appDir}/${hybridDirName}`;
 const platform = utils.getPlatform(env.OS);
 const inversePlatform = platform === 'ios' ? 'android' : 'ios';
 
-const execOptions = { maxBuffer: 1024 * 20000 };
+const execOptions = { maxBuffer: 1024 * 50000 };
 const execTestDir = Object.assign({}, execOptions, { cwd: testDir });
 const execAppDir = Object.assign({}, execOptions, { cwd: appDir });
-const execAppDir2 = Object.assign({}, execOptions, { cwd: appDir, timeout: 100000, killSignal: 'SIGTERM' });
+const timeoutShort = 10000; // 10s
+const timeout = 300000; // 5 mins
+const timeoutLong = 1800000; // 0.5h
 
 let filelist;
 let hybridFileList;
@@ -35,15 +39,15 @@ process.env.NODE_ENV = config.env.test;
 
 describe('ojet: Hybrid test', function () {
   before(function (done) {
-    this.timeout(10000);
-    fs.ensureDirSync(appDir);
-    fs.emptyDirSync(appDir);
+    this.timeout(timeout);
+    utils.deleteDir(appDir);
+    utils.ensureDir(testDir);
     done();
   });
 
   describe('Scaffolding', function () {
     it('Generate android/ios app', function (done) {
-      const timeOutLimit = utils.isNoRestoreTest() ? 120000 : 520000;
+      const timeOutLimit = utils.isNoRestoreTest() ? timeout : timeoutLong;
       this.timeout(timeOutLimit);
       let command = `ojet create ${appName} --hybrid --template=navbar --appid=my.id --appName=testcase --platform=${platform}`;
       command = utils.isNoRestoreTest() ? `${command} --norestore` : command;
@@ -56,10 +60,11 @@ describe('ojet: Hybrid test', function () {
     });
 
     it('Use \'create app\' syntax alias', function (done) {
-      this.timeout(300000);
+      this.timeout(timeout);
       exec(`ojet create app ${appName}`, execTestDir, (error, stdout) => {
-        const errLogCorrect = /path already exists and is not empty/.test(stdout);
-        assert.equal(errLogCorrect, true, error);
+        const stdLog = /path already exists and is not empty/.test(stdout);
+        const errLog = /path already exists and is not empty/.test(error);
+        assert.equal(stdLog || errLog, true, error);
         done();
       });
     });
@@ -67,46 +72,51 @@ describe('ojet: Hybrid test', function () {
 
   describe('Invalid arguments & Check error messages', function () {
     it('Complain about generating app to non-empty appDir', function (done) {
-      this.timeout(300000);
+      this.timeout(timeoutShort);
       exec(`ojet create ${appName} --hybrid --platforms=${platform}`, execTestDir, (error, stdout) => {
-        const errLogCorrect = /path already exists and is not empty/.test(stdout);
-        assert.equal(errLogCorrect, true, error);
+        const errLog = /path already exists and is not empty/.test(error);
+        const stdLog = /path already exists and is not empty/.test(stdout);
+        assert.equal(errLog || stdLog, true, error);
         done();
       });
     });
 
     it('Complain about unsupported platform', function (done) {
-      this.timeout(150000);
+      this.timeout(timeoutShort);
       exec('ojet build android1', execAppDir, (error, stdout) => {
-        const errLogCorrect = /Invalid platform/i.test(stdout);
-        assert.equal(errLogCorrect, true, stdout);
+        const stdLog = /Invalid platform/i.test(stdout);
+        const errLog = /Invalid platform/i.test(error);
+        assert.equal(errLog || stdLog, true, stdout);
         done();
       });
     });
 
     it('Complain about deprecated server port name', function (done) {
-      this.timeout(20000);
+      this.timeout(timeout);
       exec(`ojet serve ${platform} --serverPort=we12`, execAppDir, (error, stdout) => {
-        const errLogCorrect = /Flag 'serverPort' was deprecated/.test(stdout);
-        assert.equal(errLogCorrect, true, stdout);
+        const errLog= /serverPort not valid/.test(error);
+        const stdLog= /serverPort not valid/.test(stdout);
+        assert.equal(errLog || stdLog, true, stdout);
         done();
       });
     });
 
-    it('Complain about unsupported server port value', function (done) {
-      this.timeout(20000);
-      exec(`ojet serve ${platform} --serverPort=we12`, execAppDir, (error, stdout) => {
-        const errLogCorrect = /is not valid/.test(stdout);
-        assert.equal(errLogCorrect, true, stdout);
+    it('Complain about invalid server port value', function (done) {
+      this.timeout(timeout);
+      exec(`ojet serve ${platform} --server-port=we12`, execAppDir, (error, stdout) => {
+        const errLog= /value 'we12' is not valid/.test(error);
+        const stdLog= /value 'we12' is not valid/.test(stdout);
+        assert.equal(errLog || stdLog, true, stdout);
         done();
       });
     });
 
     it('Complain about unsupported build argument', function (done) {
-      this.timeout(150000);
+      this.timeout(timeout);
       exec(`ojet build --xyz ${platform}`, execAppDir, (error, stdout) => {
-        const errLogCorrect = /'xyz' not supported/.test(stdout);
-        assert.equal(errLogCorrect, true, stdout);
+        const errLog = /Option xyz not valid/.test(error);
+        const stdLog = /Option xyz not valid/.test(stdout);
+        assert.equal(errLog || stdLog, true, stdout);
         done();
       });
     });
@@ -151,7 +161,7 @@ describe('ojet: Hybrid test', function () {
 
   describe('Build', function () {
     it(`Build ${platform}`, function (done) {
-      this.timeout(2400000);
+      this.timeout(timeout);
       exec(`ojet build ${platform}`, execAppDir, (error, stdout) => {
         assert.equal(utils.buildSuccess(stdout), true, error);
         done();
@@ -159,7 +169,7 @@ describe('ojet: Hybrid test', function () {
     });
 
     it(`Build ${platform} for device`, function (done) {
-      this.timeout(2400000);
+      this.timeout(timeout);
       exec(`ojet build ${platform} --destination=device`, execAppDir, (error, stdout) => {
         assert.equal(utils.buildSuccess(stdout), true, error);
         done();
@@ -167,7 +177,7 @@ describe('ojet: Hybrid test', function () {
     });
 
     it('Use \'build app\' syntax alias', function (done) {
-      this.timeout(2400000);
+      this.timeout(timeout);
       exec(`ojet build app ${platform}`, execAppDir, (error, stdout) => {
         assert.equal(utils.buildSuccess(stdout), true, error);
         done();
@@ -177,17 +187,17 @@ describe('ojet: Hybrid test', function () {
 
   describe('Serve', function () {
     it('ojet serve using the default platform', function (done) {
-      this.timeout(2400000);
-      exec('ojet serve', execAppDir2, (error, stdout) => {
-        assert.equal((utils.noError(stdout) || /Watching files/.test(stdout)), true, error);
+      this.timeout(timeoutLong);
+      utils.spawn('ojet', ['serve'], 'Watching files', false, execAppDir, function(childProcess) {
+        childProcess.kill(); // Kill livereload watcher
         done();
       });
     });
 
     it('Use \'serve app\' syntax alias', function (done) {
-      this.timeout(2400000);
-      exec('ojet serve app', execAppDir2, (error, stdout) => {
-        assert.equal((utils.noError(stdout) || /Watching files/.test(stdout)), true, error);
+      this.timeout(timeoutLong);
+      utils.spawn('ojet', ['serve', 'app'], 'Watching files', false, execAppDir, function(childProcess) {
+        childProcess.kill(); // Kill livereload watcher
         done();
       });
     });
@@ -195,18 +205,18 @@ describe('ojet: Hybrid test', function () {
 
   describe('Adding sass', function () {
     it('Add sass generator', function (done) {
-      this.timeout(2400000);
-      exec('ojet add sass', execAppDir2, (error, stdout) => {
+      this.timeout(timeout);
+      exec('ojet add sass', execAppDir, (error, stdout) => {
         assert.equal(/add-sass finished/.test(stdout) || /add-sass finished/.test(error), true, error);
         done();
       });
     });
   });
-  //
-  describe('Adding theme', function () {
-    it('Add theme generator', function (done) {
-      this.timeout(2400000);
-      exec('ojet add theme green', execAppDir2, (error, stdout) => {
+
+  describe('Create theme', function () {
+    it('Create theme generator', function (done) {
+      this.timeout(timeout);
+      exec('ojet create theme green', execAppDir, (error, stdout) => {
         assert.equal(utils.noError(stdout), true, error);
         done();
       });
@@ -215,8 +225,8 @@ describe('ojet: Hybrid test', function () {
 
   describe('Compile sass', function () {
     it('Compile sass', function (done) {
-      this.timeout(2400000);
-      exec('ojet build --theme=green', execAppDir2, (error, stdout) => {
+      this.timeout(timeout);
+      exec('ojet build --theme=green', execAppDir, (error, stdout) => {
         assert.equal(utils.noError(stdout), true, stdout);
         done();
       });
@@ -225,7 +235,7 @@ describe('ojet: Hybrid test', function () {
 
   describe('Platform management', function () {
     it(`Add cordova ${inversePlatform} platform`, function (done) {
-      this.timeout(100000);
+      this.timeout(timeout);
       exec(`ojet add platform ${inversePlatform}`, execAppDir, (error, stdout) => {
         const success = error ? false : true;
         assert.equal(success, true, error);
@@ -241,7 +251,7 @@ describe('ojet: Hybrid test', function () {
     });
 
     it(`Remove cordova ${inversePlatform} platform`, function (done) {
-      this.timeout(100000);
+      this.timeout(timeout);
       exec(`ojet remove platform ${inversePlatform}`, execAppDir, (error, stdout) => {
         const success = error ? false : true;
         assert.equal(success, true, error);
@@ -261,7 +271,7 @@ describe('ojet: Hybrid test', function () {
     const devicePlugin = 'cordova-plugin-device';
 
     it('Add cordova plugin', function (done) {
-      this.timeout(100000);
+      this.timeout(timeout);
       exec(`ojet add plugin ${devicePlugin} cordova-plugin-battery-status`, execAppDir, (error, stdout) => {
         const success = error ? false : true;
         assert.equal(success, true, error);
@@ -277,7 +287,7 @@ describe('ojet: Hybrid test', function () {
     });
 
     it('Remove cordova plugin', function (done) {
-      this.timeout(100000);
+      this.timeout(timeout);
       exec(`ojet remove plugin ${devicePlugin}`, execAppDir, (error, stdout) => {
         const success = error ? false : true;
         assert.equal(success, true, error);
@@ -293,24 +303,14 @@ describe('ojet: Hybrid test', function () {
     });
   });
 
-  // To be add in v.4.0.0
-  // describe('Cleanup', function () {
-  //   it(`Clean ${platform} platform`, function (done) {
-  //     this.timeout(100000);
-  //     exec(`ojet clean ${platform}`, execAppDir, (error, stdout) => {
-  //       const errLogCorrect = /CLEAN SUCCEEDED/.test(stdout);
-  //       assert.equal(errLogCorrect, true, stdout);
-  //       done();
-  //     });
-  //   });
-  //
-  //   it('Clean all platforms', function (done) {
-  //     this.timeout(100000);
-  //     exec('ojet clean', execAppDir, (error, stdout) => {
-  //       const errLogCorrect = /CLEAN SUCCEEDED/.test(stdout);
-  //       assert.equal(errLogCorrect, true, stdout);
-  //       done();
-  //     });
-  //   });
-  // });
+  describe('Clean', function () {
+    it(`Clean ${platform} platform`, function (done) {
+      this.timeout(timeout);
+      exec(`ojet clean ${platform}`, execAppDir, (error, stdout) => {
+        const errLogCorrect = /CLEAN SUCCEEDED/.test(stdout);
+        assert.equal(errLogCorrect, true, stdout);
+        done();
+      });
+    });
+  });
 });

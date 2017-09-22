@@ -21,12 +21,15 @@ const utils = require('./lib/utils');
 // Tasks
 const add = require('./lib/tasks/add');
 const buildAndServe = require('./lib/tasks/build.serve');
+const clean = require('./lib/tasks/clean');
+const configure = require('./lib/tasks/configure');
 const create = require('./lib/tasks/create');
 const help = require('./lib/tasks/help');
 const list = require('./lib/tasks/list');
+const publish = require('./lib/tasks/publish');
 const remove = require('./lib/tasks/remove');
 const restore = require('./lib/tasks/restore');
-const clean = require('./lib/tasks/clean');
+const search = require('./lib/tasks/search');
 const strip = require('./lib/tasks/strip');
 
 /**
@@ -56,6 +59,9 @@ module.exports = (function () {
   const options = utils.cloneObject(argv);
   delete options._; // Delete commands
 
+  // Is verbose?
+  process.env.verbose = options.verbose || false;
+
   // Apply aliases
   const helpTaskNameUsed = commands.indexOf('help') === 0;
   const n = helpTaskNameUsed ? 1 : 0;
@@ -65,13 +71,12 @@ module.exports = (function () {
   }
 
   // Final user input
-  if (utils.isVerbose(options)) {
-    utils.log('User input:');
+  if (utils.isVerbose()) {
     if (commands.length > 0) {
-      utils.log(commands);
+      utils.log('User input commands:', commands);
     }
     if (!utils.isObjectEmpty(options)) {
-      utils.log(options);
+      utils.log('User input options:', options);
     }
   }
 
@@ -96,27 +101,35 @@ module.exports = (function () {
       case tasksObj.serve.name:
         buildAndServe(task, scope, parameter, options);
         break;
+      case tasksObj.configure.name:
+        configure(task, scope, options);
+        break;
+      case tasksObj.clean.name:
+        clean(scope, parameter);
+        break;
       case tasksObj.create.name:
         create(scope, parameter, options);
         break;
+      case tasksObj.help.name:
+        help(commands);
+        break;
       case tasksObj.list.name:
         list(scope, parameter);
+        break;
+      case tasksObj.publish.name:
+        publish(task, scope, parameter, options);
         break;
       case tasksObj.remove.name:
         remove(scope, parameters);
         break;
       case tasksObj.restore.name:
-        restore(scope, parameter);
+        restore(task, scope, parameter);
         break;
-      case tasksObj.clean.name:
-        clean(scope, parameters);
+      case tasksObj.search.name:
+        search(task, scope, parameter);
         break;
       case tasksObj.strip.name:
         strip(scope, parameter);
-        break;
-      // Help
-      case tasksObj.help.name:
-        help(commands);
         break;
       case undefined:
         if (utils.hasProperty(options, 'version')) {
