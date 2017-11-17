@@ -1,6 +1,9 @@
 ## Release Notes for ojet-cli ##
 
-### 4.0.1
+### 4.1.0
+* If JET images are altered, they will be repackaged into the JET sprite files
+
+### 4.0.0
 * Moved module into @oracle scope, changing the name to @oracle/ojet-cli
 * Added 'ojet create component' to scaffold a composite component based on a template
 * Due to a [known issue](https://github.com/phonegap/ios-deploy/issues/292) in the ios-deploy module, serving an app to an iOS device may fail to launch the app with error code 253. Try upgrading to ios-deploy@1.9.2, restarting your device and  reconnecting the USB cable.  Otherwise, launch the app manually.
