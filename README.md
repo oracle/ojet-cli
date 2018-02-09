@@ -64,7 +64,7 @@ Or view help on adding a plugin:
 ojet help add plugin
 ```
 
-For more information on the Oracle JET CLI, refer to the [Oracle JET Developers Guide](http://docs.oracle.com/middleware/jet420/jet/).
+For more information on the Oracle JET CLI, refer to the [Oracle JET Developers Guide](http://www.oracle.com/pls/topic/lookup?ctx=jet420).
 
 ## [Contributing](https://github.com/oracle/ojet-cli/tree/master/CONTRIBUTING.md)
 Oracle JET is an open source project.  Pull Requests are currently not being accepted. See [CONTRIBUTING](https://github.com/oracle/ojet-cli/tree/master/CONTRIBUTING.md) for details.
