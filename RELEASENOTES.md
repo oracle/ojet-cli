@@ -1,5 +1,8 @@
 ## Release Notes for ojet-cli ##
 
+### 4.2.0
+* No changes
+
 ### 4.1.0
 * If JET images are altered, they will be repackaged into the JET sprite files
 

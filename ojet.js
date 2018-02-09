@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2018, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 
@@ -56,8 +56,10 @@ module.exports = (function () {
   // Extract commands
   const commands = argv._;
   // Extract options from the parsed user input
-  const options = utils.cloneObject(argv);
+  let options = utils.cloneObject(argv);
   delete options._; // Delete commands
+  // Convert boolean values
+  options = _convertStringBooleansToRealBooleans(options);
 
   // Is verbose?
   process.env.verbose = options.verbose || false;
@@ -203,4 +205,29 @@ function _applyScopeAliases(task, scope) {
     }
   }
   return inputScope;
+}
+
+/**
+ * ## _convertStringBooleansToRealBooleans
+ * 'true' & 'false' parsed from the command line are of a string type.
+ * This is a conversion to real booleans.
+ * E.g. ojet serve --build false
+ *
+ * @private
+ * @param {Object} options
+ * @return {Object} optionsCopy
+ */
+
+function _convertStringBooleansToRealBooleans(options) {
+  const optionsCopy = utils.cloneObject(options);
+  Object.keys(optionsCopy).forEach((key) => {
+    if (utils.hasProperty(optionsCopy, key)) {
+      if (optionsCopy[key] === 'true') {
+        optionsCopy[key] = true;
+      } else if (options[key] === 'false') {
+        optionsCopy[key] = false;
+      }
+    }
+  });
+  return optionsCopy;
 }

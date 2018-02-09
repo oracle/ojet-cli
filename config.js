@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2018, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 
@@ -77,6 +77,11 @@ const config = {
               description: 'Enable SASS compilation',
               parameters: '[true|false](--no-sass)',
               default: 'true'
+            },
+            svg: {
+              description: 'Enable SVG re-compilation for JET Alta Theme',
+              parameters: '[true|false]',
+              default: 'false'
             },
             theme: {
               description: 'Specify the theme to be used by the app',
@@ -333,6 +338,11 @@ const config = {
               description: 'Specify the server port',
               parameters: '<integer>',
               default: '8000'
+            },
+            svg: {
+              description: 'Enable SVG re-compilation for JET Alta Theme',
+              parameters: '[true|false]',
+              default: 'false'
             },
             theme: {
               description: 'Specify the theme to be used by the app',
