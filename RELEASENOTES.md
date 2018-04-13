@@ -1,5 +1,9 @@
 ## Release Notes for ojet-cli ##
 
+### 5.0.0
+* The main-release-paths.json file has been replaced by the path-mapping.json file in templates used to scaffold applications
+* As a continued effort toward abstraction of direct library calls in the JET CLI, the direct use of yeoman and grunt will be removed in the JET v7.0.0 release.  A new hooks API will be provided to allow for customization of tasks.
+
 ### 4.2.0
 * No changes
 
@@ -21,7 +25,7 @@
 
 ### 3.1.0
 * Changed the syntax to specify the command first, such as 'ojet list plugins' rather than 'ojet plugins list'
-* Updated the help descriptions
+* Updated the help descriptions 
 
 ### 3.0.0
 * Initial release

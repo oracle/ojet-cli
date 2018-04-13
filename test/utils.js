@@ -16,7 +16,11 @@ utils.bowerCopySuccess = function (std) {
 };
 
 utils.buildSuccess = function _isSuccess(std) {
-  return std.indexOf('BUILD SUCCE') > -1 || std.indexOf('Code signing') > -1 || std.indexOf('Code Sign') > -1;
+  return std.indexOf('Build finished') > -1 || std.indexOf('Code signing') > -1 || std.indexOf('Code Sign') > -1;
+};
+
+utils.serveSuccess = function _isSuccess(std) {
+  return std.indexOf('Starting watcher') > -1 || std.indexOf('after_server hook') > -1;
 };
 
 utils.deleteDir = function (dirPath) {
@@ -83,6 +87,10 @@ utils.noError = function (std) {
 
 utils.norestoreSuccess = function (std) {
   return std.indexOf('Oracle JET Error') <= -1;
+};
+
+utils.notSupported = function (std) {
+  return std.indexOf('not supported') > 0;
 };
 
 /**

@@ -41,7 +41,6 @@ const strip = require('./lib/tasks/strip');
  * @public
  */
 module.exports = (function () {
-  utils.log('\x1b[42m Oracle JET CLI \x1b[0m');
   process.title = 'ojet';
 
   // This is the minimist parser output of the user input
