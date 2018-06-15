@@ -88,9 +88,7 @@ module.exports = (function () {
     // Here's the main logic
     const task = commands[0];
     const scope = commands[1];
-    const parameter = commands[2];
     const parameters = commands.slice(2);
-
     const tasksObj = config.tasks;
 
     switch (commands[0]) {
@@ -100,37 +98,37 @@ module.exports = (function () {
         break;
       case tasksObj.build.name:
       case tasksObj.serve.name:
-        buildAndServe(task, scope, parameter, options);
+        buildAndServe(task, scope, parameters, options);
         break;
       case tasksObj.configure.name:
-        configure(task, scope, options);
+        configure(task, scope, parameters, options);
         break;
       case tasksObj.clean.name:
-        clean(scope, parameter);
+        clean(scope, parameters);
         break;
       case tasksObj.create.name:
-        create(scope, parameter, options);
+        create(scope, parameters, options);
         break;
       case tasksObj.help.name:
         help(commands);
         break;
       case tasksObj.list.name:
-        list(scope, parameter);
+        list(scope, parameters);
         break;
       case tasksObj.publish.name:
-        publish(task, scope, parameter, options);
+        publish(task, scope, parameters, options);
         break;
       case tasksObj.remove.name:
         remove(scope, parameters);
         break;
       case tasksObj.restore.name:
-        restore(task, scope, parameter);
+        restore(task, scope, parameters);
         break;
       case tasksObj.search.name:
-        search(task, scope, parameter);
+        search(task, scope, parameters);
         break;
       case tasksObj.strip.name:
-        strip(scope, parameter);
+        strip(parameters);
         break;
       case undefined:
         if (utils.hasProperty(options, 'version')) {

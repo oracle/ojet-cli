@@ -1,5 +1,17 @@
 ## Release Notes for ojet-cli ##
 
+### 5.1.0
+When using Cordova-Android 7.0.0+, users may encounter an error like:
+
+ENOENT: no such file or directory, open ‘App\hybrid\platforms\android\res\xml\config.xml’
+
+This is because Cordova changed the Android project file structure, and some third-party plugins/tools are not updated yet.
+The error is harmless.  Users can also choose to downgrade to Cordova-Android 6.4.0 to completely avoid the issue. 
+
+More information is in the Cordova-Android 7.0.0 release note: 
+
+https://cordova.apache.org/announcements/2017/12/04/cordova-android-7.0.0.html
+
 ### 5.0.0
 * The main-release-paths.json file has been replaced by the path-mapping.json file in templates used to scaffold applications
 * As a continued effort toward abstraction of direct library calls in the JET CLI, the direct use of yeoman and grunt will be removed in the JET v7.0.0 release.  A new hooks API will be provided to allow for customization of tasks.
