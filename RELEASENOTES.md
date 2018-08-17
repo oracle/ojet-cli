@@ -1,5 +1,8 @@
 ## Release Notes for ojet-cli ##
 
+### 5.2.0
+* Cordova 8 may cause very slow performance during build and serve.  You may wish to consider downgrading to Cordova 7 if this is an issue.
+
 ### 5.1.0
 When using Cordova-Android 7.0.0+, users may encounter an error like:
 

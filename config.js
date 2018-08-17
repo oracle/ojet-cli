@@ -26,13 +26,26 @@ const config = {
         component: {
           hideFromHelp: true,
           aliases: ['components'],
-          description: 'Adds the specified component(s) to the hybrid app',
+          description: 'Adds the specified component(s) to the app',
           parameters: '<component1> [<component2>]',
+          options: {
+            'pack-version': {
+              description: 'Specify the pack version',
+              parameters: '<pack_version>'
+            }
+          },
           examples: ['ojet add component flipcard']
         },
         hybrid: {
           description: 'Adds a hybrid app target to the web app',
           examples: ['ojet add hybrid']
+        },
+        pack: {
+          hideFromHelp: true,
+          aliases: ['packs'],
+          description: 'Adds the specified pack(s) to the app',
+          parameters: '<pack1> [<pack2>]',
+          examples: ['ojet add pack oj-dvt']
         },
         platform: {
           aliases: ['platforms'],
@@ -142,12 +155,12 @@ const config = {
         app: {
           description: 'Configures the specified parameter for a JET app',
           options: {
-            'catalog-url': {
-              description: 'Specify the URL for the catalog used by the app',
-              parameters: '<catalog_url>'
+            'exchange-url': {
+              description: 'Specify the URL for the Exchange used by the app',
+              parameters: '<exchange_url>'
             }
           },
-          examples: ['ojet configure --catalog-url=myCatalog.org', 'ojet configure app --catalog-url=10.1.1.32:8010/v1/basepath/']
+          examples: ['ojet configure --exchange-url=myExchange.org', 'ojet configure app --exchange-url=10.1.1.32:8010/v1/basepath/']
         },
       },
     },
@@ -224,6 +237,12 @@ const config = {
           description: 'Lists all installed components',
           examples: ['ojet list component']
         },
+        pack: {
+          hideFromHelp: true,
+          aliases: ['packs'],
+          description: 'Lists all installed packs',
+          examples: ['ojet list packs']
+        },
         platform: {
           aliases: ['platforms'],
           description: 'Lists all installed platforms',
@@ -238,10 +257,10 @@ const config = {
     },
     publish: {
       hideFromHelp: true,
-      description: 'Publishes components to the catalog',
+      description: 'Publishes components to the Exchange',
       scopes: {
         component: {
-          description: 'Publishes the specified component to the catalog',
+          description: 'Publishes the specified component to the Exchange',
           aliases: ['components'],
           parameters: '<component>',
           options: {
@@ -251,9 +270,29 @@ const config = {
             password: {
               description: 'The user\'s registered password'
             },
+            pack: {
+              description: 'Specify the pack name',
+              parameters: '<pack_name>'
+            },
           },
           examples: [
             'ojet publish component flipcard'
+          ]
+        },
+        pack: {
+          description: 'Publishes the specified pack to the Exchange',
+          aliases: ['packs'],
+          parameters: '<pack>',
+          options: {
+            username: {
+              description: 'The user\'s registered username'
+            },
+            password: {
+              description: 'The user\'s registered password'
+            },
+          },
+          examples: [
+            'ojet publish pack oj-dvt'
           ]
         }
       },
@@ -267,6 +306,13 @@ const config = {
           aliases: ['components'],
           parameters: '<component1> [<component2>]',
           examples: ['ojet remove components flipcard dv-gantt']
+        },
+        pack: {
+          hideFromHelp: true,
+          aliases: ['packs'],
+          description: 'Removes the specified pack(s) from the app',
+          parameters: '<pack1> [<pack2>]',
+          examples: ['ojet remove pack oj-core']
         },
         platform: {
           description: 'Removes the specified platform(s) from the app',
@@ -296,14 +342,14 @@ const config = {
     },
     search: {
       hideFromHelp: true,
-      description: 'Searches for a component in the catalog based on the specified keyword',
+      description: 'Searches for a component in the exchange based on the specified keyword',
       scopes: {
-        catalog: {
-          description: 'Searches for a component in the catalog based on the specified keyword',
+        exchange: {
+          description: 'Searches for a component in the exchange based on the specified keyword',
           parameters: '<keyword>',
           examples: [
-            'ojet search catalog flip-card',
-            'ojet search catalog flip-card dv-gantt'
+            'ojet search exchange flip-card',
+            'ojet search exchange flip-card dv-gantt'
           ]
         }
       },
@@ -439,6 +485,7 @@ const config = {
   env: {
     test: 'test'
   },
+  exchangeUrlParam: 'exchange-url',
   components: {
     dir: './src/js/jet-composites/'
   },
