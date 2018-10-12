@@ -133,10 +133,17 @@ const config = {
             'ojet build app android --release',
             'ojet build ios --device --build-config=./buildConfig.json --theme=myCustomTheme',
             'ojet build web --theme=alta:android',
-            'ojet build windows --platform-options "--archs=\\"x86 x64 arm\\""'
+            'ojet build windows --platform-options="--archs=\\"x86 x64 arm\\""'
+          ]
+        },
+        component: {
+          description: 'Builds an optimized component for the specified component name',
+          parameters: 'component name',
+          examples: [
+            'ojet build component demo-card'
           ]
         }
-      },
+      }
     },
     clean: {
       description: 'Cleans build output from a JET app',
@@ -216,6 +223,12 @@ const config = {
           parameters: '<component-name>',
           examples: ['ojet create component demo-card']
         },
+        pack: {
+          aliases: ['packs'],
+          description: 'Creates a pack with the specified name in an existing app, or creates a pack with a shell app',
+          parameters: '<pack-name>',
+          examples: ['ojet create pack component demo-pack']
+        },
         theme: {
           aliases: ['themes'],
           description: 'Creates a custom theme with the specified name',
@@ -274,6 +287,9 @@ const config = {
               description: 'Specify the pack name',
               parameters: '<pack_name>'
             },
+            release: {
+              description: 'Whether to publish the specified component with a release build'
+            }
           },
           examples: [
             'ojet publish component flipcard'
@@ -347,6 +363,11 @@ const config = {
         exchange: {
           description: 'Searches for a component in the exchange based on the specified keyword',
           parameters: '<keyword>',
+          options: {
+            versions: {
+              description: 'Lists all available versions'
+            }
+          },
           examples: [
             'ojet search exchange flip-card',
             'ojet search exchange flip-card dv-gantt'
@@ -420,13 +441,13 @@ const config = {
             destination: {
               description: 'Specify the destination for serving the app',
               parameters: 'device[:<device_name>]|emulator[:<emulator_name>]|' + // eslint-disable-line
-                newLine + ' browser[:chrome|:firefox|:edge|:ie|:opera|:safari]|server-only',
+                newLine + ' browser[:chrome|:firefox|:edge|:ie|:safari]|server-only',
               default: 'emulator' + // eslint-disable-line
                 newLine + 'Default browser: chrome'
             },
             browser: {
               description: 'Shortcut for --destination=browser',
-              parameters: '[chrome|firefox|edge|ie|opera|safari]',
+              parameters: '[chrome|firefox|edge|ie|safari]',
               default: 'chrome'
             },
             device: {

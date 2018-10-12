@@ -1,6 +1,6 @@
 {
   "name": "@oracle/ojet-cli",
-  "version": "5.2.0",
+  "version": "6.0.0",
   "description": "Oracle JET Command Line Interface",
   "license": "UPL-1.0",
   "homepage": "http://oraclejet.org",
@@ -8,10 +8,7 @@
     "ojet": "./ojet.js"
   },
   "dependencies": {
-    "archiver": "^2.1.0",
-    "extract-zip": "^1.6.5",
-    "form-data": "^2.1.2",
-    "@oracle/generator-oraclejet": "~5.2.0",
+    "@oracle/generator-oraclejet": "~6.0.0",
     "minimist": "^1.2.0",
     "yeoman-environment": "^1.6.5"
   },
@@ -19,7 +16,5 @@
     "eslint": "~3.19.0",
     "minimatch": "~3.0.3"
   },
-  "preferGlobal": true,
-  "jetversion": "5.2.0",
-  "jetdocversion": "520"
+  "preferGlobal": true
 }

@@ -1,4 +1,15 @@
-## Release Notes for ojet-cli ##
+﻿## Release Notes for ojet-cli ##
+
+### 6.0.0
+
+* Deprecation of "ojet add sass" command.  JET is moving to the use of CSS variables for theming, and as a result, will remove the use of SASS in a future release.
+* On Cordova v7 or v8: A change to the Android Cordova platform location of its config.xml file may result in an "platform.json not found" or "config.xml not found" error messages when you install the latest Cordova version. This will not prevent you from running ojet serve android, but messages returned by ojet serve may appear different from a previous version of Cordova.
+* The current ojet-cli supports 'ojet add windows' but not with a version.  It will install the windows version that comes with the installed Cordova.
+
+If you need a specific version, do the following:
+
+1. cd hybrid
+2. cordova platform add windows@latest
 
 ### 5.2.0
 * Cordova 8 may cause very slow performance during build and serve.  You may wish to consider downgrading to Cordova 7 if this is an issue.

@@ -125,7 +125,7 @@ module.exports = (function () {
         restore(task, scope, parameters);
         break;
       case tasksObj.search.name:
-        search(task, scope, parameters);
+        search(task, scope, parameters, options);
         break;
       case tasksObj.strip.name:
         strip(parameters);
