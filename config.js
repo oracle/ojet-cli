@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2018, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 
@@ -74,8 +74,9 @@ const config = {
       description: 'Builds a JET app',
       scopes: {
         app: {
-          description: 'Builds a JET app for the specified platform',
-          parameters: '[android|ios|windows|web]',
+          description: 'Builds a JET app for the specified platform,' + // eslint-disable-line
+          newLine + 'where [app] is the directory context of the JET app.' + newLine, // eslint-disable-line
+          parameters: '[android|ios|windows|web] - specifies the build platform',
           isParameterOptional: true,
           options: {
             release: {
@@ -130,17 +131,18 @@ const config = {
           examples: [
             'ojet build',
             'ojet build ios --no-sass',
-            'ojet build app android --release',
+            'ojet build android --release',
             'ojet build ios --device --build-config=./buildConfig.json --theme=myCustomTheme',
             'ojet build web --theme=alta:android',
             'ojet build windows --platform-options="--archs=\\"x86 x64 arm\\""'
           ]
         },
         component: {
-          description: 'Builds an optimized component for the specified component name',
+          description: 'Builds an optimized component for the specified component name' + // eslint-disable-line
+          newLine + 'Use ojet build component component_name to build an optimized component',
           parameters: 'component name',
           examples: [
-            'ojet build component demo-card'
+            'ojet build component demo-card // component build'
           ]
         }
       }
@@ -151,7 +153,7 @@ const config = {
         app: {
           description: 'Cleans build output from a JET app for the specified platform',
           parameters: 'android|ios|windows|web',
-          examples: ['ojet clean app android', 'ojet clean ios']
+          examples: ['ojet clean android', 'ojet clean ios']
         },
       },
     },
@@ -468,7 +470,7 @@ const config = {
           },
           examples: [
             'ojet serve',
-            'ojet serve app ios --no-livereload --emulator="iPad-Air, 10.2"',
+            'ojet serve ios --no-livereload --emulator="iPad-Air, 10.2"',
             'ojet serve --device --release',
             'ojet serve windows --no-sass --livereload-port=357230',
             'ojet serve android --browser',

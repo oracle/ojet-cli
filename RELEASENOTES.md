@@ -1,5 +1,12 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 6.1.0
+
+* Added an after_component_build user hook
+* Added an after_app_install user hook
+* Enhanced ojet build so that it will also build all components
+* Enhanced path mapping so that in release mode, the path to the minimized directory is used
+
 ### 6.0.0
 
 * Deprecation of "ojet add sass" command.  JET is moving to the use of CSS variables for theming, and as a result, will remove the use of SASS in a future release.
