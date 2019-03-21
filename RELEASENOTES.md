@@ -1,5 +1,12 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 6.2.0
+
+* Added an after_component_create user hook
+* Enhanced ojet-cli to allow user-defined options for ojet serve and ojet build
+* Cordova version 7+ is now recommended, as the paths Android hybrid uses for config.xml has changed from versions before 7
+* ojet restore no longer updates or overwrites hybrid resource or custom hook files
+
 ### 6.1.0
 
 * Added an after_component_build user hook

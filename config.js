@@ -109,6 +109,10 @@ const config = {
               newLine + 'When the --theme flag is missing,' +
               newLine + 'the first element in the --themes flag is identified as the default theme.'
             },
+            'user-options': {
+              description: 'Specify user-defined options - these are accessible in hooks config object',
+              parameters: '<string>'
+            },
           },
           hybridOnlyOptions: {
             destination: {
@@ -134,7 +138,8 @@ const config = {
             'ojet build android --release',
             'ojet build ios --device --build-config=./buildConfig.json --theme=myCustomTheme',
             'ojet build web --theme=alta:android',
-            'ojet build windows --platform-options="--archs=\\"x86 x64 arm\\""'
+            'ojet build windows --platform-options="--archs=\\"x86 x64 arm\\""',
+            'ojet build --user-options="arbitrary string" // provide user-defined options'
           ]
         },
         component: {
@@ -438,6 +443,10 @@ const config = {
             'server-only': {
               description: 'Shortcut for --destination=server-only'
             },
+            'user-options': {
+              description: 'Specify user-defined options - these are accessible in hooks config object',
+              parameters: '<string>'
+            },
           },
           hybridOnlyOptions: {
             destination: {
@@ -477,7 +486,8 @@ const config = {
             'ojet serve --browser=edge',
             'ojet serve ios --device --build-config ./buildConfig.json --theme myCustomTheme',
             'ojet serve web --theme alta:android',
-            'ojet serve windows --platform-options "--archs=\\"x86 x64 arm\\""'
+            'ojet serve windows --platform-options "--archs=\\"x86 x64 arm\\""',
+            'ojet serve --user-options="arbitrary string" // provide user-defined options.'
           ]
         }
       }
