@@ -1,0 +1,8 @@
+@component@:not(.oj-complete){
+  visibility: hidden;
+}
+
+@component@{
+	min-height: 50px;
+	width: 50px;
+}

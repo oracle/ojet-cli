@@ -1,11 +1,26 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 7.0.0
+* Removed support for grunt and Yeoman
+* Custom hooks added for component create and component build
+* --user-options flag added to allow user to pass custom informtion to the build hook
+* Cleartext HTTP traffic not permitted
+
+With the release of Cordova 9, the default androidTargetSDK is now API28 (Android Pie).  This version of Android sets the default value of the usesCleartextTraffic attribute to false resulting in an error being thrown if the application is run using an HTTP protocol instead of HTTPS.  The JET CLI will run your hybrid application in debug mode during development.  This uses HTTP and will result in the above error.
+
+Workaround
+In the AndroidManifest.xml file, located in /hybrid/platforms/android/ folder by default, add the following attribute to the <application ... > tag.
+
+<application android:usesCleartextTraffic="true" ... > </application>
+
+IMPORTANT: This is for development only. When you build your application with the --release flag, the Android SDK uses HTTPS and will not require this attribute to be set.  See https://developer.android.com/guide/topics/manifest/application-element#usesCleartextTraffic for details.
+
 ### 6.2.0
+
+### 6.1.0
 
 * Added an after_component_create user hook
 * Enhanced ojet-cli to allow user-defined options for ojet serve and ojet build
-* Cordova version 7+ is now recommended, as the paths Android hybrid uses for config.xml has changed from versions before 7
-* ojet restore no longer updates or overwrites hybrid resource or custom hook files
 
 ### 6.1.0
 
