@@ -4,9 +4,12 @@
 */
 'use strict';
 
+const Admzip = require('adm-zip');
+const CONST = require('../../lib/utils.constants');
 const fs = require('fs-extra');
 const path = require('path');
 const graphics = require('../../hybrid/graphics');
+const utils = require('../../lib/utils');
 
 module.exports =
 {
@@ -30,5 +33,49 @@ module.exports =
           reject(err);
         });
     });
-  }
+  },
+
+  /**
+   * ## handleZippedTemplateArchive
+   * Unarchives provided zip (zip on given path) and merges with the default app template
+   *
+   * @private
+   * @param {string || binary data buffer} template
+   * @param {string} destination - output path
+   */
+  _handleZippedTemplateArchive: ((template, destination) => {
+    const zip = new Admzip(template);
+    const zipEntries = zip.getEntries();
+
+    let isTemplateInNewFormat = false;
+
+    for (let i = 0; i < zipEntries.length; i += 1) {
+      if (zipEntries[i].entryName === 'src/') {
+        isTemplateInNewFormat = true;
+        break;
+      }
+    }
+
+    if (isTemplateInNewFormat) {
+      // Unpack the archive to the app root
+      zipEntries.forEach((zipEntry) => {
+        const entryName = zipEntry.entryName;
+        if (CONST.APP_PROTECTED_OBJECTS.indexOf(entryName) === -1) {
+          zip.extractEntryTo(entryName, path.join(destination, '..'), true, true);
+        }
+      });
+    } else {
+      // Unpack the archive content to 'src/' except of 'scripts'
+      utils.log.warning('No "src" directory found. This might indicate you are using deprecated format of an app template.');
+
+      zipEntries.forEach((zipEntry) => {
+        const entryName = zipEntry.entryName;
+        if (entryName.startsWith('scripts/')) {
+          zip.extractEntryTo(entryName, path.join(destination, '..'), true, true);
+        } else {
+          zip.extractEntryTo(entryName, destination, true, true);
+        }
+      });
+    }
+  })
 };

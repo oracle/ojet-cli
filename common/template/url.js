@@ -4,6 +4,7 @@
 */
 'use strict';
 
+const commonTemplateHandler = require('./common');
 const fs = require('fs-extra');
 const fetchZip = require('../../util/fetchZip');
 const path = require('path');
@@ -24,9 +25,11 @@ module.exports = {
   }
 };
 
-function _processFetchedTemplateZip(values, temp, destination) {
+function _processFetchedTemplateZip(fetchedTemplate, temp, destination) {
   fs.mkdirsSync(temp);
-  values.extractAllTo(temp);
+
+  commonTemplateHandler._handleZippedTemplateArchive(fetchedTemplate, destination);
+
   fs.copySync(temp, destination);
   fs.removeSync(temp);
 }

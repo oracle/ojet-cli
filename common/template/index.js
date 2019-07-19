@@ -4,7 +4,6 @@
 */
 'use strict';
 
-const blankTemplate = require('./blank');
 const urlTemplate = require('./url');
 const commonTemplate = require('./common');
 const npmTemplate = require('./npm');
@@ -15,9 +14,9 @@ const util = require('../../util');
 const _HYBRID = 'hybrid';
 const _WEB = 'web';
 
-const BLANK_TEMPLATE = blankTemplate.BLANK_TEMPLATE;
+const BLANK_TEMPLATE = 'blank';
 
-const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~7.0.0';
+const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~7.1.0';
 
 const _TEMPLATES = [BLANK_TEMPLATE, 'basic', 'navbar', 'navdrawer'];
 
@@ -44,9 +43,6 @@ function _getHandler(generator, template, templateDestDirectory) {
     return localTemplate.handle(generator, templateLocalPath, templateDestDirectory);
   }
   const templateSpec = _resolveTemplateSpec(generator, template);
-  if (templateSpec.name === BLANK_TEMPLATE) {
-    return blankTemplate.handle(generator, templateDestDirectory, templateSpec.type);
-  }
   return npmTemplate.handle(generator, _TEMPLATES_NPM_URL, templateDestDirectory, templateSpec);
 }
 

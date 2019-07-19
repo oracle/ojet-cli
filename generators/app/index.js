@@ -11,6 +11,7 @@ const commonMessages = require('../../common/messages');
 const commonRestore = require('../../common/restore');
 const commonTest = require('../../common/test');
 const templateHandler = require('../../common/template');
+const fs = require('fs');
 const path = require('path');
 
 function _writeTemplate(generator, utils) {
@@ -47,11 +48,14 @@ module.exports = function (parameters, opt, utils) {
   .then((validAppDir) => {
     app.appDir = path.basename(validAppDir);
     app.options.appname = app.appDir;
+    fs.mkdirSync(path.resolve(app.appDir));
   })
-  .then(() => _writeTemplate(app, utils))
   .then(() => common.switchToAppDirectory(app))
   .then(() => common.writeCommonTemplates())
   .then(() => common.writeGitIgnore())
+  .then(() => common.switchFromAppDirectory())
+  .then(() => _writeTemplate(app, utils))
+  .then(() => common.switchToAppDirectory(app))
   .then(() => common.updatePackageJSON(app))
   .then(() => {
     if (app.options.component) {

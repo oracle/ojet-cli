@@ -52,8 +52,7 @@ function _invokeCordovaPrepare(generator) {
 function _writeTemplate(generator, utils) {
   return new Promise((resolve, reject) => {
     const appDir = generator.appDir;
-    const appSrc = paths.getDefaultPaths().source;
-    const appDirectory = path.resolve(path.join(`${appDir}/${appSrc}/`));
+    const appDirectory = path.resolve(appDir, 'src');
 
     templateHandler.handleTemplate(generator, utils, appDirectory)
       .then(() => commonComponent.writeComponentTemplate(generator, utils))
@@ -87,16 +86,19 @@ module.exports = function (parameters, opt, utils) {
     app.appDir = path.basename(validAppDir);
 
     commonHybrid.setupHybridEnv(app);
+    fs.mkdirSync(path.resolve(app.appDir));
   })
   .then(() => platformsHelper.getPlatforms(app, utils))
-  .then(() => _writeTemplate(app, utils))
   .then(() => common.switchToAppDirectory(app))
   .then(() => common.writeCommonTemplates())
   .then(() => common.writeGitIgnore())
-  .then(() => common.updatePackageJSON(app))
   .then(() => cordovaHelper.create(app))
   .then(() => commonHybrid.copyResources())
   .then(() => commonHybrid.removeExtraCordovaFiles())
+  .then(() => common.switchFromAppDirectory())
+  .then(() => _writeTemplate(app, utils))
+  .then(() => common.switchToAppDirectory(app))
+  .then(() => common.updatePackageJSON(app))
   .then(() => platformsHelper.addPlatforms(app, utils))
   .then(() => commonHybrid.updateConfigXml(app))
   .then(() => {

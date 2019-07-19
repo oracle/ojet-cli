@@ -4,7 +4,6 @@
 */
 'use strict';
 
-const Admzip = require('adm-zip');
 const request = require('request');
 
 module.exports = function (url) {
@@ -30,8 +29,7 @@ module.exports = function (url) {
       }
 
       try {
-        const zip = new Admzip(buf);
-        resolve(zip);
+        resolve(buf);
       } catch (e) {
         reject(e);
       }

@@ -1,5 +1,3 @@
 {"eslintDirs": ["."],
  "eslintFilter": ["!test/**", "!test_result/**", "!generators/**/*template*/**/*.js", "!Gruntfile.js", "!test/**/*.js", "!config/**/*.js", "!template/**/*.js"],
- "eslint5Dirs": ["generators/app/templates", "generators/hybrid/templates"],
- "eslint5Config": "../build/es5Templates.js",
  "fixup": ["package.json", "index.js"]}

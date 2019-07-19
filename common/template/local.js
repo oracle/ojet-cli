@@ -4,9 +4,9 @@
 */
 'use strict';
 
+const commonTemplateHandler = require('./common');
 const fs = require('fs-extra');
 const path = require('path');
-const Admzip = require('adm-zip');
 
 module.exports = {
 
@@ -29,8 +29,7 @@ function _copyLocalTemplate(generator, templatePath, destination) {
       if (fs.statSync(templatePath).isDirectory()) {
         fs.copySync(templatePath, destination);
       } else if (path.extname(templatePath) === '.zip') {
-        const zip = new Admzip(templatePath);
-        zip.extractAllTo(destination, true);
+        commonTemplateHandler._handleZippedTemplateArchive(templatePath, destination);
       } else {
         throw new Error(`template path ${templatePath} is not valid`);
       }

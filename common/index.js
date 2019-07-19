@@ -83,6 +83,11 @@ module.exports =
     return Promise.resolve(generator);
   },
 
+  switchFromAppDirectory: () => {
+    process.chdir('..');
+    return Promise.resolve();
+  },
+
   validateArgs: function _validateArgs(generator) {
     return new Promise((resolve, reject) => {
       const args = generator.arguments;
