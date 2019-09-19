@@ -5,6 +5,7 @@
       "web": "src-web",
       "hybrid": "src-hybrid",
       "javascript": "js",
+      "typescript": "ts",
       "styles": "css",
       "themes": "themes",
       "tests": "tests"

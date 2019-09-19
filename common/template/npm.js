@@ -4,6 +4,7 @@
 */
 'use strict';
 
+const CONST = require('../../lib/utils.constants');
 const fs = require('fs-extra');
 const path = require('path');
 const exec = require('child_process').exec;
@@ -48,7 +49,39 @@ function _copyNpmTemplate(generator, templateSpec, destination) {
     throw new Error(`Could not find source for template: ${msg}`);
   }
 
-  fs.copySync(src, destination);
+  // 1. Check if top level sources contain 'src/' directory
+  const sourceTopLevelEntries = fs.readdirSync(src);
+  let isTemplateInNewFormat = false;
+
+  for (let i = 0; i < sourceTopLevelEntries.length; i += 1) {
+    if (sourceTopLevelEntries[i] === 'src') {
+      isTemplateInNewFormat = true;
+      break;
+    }
+  }
+
+  const entryFilter = (entryFullPath) => {
+    const entryName = entryFullPath.split(`${templateSpec.name}/${templateSpec.type}/`).pop();
+
+    if (isTemplateInNewFormat) {
+      // Unpack the archive to the app root except of protected objects
+      if (CONST.APP_PROTECTED_OBJECTS.indexOf(entryName) === -1) {
+        fs.copySync(entryFullPath, path.join(destination, '..'));
+      }
+      return false;
+    }
+    // Unpack the archive content to 'src/' except of 'scripts/'
+    if (entryName.startsWith('scripts/')) {
+      // Exception, copy to app root
+      fs.copySync(entryFullPath, path.join(destination, '..'));
+      return false;
+    }
+    return true;
+  };
+
+  // 2. Process via copySync entryFilter. Apply logic similar to zipHandler
+  // https://github.com/jprichardson/node-fs-extra/blob/HEAD/docs/copy-sync.md
+  fs.copySync(src, destination, { filter: entryFilter });
 }
 
 function _getTemplateFromTypeSpecificDirectory(templateRoot, templateSpec) {

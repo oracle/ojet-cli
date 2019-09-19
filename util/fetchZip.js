@@ -4,35 +4,32 @@
 */
 'use strict';
 
-const request = require('request');
+const http = require('http');
+const https = require('https');
+const url = require('url');
 
-module.exports = function (url) {
+module.exports = function (requestedUrl) {
   // fetches the zip file
   return new Promise((resolve, reject) => {
-    const data = [];
-    let dataLen = 0;
+    const protocol = url.parse(requestedUrl).protocol === 'https:' ? https : http;
 
-    request.get({ url, encoding: null }).on('error', (err) => {
-      reject(err);
-    }).on('data', (block) => {
-      data.push(block);
-      dataLen += block.length;
-    }).on('end', (err) => {
-      if (err) {
-        reject(err);
-      }
-      const buf = new Buffer(dataLen);
-
-      for (let i = 0, len = data.length, pos = 0; i < len; i += 1) {
-        data[i].copy(buf, pos);
-        pos += data[i].length;
-      }
-
-      try {
-        resolve(buf);
-      } catch (e) {
-        reject(e);
-      }
+    // HTTP/HTTPS request
+    // https://nodejs.org/api/http.html#http_http_request_url_options_callback
+    // https://nodejs.org/api/https.html#https_https_request_options_callback
+    const request = protocol.request(requestedUrl, (response) => {
+      const buffer = [];
+      response.on('data', (chunk) => {
+        buffer.push(chunk);
+      });
+      response.on('end', () => {
+        resolve(Buffer.concat(buffer));
+      });
     });
+
+    request.on('error', (error) => {
+      reject(error);
+    });
+
+    request.end();
   });
 };

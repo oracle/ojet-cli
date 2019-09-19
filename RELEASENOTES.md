@@ -1,5 +1,11 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 7.2.0
+* A before_optimize user hook is now available to allow user control of the release mode build bundling
+* A 'web' option was added to the 'ojet add' command to add a web target to a hybrid app
+* Typescript-based applications can now be created and built using the --typescript option in create or the 'ojet add typescript' command for existing apps
+* Node version 8+ is required
+
 ### 7.1.0
 
 ### 7.0.0

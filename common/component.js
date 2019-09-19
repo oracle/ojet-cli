@@ -53,15 +53,25 @@ function _getComponentDestPath(generator) {
 function _replaceComponentTemplateToken(generator) {
   const componentName = _getComponentName(generator);
   const base = _getComponentDestPath(generator);
-  _replaceComponentTokenInFileList(base, componentName);
-  _replaceComponentTokenInFileList(path.join(base, 'resources/nls'), componentName);
+  _replaceComponentTokenInFileList(base, componentName, generator.options.pack);
+  _replaceComponentTokenInFileList(path.join(base, 'resources/nls'), componentName, generator.options.pack);
 }
 
-function _replaceComponentTokenInFileList(base, componentName) {
+function _replaceComponentTokenInFileList(base, componentName, packName) {
+  let useComponentName;
+  let fileContent;
   fs.readdirSync(base).forEach((file) => {
     if (path.extname(file).length !== 0) {
-      const fileContent = fs.readFileSync(path.join(base, file), 'utf-8');
-      fs.outputFileSync(path.join(base, file), fileContent.replace(new RegExp('@component@', 'g'), componentName));
+      fileContent = fs.readFileSync(path.join(base, file), 'utf-8');
+      if (packName && file !== 'component.json') useComponentName = packName.concat('-').concat(componentName);
+      else useComponentName = componentName;
+      // For pack names, loader.js requires two different @component@ replacements:
+      // - use packName-componentName for Composite.register,
+      // - use componentName within the define block.
+      if (packName && file === 'loader.js') {
+        fileContent = fileContent.replace(new RegExp('/@component@', 'g'), componentName);
+      }
+      fs.outputFileSync(path.join(base, file), fileContent.replace(new RegExp('@component@', 'g'), useComponentName));
     }
   });
 }

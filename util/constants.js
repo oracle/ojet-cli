@@ -52,7 +52,8 @@ module.exports = {
 
     const appFlags = [
       'template',
-      'norestore'
+      'norestore',
+      'typescript'
     ];
 
     const restoreFlags = [

@@ -18,6 +18,7 @@ const commonTest = require('../../common/test');
 const cordovaHelper = require('../../hybrid/cordova');
 const platformsHelper = require('../../hybrid/platforms');
 const fs = require('fs-extra');
+const scopesApp = require('../../lib/scopes/app');
 
 /*
  * Generator for the create step
@@ -113,6 +114,12 @@ module.exports = function (parameters, opt, utils) {
       .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
       .then(() => _invokeCordovaPrepare(app))
       .then(() => commonHookRunner.runAfterAppCreateHook())
+      .then(() => {
+        if (app.options.typescript) {
+          return scopesApp.addTypescript();
+        }
+        return Promise.resolve();
+      })
       .then(() => utils.log(commonMessages.restoreComplete(
         app.options.invokedByRestore, app.appDir)));
     }
@@ -124,4 +131,3 @@ module.exports = function (parameters, opt, utils) {
     }
   });
 };
-

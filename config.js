@@ -21,10 +21,12 @@ const config = {
   tasks: {
     add: {
       description: 'Adds platforms, plugins and more to a JET app',
+      // 'hideFromHelp' not used += v7.2.0, implementation hasn't been removed
+      // can be used on task and scope level, example below:
       // hideFromHelp: true,
       scopes: {
         component: {
-          hideFromHelp: true,
+          // hideFromHelp: true,
           aliases: ['components'],
           description: 'Adds the specified component(s) to the app',
           parameters: '<component1> [<component2>]',
@@ -32,6 +34,17 @@ const config = {
             'pack-version': {
               description: 'Specify the pack version',
               parameters: '<pack_version>'
+            },
+            secure: {
+              description: 'Whether to enforce secure HTTPS protocol',
+              parameters: '[true|false]',
+              default: 'true'
+            },
+            username: {
+              description: 'The user\'s registered username'
+            },
+            password: {
+              description: 'The user\'s registered password'
             }
           },
           examples: ['ojet add component flipcard']
@@ -41,10 +54,22 @@ const config = {
           examples: ['ojet add hybrid']
         },
         pack: {
-          hideFromHelp: true,
           aliases: ['packs'],
           description: 'Adds the specified pack(s) to the app',
           parameters: '<pack1> [<pack2>]',
+          options: {
+            secure: {
+              description: 'Whether to enforce secure HTTPS protocol',
+              parameters: '[true|false]',
+              default: 'true'
+            },
+            username: {
+              description: 'The user\'s registered username'
+            },
+            password: {
+              description: 'The user\'s registered password'
+            }
+          },
           examples: ['ojet add pack oj-dvt']
         },
         platform: {
@@ -67,6 +92,14 @@ const config = {
         sass: {
           description: 'Adds SASS compilation and watch to the app',
           examples: ['ojet add sass']
+        },
+        web: {
+          description: 'Adds a web app target to the web app',
+          examples: ['ojet add web']
+        },
+        typescript: {
+          description: 'Adds Typescript compilation to the app',
+          examples: ['ojet add typescript']
         }
       },
     },
@@ -163,7 +196,6 @@ const config = {
       },
     },
     configure: {
-      hideFromHelp: true,
       description: 'Configures tooling parameters for a JET app',
       scopes: {
         app: {
@@ -198,6 +230,9 @@ const config = {
               parameters: 'blank|basic[:web|:hybrid]|navbar[:web|:hybrid]|' + // eslint-disable-line
                 newLine + ' navdrawer[:web|:hybrid]|<URL_to_zip_file>'
             },
+            typescript: {
+              description: 'Create a typescript-based app',
+            },
           },
           hybridOnlyOptions: {
             appid: {
@@ -219,6 +254,7 @@ const config = {
           },
           examples: [
             'ojet create myWebApp --template=navbar',
+            'ojet create myWebApp --template=navbar --typescript',
             'ojet create myHybridApp --hybrid --appid="com.oracle.myApp" --appname="My App" --platforms=ios,android --template=navdrawer',
             'ojet create myApp --web --template=basic:hybrid',
             'ojet create FixItFast --template=http://www.oracle.com/webfolder/technetwork/jet/public_samples/FixItFast.zip'
@@ -252,13 +288,11 @@ const config = {
       description: 'Lists platforms, plugins and more within a JET app',
       scopes: {
         component: {
-          hideFromHelp: true,
           aliases: ['components'],
           description: 'Lists all installed components',
           examples: ['ojet list component']
         },
         pack: {
-          hideFromHelp: true,
           aliases: ['packs'],
           description: 'Lists all installed packs',
           examples: ['ojet list packs']
@@ -276,7 +310,6 @@ const config = {
       }
     },
     publish: {
-      hideFromHelp: true,
       description: 'Publishes components to the Exchange',
       scopes: {
         component: {
@@ -296,6 +329,11 @@ const config = {
             },
             release: {
               description: 'Whether to publish the specified component with a release build'
+            },
+            secure: {
+              description: 'Whether to enforce secure HTTPS protocol',
+              parameters: '[true|false]',
+              default: 'true'
             }
           },
           examples: [
@@ -313,6 +351,11 @@ const config = {
             password: {
               description: 'The user\'s registered password'
             },
+            secure: {
+              description: 'Whether to enforce secure HTTPS protocol',
+              parameters: '[true|false]',
+              default: 'true'
+            }
           },
           examples: [
             'ojet publish pack oj-dvt'
@@ -324,14 +367,12 @@ const config = {
       description: 'Removes platforms, plugins and more from a JET app',
       scopes: {
         component: {
-          hideFromHelp: true,
           description: 'Removes the specified component(s) from the app',
           aliases: ['components'],
           parameters: '<component1> [<component2>]',
           examples: ['ojet remove components flipcard dv-gantt']
         },
         pack: {
-          hideFromHelp: true,
           aliases: ['packs'],
           description: 'Removes the specified pack(s) from the app',
           parameters: '<pack1> [<pack2>]',
@@ -356,6 +397,19 @@ const config = {
       scopes: {
         app: {
           description: 'Restores missing dependencies, plugins, and libraries to a JET app',
+          options: {
+            secure: {
+              description: 'Whether to enforce secure HTTPS protocol',
+              parameters: '[true|false]',
+              default: 'true'
+            },
+            username: {
+              description: 'The user\'s registered username'
+            },
+            password: {
+              description: 'The user\'s registered password'
+            }
+          },
           examples: [
             'ojet restore',
             'ojet restore app'
@@ -364,13 +418,23 @@ const config = {
       }
     },
     search: {
-      hideFromHelp: true,
-      description: 'Searches for a component in the exchange based on the specified keyword',
+      description: 'Searches for a component in the Exchange based on the specified keyword',
       scopes: {
         exchange: {
-          description: 'Searches for a component in the exchange based on the specified keyword',
+          description: 'Searches for a component in the Exchange based on the specified keyword',
           parameters: '<keyword>',
           options: {
+            secure: {
+              description: 'Whether to enforce secure HTTPS protocol',
+              parameters: '[true|false]',
+              default: 'true'
+            },
+            username: {
+              description: 'The user\'s registered username'
+            },
+            password: {
+              description: 'The user\'s registered password'
+            },
             versions: {
               description: 'Lists all available versions'
             }

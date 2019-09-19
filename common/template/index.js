@@ -16,9 +16,9 @@ const _WEB = 'web';
 
 const BLANK_TEMPLATE = 'blank';
 
-const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~7.1.0';
+const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~7.2.0';
 
-const _TEMPLATES = [BLANK_TEMPLATE, 'basic', 'navbar', 'navdrawer'];
+const _TEMPLATES = [BLANK_TEMPLATE, `${BLANK_TEMPLATE}-ts`, 'basic', 'basic-ts', 'navbar', 'navbar-ts', 'navdrawer', 'navdrawer-ts'];
 
 
 module.exports =
@@ -61,8 +61,15 @@ function _toTemplateUrl(template) {
 function _resolveTemplateSpec(generator, template) {
   const res = template.split(':');
 
-  const templateName = res[0];
+  let templateName = res[0];
   const templateType = (res.length > 1) ? res[1] : _getGeneratorType(generator.options.namespace);
+
+  if (templateName.endsWith('-ts')) {
+    // eslint-disable-next-line no-param-reassign
+    generator.options.typescript = true;
+  } else if (generator.options.typescript) {
+    templateName = `${templateName}-ts`;
+  }
 
   _validateTemplateName(templateName);
   _validateTemplateType(templateType);

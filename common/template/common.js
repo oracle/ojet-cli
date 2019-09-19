@@ -9,7 +9,6 @@ const CONST = require('../../lib/utils.constants');
 const fs = require('fs-extra');
 const path = require('path');
 const graphics = require('../../hybrid/graphics');
-const utils = require('../../lib/utils');
 
 module.exports =
 {
@@ -66,7 +65,6 @@ module.exports =
       });
     } else {
       // Unpack the archive content to 'src/' except of 'scripts'
-      utils.log.warning('No "src" directory found. This might indicate you are using deprecated format of an app template.');
 
       zipEntries.forEach((zipEntry) => {
         const entryName = zipEntry.entryName;

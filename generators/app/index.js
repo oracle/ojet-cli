@@ -13,6 +13,7 @@ const commonTest = require('../../common/test');
 const templateHandler = require('../../common/template');
 const fs = require('fs');
 const path = require('path');
+const scopesApp = require('../../lib/scopes/app');
 
 function _writeTemplate(generator, utils) {
   return new Promise((resolve, reject) => {
@@ -42,7 +43,6 @@ module.exports = function (parameters, opt, utils) {
     options: Object.assign({ namespace: 'app' }, opt),
     appDir: opt.component ? opt.component : parameters
   };
-
   common.validateFlags(app)
   .then(() => common.validateAppDirNotExistsOrIsEmpty(app))
   .then((validAppDir) => {
@@ -68,6 +68,12 @@ module.exports = function (parameters, opt, utils) {
       commonRestore.npmInstall(app)
       .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
       .then(() => commonHookRunner.runAfterAppCreateHook())
+      .then(() => {
+        if (app.options.typescript) {
+          return scopesApp.addTypescript();
+        }
+        return Promise.resolve();
+      })
       .then(() => utils.log(commonMessages.restoreComplete(
         app.options.invokedByRestore, app.appDir)));
     }
