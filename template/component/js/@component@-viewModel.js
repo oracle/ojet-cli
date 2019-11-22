@@ -4,14 +4,14 @@
 */
 'use strict';
 define(
-    ['knockout', 'jquery', 'ojL10n!./resources/nls/@component@-strings'], function (ko, $, componentStrings) {
+    ['knockout', 'ojL10n!./resources/nls/@component@-strings', 'ojs/ojcontext', 'ojs/ojknockout'], function (ko, componentStrings, Context) {
     
     function ExampleComponentModel(context) {
         var self = this;
         
         //At the start of your viewModel constructor
-        var busyContext = oj.Context.getContext(context.element).getBusyContext();
-        var options = {"description": "CCA Startup - Waiting for data"};
+        var busyContext = Context.getContext(context.element).getBusyContext();
+        var options = {"description": "Web Component Startup - Waiting for data"};
         self.busyResolve = busyContext.addBusyState(options);
 
         self.composite = context.element;

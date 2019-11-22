@@ -2,287 +2,172 @@
   Copyright (c) 2015, 2019, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
-/**
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
-*/
-var env = process.env,
-        assert = require('assert'),
-        fs = require('fs-extra'),
-        path = require('path'),
-        hybridDirectory = "hybrid",
-        exec = require('child_process').exec,
-        util = require('./util'),
-        execOptions =
-        {
-          cwd: path.resolve('test_result/test/generator/test')
-        };
+var env = process.env;
+var assert = require('assert');
+var fs = require('fs-extra');
+var path = require('path');
+const hybridDirectory = "hybrid";
+var util = require('./util');
 
-  var filelist;
-  var hybridFileList;
-  var testDir = path.resolve('test_result/test/generator/test/hybridTest');
-  var hybridTestDir = path.resolve('test_result/test/generator/test/hybridTest/' + hybridDirectory);
-  var utilDir = path.resolve('test_result/test/generator/util/hybrid');
-  var platform = util.getPlatform(env.OS);
+const platform = util.getPlatform(env.OS);
 
-describe("Hybrid Test", function ()
-{
 
-  before(function(){
-    console.log(testDir);
-    fs.ensureDirSync(testDir);
-    fs.emptyDirSync(testDir);    
-  });  
-
-  describe("Scaffold", function(){
-   
-    it("Generate android/ios app", function (done)
-    {
-      var timeOutLimit = util.isNoRestoreTest() ? 320000 : 520000;
-      this.timeout(timeOutLimit);
-      var command = 'yo @oracle/oraclejet:hybrid hybridTest --template=navbar --appid=my.id --appName=testcase --platforms=' + platform;
-      command = util.isNoRestoreTest() ? command + ' --norestore' : command;
-
-      exec(command, execOptions, function (error, stdout)
-      {
-        filelist = fs.readdirSync(testDir);
-        hybridFileList = fs.readdirSync(hybridTestDir);
-        assert.equal(util.norestoreSuccess(stdout) || /Your app is/.test(stdout), true, error);
-        done();
-      });
-    });
-  });
-  
-  describe("Run Tests", function(){
-
-    it("Copy npm modules", function(done){
-      this.timeout(200000);
-      //copy Npm and bower modules   
-      if (util.isNoRestoreTest()){  
-        fs.copy(utilDir, testDir, function(err){
-          done();
-        });
-      } else {
-        done();
-      }
-    });
-
-    describe("Invalid arugments & Check error messages", function () {
-
-      it("complain generating app to non-empty appDir", function (done)
-      {
-        this.timeout(300000);
-        exec('yo @oracle/oraclejet:hybrid hybridTest --platforms=' + platform, execOptions, function (error, stdout)
-        {
-          var errLogCorrect = /path already exists/.test(error.message);
-          assert.equal(errLogCorrect, true, error);
-          done();
-        });
+describe("Hybrid Test", () => {
+  describe("Run Tests", () => {
+    describe("Invalid arugments & check error messages", () => {
+      it("should complain about generating app to non-empty appDir", async () => {
+        let result = await util.execCmd(`${util.OJET_COMMAND} create hybridTest --hybrid --platforms=${platform}`, { cwd: util.testDir }, true);
+        var errLogCorrect = /path already exists/.test(result.stdout);
+        assert.equal(errLogCorrect, true, result.stdout);
       });
 
-      it("complain about unsupported platform android1", function (done)
-      {
-        this.timeout(150000);
-        exec('grunt build --force=true --platform=' + 'android1', {cwd: testDir}, function (error, stdout)
-        {
+      it("should complain about unsupported platform android1", async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} build android1`, { cwd: util.getAppDir(util.HYBRID_APP_NAME) }, true);
 
-          var errLogCorrect = /Invalid platform/i.test(stdout);
-          assert.equal(errLogCorrect, true, stdout);
-          done();
-        });
+        let errLogCorrect = /Invalid platform/i.test(result.error);
+        assert.equal(errLogCorrect, true, result.error);
       });
 
-      it("complain about unsupported server port", function (done)
-      {
-        this.timeout(20000);
-        exec('grunt serve --force=true --platform=' + platform + ' --server-port=' + '12we', {cwd: testDir,}, function (error, stdout)
-        {
+      it("should complain about unsupported server port", async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} serve ${platform} --server-port=12we`, {cwd: util.getAppDir(util.HYBRID_APP_NAME) }, true);
 
-          var errLogCorrect = /not valid/.test(stdout);
-          assert.equal(errLogCorrect, true, stdout);
-          done();
-        });
+        var errLogCorrect = /is not valid/.test(result.stdout);
+        assert.equal(errLogCorrect, true, result.stdout);
       });
 
-      it("complain about unsupported build argument", function (done)
-      {
-        this.timeout(150000);
-        exec('grunt build:xyz --force=true --platform=' + platform, {cwd: testDir}, function (error, stdout)
-        {
+      it("should complain about unsupported build argument", async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} build xyz ${platform}`, {cwd: util.getAppDir(util.HYBRID_APP_NAME) }, true);
 
-          var errLogCorrect = /buildType xyz is invalid/.test(stdout);
-          assert.equal(errLogCorrect, true, stdout);
-          done();
-        });
+        var errLogCorrect = /Invalid platform xyz/.test(result.error);
+        assert.equal(errLogCorrect, true, result.error);
       });
     });
 
-    describe("Build", function ()
-    {
-      it("Grunt build android/ios --force=true", function (done)
-      {
-        this.timeout(2400000);
-        exec('grunt build --platform=' + platform, {cwd: testDir, maxBuffer: 1024 * 20000 }, function (error, stdout)
-        {
-          assert.equal(util.buildSuccess(stdout), true, error);
-          done();
+    if (!util.noBuild()) {
+      describe("Build", () => {
+        it("should build android or ios", async () => {
+          let result = await util.execCmd(`${util.OJET_APP_COMMAND} build ${platform}`, {cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
+          assert.equal(util.buildSuccess(result.stdout), true, result.error);
+
+          result = await util.execCmd(`${util.OJET_APP_COMMAND} build ${platform} --destination=device`, {cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
+          assert.equal(util.buildSuccess(result.stdout), true, result.error);
         });
       });
+    }
 
-      it("Grunt build android/ios for device", function (done)
-      {
-        this.timeout(2400000);
-        exec(`grunt build --platform=${platform} --destination=device --force=true`, {cwd: testDir, maxBuffer: 1024 * 20000 }, function (error, stdout)
-        {
-          assert.equal(util.buildSuccess(stdout), true, error);
-          done();
-        });
-      });
-    });
-
-    describe("Check essential files", function ()
-    { 
-      it("config.xml exists and is correct", function ()
-      {
+    describe("Check essential files", () => { 
+      var filelist;
+      var hybridFileList;
+      var testDir = util.getAppDir(util.HYBRID_APP_NAME);
+      var hybridTestDir = path.resolve(testDir, hybridDirectory);
+    
+      it("should have config.xml and be correct", () => {
         filelist = fs.readdirSync(testDir);
         hybridFileList = fs.readdirSync(hybridTestDir);
         var inlist = hybridFileList.indexOf("config.xml") > -1;
         assert.equal(inlist, true, path.resolve(hybridTestDir, 'config.xml') + " missing");
         if (inlist) {
-            // Check contents of config.xml
-            var configRead = fs.readFileSync(path.resolve(hybridTestDir, 'config.xml'), "utf-8");
-            assert.equal(configRead.indexOf("<name>testcase</name>") > -1, true, "config.xml missing <name>");
-            assert.equal(configRead.indexOf('id="my.id"') > -1, true, "config.xml missing correct id value");
+          // Check contents of config.xml
+          var configRead = fs.readFileSync(path.resolve(hybridTestDir, 'config.xml'), "utf-8");
+          assert.equal(configRead.indexOf("<name>testcase</name>") > -1, true, "config.xml missing <name>");
+          assert.equal(configRead.indexOf('id="my.id"') > -1, true, "config.xml missing correct id value");
         }
       });
 
-      it("package.json exists", function ()
-      {
+      it("should have package.json", () => {
         var inlist = filelist.indexOf("package.json") > -1;
         assert.equal(inlist, true, path.resolve(testDir, 'package.json') + " missing");
       });
 
-      it(".gitignore exists", function ()
-      {
+      it("should have .gitignore", () => {
         var inlist = filelist.indexOf(".gitignore") > -1;
         assert.equal(inlist, true, path.resolve(testDir, '.gitignore') + " missing");
       });
 
-      if (platform == 'android')
-      {
-        it(".apk exists", function ()
-        {
-          var apkList = fs.readdirSync(path.resolve(testDir, hybridDirectory, 'platforms/android/build/outputs/apk'));
+      if (platform === 'android') {
+        it("should have an .apk", () => {
+          var apkList = fs.readdirSync(path.resolve(testDir, hybridDirectory, 'platforms/android/app/build/outputs/apk/debug'));
           var inlist = false;
-          apkList.forEach(function (value)
-          {
+          apkList.forEach((value) => {
             inlist = inlist || /.apk/.test(value);
           });
           assert.equal(inlist, true, path.resolve(testDir, hybridDirectory, 'platforms/android/build/outputs/apk', 'android.apk') + " missing");
         });
       }
 
-    });
-  });
-
-  describe("serve", () => {
-    it("Grunt serve android/ios without platform", function (done)
-    {
-      this.timeout(2400000);
-      const cmd = 'grunt serve --force=true';
-      exec(cmd, {cwd: testDir, maxBuffer: 1024 * 20000, timeout:100000, killSignal:'SIGTERM' }, function (error, stdout)
-      {
-        assert.equal((util.noError(stdout) || /Build SUCCEEDED/.test(stdout) || /Deploying to /.test(stdout)), true, stdout);
-        done();
+      it("should not have 'locale_' dirs in resources", () => {
+        const resourcePath = path.resolve(hybridTestDir, 'www/js/libs/oj', `v${util.getJetVersion(util.HYBRID_APP_NAME)}`, 'resources/nls');
+        var locList = fs.readdirSync(resourcePath);
+        if (locList) {
+          locList.forEach((elem) => {
+            if (elem.startsWith('locale_')) {
+              assert.fail(elem);
+            }
+          });
+        } else {
+          assert.fail("No files found in resources!");
+        }
       });
     });
   });
 
-  describe("add-sass", () => {
-    it("add sass generator", function (done)
-    {
-      this.timeout(2400000);
-      exec(`yo @oracle/oraclejet:add-sass`, {cwd: testDir, maxBuffer: 1024 * 20000, timeout:200000, killSignal:'SIGTERM' }, function (error, stdout)
-      {
-        assert.equal(/add-sass finished/.test(stdout) || /add-sass finished/.test(error), true, stdout);
-        done();
+  if (!util.noServe()) {
+    describe("serve", () => {
+      it("should serve android/ios without platform", async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} serve --build=false`, { cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+        assert.equal(/cordova serve/i.test(result.stdout), true, result.stdout);
+        result.process.kill();
       });
     });
-  });
+  }
 
-  describe("add-theme", () => {
-    it("add add-theme generator", function (done)
-    {
-      this.timeout(2400000);
-      exec(`yo @oracle/oraclejet:add-theme green`, {cwd: testDir, maxBuffer: 1024 * 20000, timeout:50000, killSignal:'SIGTERM' }, function (error, stdout)
-      {
-        assert.equal(util.noError(stdout), true, error);
-        done();
-      });
-    });
-  });
+  if (!util.noSass()) {
+    describe("add sass", () => {
+      it("should add sass generator", async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} add sass`, { cwd: util.getAppDir(util.HYBRID_APP_NAME) });
+        assert.equal(/add sass complete/.test(result.stdout), true, result.stdout);
 
-  describe("compile sass", () => {
-    it("compile sass", function (done)
-    {
-      this.timeout(2400000);
-      exec(`grunt build --theme=green`, {cwd: testDir, maxBuffer: 1024 * 20000, timeout:100000, killSignal:'SIGTERM' }, function (error, stdout)
-      {
-        assert.equal(util.noError(stdout) || /Cordova compile finished/.test(stdout), true, stdout);
-        done();
-      });
-    });
-  });  
-
-  describe("Clean hybridTest", function () {
-
-    it("Kill adb process to release", function (done) {
-      var killAdbCommand = util.isWindows(env.OS) ? "taskkill /IM adb.exe /T /F" : "killall adb.exe";
-      this.timeout(500);
-      exec(killAdbCommand, execOptions, function (error, stdout)
-      {
-        done();
+        // Recopy oraclejet-tooling
+        util.copyOracleJetTooling(`${util.HYBRID_APP_NAME}`);
       });
     });
 
-    it("Clean cordova platform", function (done) {
-      this.timeout(40000);
-      exec("cordova platform remove " + platform, {cwd: hybridTestDir}, function (error, stdout)
-      {
-        done();
-        var success = error ? false : true;
-        //assert.equal(success,true, error); 
+    describe("create theme", () => {
+      it("should add green theme", async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} create theme green`, {cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
+        assert.equal(/green theme added/.test(result.stdout), true, result.error);
       });
     });
 
-    it("Clean cordova platform try #2", function (done) {
-      this.timeout(40000);
-      exec("cordova platform remove " + platform, {cwd: hybridTestDir}, function (error, stdout)
-      {
-        done();
-        var success = error ? false : true;
-        //assert.equal(success,true, error); 
+    describe("compile sass", () => {
+      it("should compile sass", async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} build --theme=green`, {cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
+        assert.equal(util.noError(result.stdout) && /Cordova compile finished/.test(result.stdout) && /green.scss/.test(result.stdout), true, result.error);
       });
-    });
+    }); 
+  }
+  
+  if (!util.noCordova()) {
+    describe('Plugin management', async () => {
+      const batteryPlugin = 'cordova-plugin-battery-status';
 
-    it("Clean cordova ", function (done) {
-      this.timeout(40000);
-      exec("cordova clean", {cwd: hybridTestDir}, function (error, stdout)
-      {
-        done();
-        var success = error ? false : true;
-        //assert.equal(success,true, error); 
-      });
-    });
+      it('should add cordova plugin', async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} add plugin ${batteryPlugin}`, { cwd: util.getAppDir(util.HYBRID_APP_NAME) });
 
-    it("Clean cordova try #2", function (done) {
-      this.timeout(40000);
-      exec("cordova clean", {cwd: hybridTestDir}, function (error, stdout)
-      {
-        done();
-        var success = error ? false : true;
-        //assert.equal(success,true, error); 
+        assert.equal(new RegExp(`Adding ${batteryPlugin}`).test(result.stdout) && util.succeeded(result.stdout), true, result.error);
+
+        var hybridName = util.getAppDir(util.HYBRID_APP_NAME);
+        const pkg = JSON.parse(fs.readFileSync(`${hybridName}/${hybridDirectory}/package.json`));
+        assert.ok(pkg.dependencies[batteryPlugin], pkg);
+      });
+
+      it('should remove cordova plugin', async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} remove plugin ${batteryPlugin}`, { cwd: util.getAppDir(util.HYBRID_APP_NAME) });
+        assert.equal(new RegExp(`Removing ${batteryPlugin}`).test(result.stdout) && util.succeeded(result.stdout), true, result.error);
+        var hybridName = util.getAppDir(util.HYBRID_APP_NAME);
+        const pkg = JSON.parse(fs.readFileSync(`${hybridName}/${hybridDirectory}/package.json`));
+        assert.equal(pkg.dependencies[batteryPlugin], null || undefined, pkg);
       });
     });
-  });
+  }
 });

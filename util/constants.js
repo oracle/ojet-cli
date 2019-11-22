@@ -11,6 +11,7 @@ module.exports = {
   SUPPORTED_HYBRID_PLATFORMS: ['android', 'ios', 'windows'],
   CORDOVA_CONFIG_XML: 'config.xml',
   DEFAULT_THEME: 'alta',
+  DEFAULT_PCSS_THEME: 'web',
   APP_CONFIG_JSON: 'oraclejetconfig.json',
   JET_COMPOSITES: 'jet-composites',
   COMPONENT_FILES: ['component.json', 'loader.js', 'styles.css'],
@@ -60,6 +61,10 @@ module.exports = {
       'invokedByRestore',
     ];
 
+    const addComponentFlags = [
+      'typescript'
+    ];
+
     if (/hybrid/.test(namespace)) {
       // for hybrid and add-hybrid
       return systemFlags.concat(restoreFlags, hybridFlags, appFlags);
@@ -69,6 +74,9 @@ module.exports = {
     } else if (/restore/.test(namespace)) {
       // for restore
       return systemFlags.concat(restoreFlags, hybridFlags, appFlags);
+    } else if (/add-component/.test(namespace)) {
+      // for add component
+      return systemFlags.concat(restoreFlags, addComponentFlags);
     }
     // add-theme, add-sass, no supported flag
     return systemFlags.concat(restoreFlags);

@@ -35,6 +35,7 @@ function _deriveConfiguredPaths(appDir) {
   Object.defineProperty(configurePaths, 'sourceWeb', _getValueObj(conf.source.web, _defaultPaths.sourceWeb));
   Object.defineProperty(configurePaths, 'sourceHybrid', _getValueObj(conf.source.hybrid, _defaultPaths.sourceHybrid));
   Object.defineProperty(configurePaths, 'sourceJavascript', _getValueObj(conf.source.javascript, _defaultPaths.sourceJavascript));
+  Object.defineProperty(configurePaths, 'sourceTypescript', _getValueObj(conf.source.typescript, _defaultPaths.sourceTypescript));
   Object.defineProperty(configurePaths, 'sourceTests', _getValueObj(conf.source.tests, _defaultPaths.sourceTests));
   Object.defineProperty(configurePaths, 'sourceThemes', _getValueObj(conf.source.themes, _defaultPaths.sourceThemes));
   Object.defineProperty(configurePaths, 'stagingHybrid', _getValueObj(conf.staging.hybrid, _defaultPaths.stagingHybrid));
@@ -49,6 +50,7 @@ function _getDefaultPaths() {
   Object.defineProperty(defaultPaths, 'sourceWeb', _getValueObj('src-web'));
   Object.defineProperty(defaultPaths, 'sourceHybrid', _getValueObj('src-hybrid'));
   Object.defineProperty(defaultPaths, 'sourceJavascript', _getValueObj('js'));
+  Object.defineProperty(defaultPaths, 'sourceTypescript', _getValueObj('ts'));
   Object.defineProperty(defaultPaths, 'sourceTests', _getValueObj('tests'));
   Object.defineProperty(defaultPaths, 'sourceThemes', _getValueObj('themes'));
   Object.defineProperty(defaultPaths, 'stagingHybrid', _getValueObj('hybrid'));

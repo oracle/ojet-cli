@@ -69,11 +69,10 @@ module.exports = function () {
  * This task reads the release paths from the mainReleasePaths json file and injects the path configuration in main.js when run in release mode.
  */
     // injectPaths: paths => ({
-    //  startTag: '//injector:mainReleasePaths',
-    //  endTag: '//endinjector',
+    //  startTag: '// injector:mainReleasePaths',
+    //  endTag: '// endinjector',
     //  mainJs: 'path to mainjs',
     //  destMainJs: 'path to the inject destination',
-    //  mainReleasePaths: 'path to the main-release-paths.json'
     // }),
 
 /**

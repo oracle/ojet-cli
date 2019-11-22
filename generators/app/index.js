@@ -9,7 +9,6 @@ const commonComponent = require('../../common/component');
 const commonHookRunner = require('../../common/hookRunner');
 const commonMessages = require('../../common/messages');
 const commonRestore = require('../../common/restore');
-const commonTest = require('../../common/test');
 const templateHandler = require('../../common/template');
 const fs = require('fs');
 const path = require('path');
@@ -20,7 +19,6 @@ function _writeTemplate(generator, utils) {
     const appDirectory = path.resolve(path.join(generator.appDir, 'src'));
     templateHandler.handleTemplate(generator, utils, appDirectory)
       .then(() => commonComponent.writeComponentTemplate(generator, utils))
-      .then(() => commonTest.writeTestTemplate(generator))
       .then(() => {
         resolve();
       })

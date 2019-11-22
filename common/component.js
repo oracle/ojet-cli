@@ -14,13 +14,13 @@ module.exports =
   writeComponentTemplate: function _writeComponentTemplate(generator, utils) {
     return new Promise((resolve) => {
       if (_getComponentName(generator)) {
-        const templateSrc = path.resolve(__dirname, '../template/component');
+        const templateSrc = path.resolve(__dirname, utils.getComponentTemplatePath(generator));
         const isApp = fs.existsSync(path.join(process.cwd(), CONSTANTS.APP_CONFIG_JSON))
           || generator.appDir !== undefined;
 
         if (!isApp) return resolve();
 
-        const destDirectory = _getComponentDestPath(generator);
+        const destDirectory = _getComponentDestPath(generator, utils);
         // avoid overwrite component
         if (fs.existsSync(destDirectory)) {
           utils.log('Component already exists.');
@@ -29,9 +29,9 @@ module.exports =
 
         fs.ensureDirSync(destDirectory);
         fs.copySync(templateSrc, destDirectory);
-        if (generator.options.pack) _updatePackInfo(generator);
-        _renamePrefix(generator);
-        _replaceComponentTemplateToken(generator);
+        if (generator.options.pack) _updatePackInfo(generator, utils);
+        _renamePrefix(generator, utils);
+        _replaceComponentTemplateToken(generator, utils);
       }
 
       return resolve();
@@ -39,8 +39,8 @@ module.exports =
   }
 };
 
-function _getComponentDestPath(generator) {
-  let destBase = _getCompositesBasePath(generator);
+function _getComponentDestPath(generator, utils) {
+  let destBase = _getCompositesBasePath(generator, utils);
 
   if (generator.options.pack) {
     const packPath = path.join(destBase, generator.options.pack);
@@ -50,9 +50,9 @@ function _getComponentDestPath(generator) {
   return path.join(destBase, _getComponentName(generator));
 }
 
-function _replaceComponentTemplateToken(generator) {
+function _replaceComponentTemplateToken(generator, utils) {
   const componentName = _getComponentName(generator);
-  const base = _getComponentDestPath(generator);
+  const base = _getComponentDestPath(generator, utils);
   _replaceComponentTokenInFileList(base, componentName, generator.options.pack);
   _replaceComponentTokenInFileList(path.join(base, 'resources/nls'), componentName, generator.options.pack);
 }
@@ -76,23 +76,26 @@ function _replaceComponentTokenInFileList(base, componentName, packName) {
   });
 }
 
-function _getCompositesBasePath(generator) {
+function _getCompositesBasePath(generator, utils) {
   const appDir = generator.appDir === undefined
     ? process.cwd() : path.resolve(generator.appDir);
 
   const _configPaths = generator.appDir === undefined
     ? paths.getConfiguredPaths(appDir) : paths.getDefaultPaths();
 
-  return path.join(appDir, _configPaths.source,
-    _configPaths.sourceJavascript, CONSTANTS.JET_COMPOSITES);
+  return path.join(
+    appDir,
+    _configPaths.source,
+    utils.isTypescriptApplication() ? _configPaths.sourceTypescript : _configPaths.sourceJavascript,
+    CONSTANTS.JET_COMPOSITES);
 }
 
 function _getComponentName(generator) {
   return generator.options.componentName;
 }
 
-function _renamePrefix(generator) {
-  let base = _getComponentDestPath(generator);
+function _renamePrefix(generator, utils) {
+  let base = _getComponentDestPath(generator, utils);
   const componentName = _getComponentName(generator);
   fs.readdirSync(base).forEach((file) => {
     if (/@component@/.test(file)) _renamePrefixFile(base, file, componentName);
@@ -114,8 +117,8 @@ function _renamePrefixFile(fileDir, file, componentName) {
   fs.renameSync(oldPath, newPath);
 }
 
-function _updatePackInfo(generator) {
-  const jsonPath = path.join(_getComponentDestPath(generator), 'component.json');
+function _updatePackInfo(generator, utils) {
+  const jsonPath = path.join(_getComponentDestPath(generator, utils), 'component.json');
   const componentJson = fs.readJsonSync(jsonPath);
   componentJson.pack = generator.options.pack;
   fs.outputJsonSync(jsonPath, componentJson);

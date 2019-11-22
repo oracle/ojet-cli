@@ -1,0 +1,15 @@
+
+// Note that the order in the aggregating file is important
+//
+// 1. custom variables file: Due to the way sass default works, 
+//    the custom variable file must be imported before the platform theme 
+//    aggregating file (where the platform variable file will be imported).
+// 2. platform theme aggregating file
+
+//import SASS custom variable overrides
+@import "_<%= themename %>.sass.settings.scss";
+
+<%= importcomponents %>
+
+//import CSS Custom properties
+@import "_<%= themename %>.cssvars.settings.scss";

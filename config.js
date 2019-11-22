@@ -12,7 +12,7 @@
  * @public
  * @global
  */
-const helpTitlePartLength = 35;
+const helpTitlePartLength = 37;
 const helpSpace = ' ';
 const helpDescNewLineIndent = helpSpace.repeat(helpTitlePartLength + 1);
 const newLine = `\n${helpDescNewLineIndent}`;
@@ -93,14 +93,18 @@ const config = {
           description: 'Adds SASS compilation and watch to the app',
           examples: ['ojet add sass']
         },
-        web: {
-          description: 'Adds a web app target to the web app',
-          examples: ['ojet add web']
+        theming: {
+          description: 'Adds PCSS compilation to the app',
+          examples: ['ojet add theming']
         },
         typescript: {
           description: 'Adds Typescript compilation to the app',
           examples: ['ojet add typescript']
-        }
+        },
+        web: {
+          description: 'Adds a web app target to the web app',
+          examples: ['ojet add web']
+        },
       },
     },
     build: {
@@ -115,6 +119,10 @@ const config = {
             release: {
               description: 'Build in release mode',
               parameters: '[true|false]',
+            },
+            optimize: {
+              description: 'Specify rjs optimize value',
+              parameters: '<string>'
             },
             'build-config': {
               description: 'Specify the build config file for signing the hybrid app',
@@ -172,7 +180,8 @@ const config = {
             'ojet build ios --device --build-config=./buildConfig.json --theme=myCustomTheme',
             'ojet build web --theme=alta:android',
             'ojet build windows --platform-options="--archs=\\"x86 x64 arm\\""',
-            'ojet build --user-options="arbitrary string" // provide user-defined options'
+            'ojet build --user-options="arbitrary string" // provide user-defined options',
+            'ojet build --release --optimize=none // Build a release with readable output. Useful for debugging'
           ]
         },
         component: {
@@ -309,6 +318,30 @@ const config = {
         }
       }
     },
+    package: {
+      description: 'Prepares archive of a component or a pack',
+      scopes: {
+        component: {
+          description: 'Prepares archive of a component',
+          parameters: '<component>',
+          options: {
+            pack: {
+              description: 'Specify the pack name',
+              parameters: '<pack_name>'
+            }
+          },
+          examples: [
+            'ojet package component demo-card',
+            'ojet package component flip-card --pack=demo-pack',
+          ]
+        },
+        pack: {
+          description: 'Prepares archives of a pack and its components',
+          parameters: '<pack>',
+          examples: ['ojet package pack demo-pack']
+        }
+      }
+    },
     publish: {
       description: 'Publishes components to the Exchange',
       scopes: {
@@ -327,6 +360,9 @@ const config = {
               description: 'Specify the pack name',
               parameters: '<pack_name>'
             },
+            path: {
+              description: 'Specify the relative path to component archive',
+            },
             release: {
               description: 'Whether to publish the specified component with a release build'
             },
@@ -337,7 +373,8 @@ const config = {
             }
           },
           examples: [
-            'ojet publish component flipcard'
+            'ojet publish component flipcard',
+            'ojet publish component demo-card --path="./dist/demo-card.zip"'
           ]
         },
         pack: {
@@ -457,6 +494,10 @@ const config = {
             release: {
               description: 'Serve in release mode',
               parameters: '[true|false]',
+            },
+            optimize: {
+              description: 'Specify rjs optimize value',
+              parameters: '<string>'
             },
             'build-config': {
               description: 'Specify the build config file for signing the hybrid app',

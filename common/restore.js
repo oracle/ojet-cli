@@ -4,7 +4,7 @@
 */
 'use strict';
 
-const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
 const fs = require('fs-extra');
 const path = require('path');
 const commonMessages = require('./messages');
@@ -40,13 +40,11 @@ module.exports =
   },
 
   npmInstall: function _npmInstall() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const cmd = 'npm install';
       fs.ensureDirSync(path.join('node_modules'));
-      exec(cmd, null, (err) => {
-        if (err) return reject(err);
-        return resolve();
-      });
+      execSync(cmd, null);
+      resolve();
     });
   }
 };

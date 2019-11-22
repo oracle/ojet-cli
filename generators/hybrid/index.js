@@ -14,7 +14,6 @@ const commonHookRunner = require('../../common/hookRunner');
 const commonHybrid = require('../../hybrid');
 const commonMessages = require('../../common/messages');
 const commonRestore = require('../../common/restore');
-const commonTest = require('../../common/test');
 const cordovaHelper = require('../../hybrid/cordova');
 const platformsHelper = require('../../hybrid/platforms');
 const fs = require('fs-extra');
@@ -57,7 +56,6 @@ function _writeTemplate(generator, utils) {
 
     templateHandler.handleTemplate(generator, utils, appDirectory)
       .then(() => commonComponent.writeComponentTemplate(generator, utils))
-      .then(() => commonTest.writeTestTemplate(generator))
       .then(() => {
         resolve();
       })
@@ -112,6 +110,7 @@ module.exports = function (parameters, opt, utils) {
     if (!app.options.norestore) {
       commonRestore.npmInstall(app)
       .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
+      .then(() => commonHybrid.copyHooks())
       .then(() => _invokeCordovaPrepare(app))
       .then(() => commonHookRunner.runAfterAppCreateHook())
       .then(() => {

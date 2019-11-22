@@ -1,5 +1,16 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 8.0.0
+* The CLI will no longer generate source maps for theme SCSS as JET does not generate them
+* Template path_mapping.json files have been updated to support JET's ES5 IE compatibility mode.  In addition, in a non-hybrid release mode build with the OJET CLI, the code/JET bundles are now called "bundle.js" and "bundle_es5.js", with a main.js swapped in to load the appropriate bundle based on whether the user's browser is IE or not.
+* Removed unsupported QUnit test templating
+* uglify-es replaced by terser
+* before_optimize, before_component_optimize hooks added
+* optimize flag added to ojet build command to control minification of files
+* SASS version is now configurable
+* typescript component creation now supported
+* themes staging directory renamed to staged-themes at build time
+
 ### 7.2.0
 * A before_optimize user hook is now available to allow user control of the release mode build bundling
 * A 'web' option was added to the 'ojet add' command to add a web target to a hybrid app

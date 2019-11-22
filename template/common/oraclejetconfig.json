@@ -7,16 +7,17 @@
       "javascript": "js",
       "typescript": "ts",
       "styles": "css",
-      "themes": "themes",
-      "tests": "tests"
+      "themes": "themes"
     },
 
     "staging": {
       "web": "web",
       "hybrid": "hybrid",
-      "themes": "themes"
+      "themes": "staged-themes"
     }
   },
   
-  "defaultBrowser": "chrome" 
+  "defaultBrowser": "chrome",
+  "sassVer": "4.11.0",
+  "defaultTheme": "alta"
 }

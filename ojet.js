@@ -26,6 +26,7 @@ const configure = require('./lib/tasks/configure');
 const create = require('./lib/tasks/create');
 const help = require('./lib/tasks/help');
 const list = require('./lib/tasks/list');
+const PackageClass = require('./lib/tasks/package');
 const publish = require('./lib/tasks/publish');
 const remove = require('./lib/tasks/remove');
 const restore = require('./lib/tasks/restore');
@@ -90,7 +91,6 @@ module.exports = (function () {
     const scope = commands[1];
     const parameters = commands.slice(2);
     const tasksObj = config.tasks;
-
     switch (commands[0]) {
       // App
       case tasksObj.add.name:
@@ -115,11 +115,16 @@ module.exports = (function () {
       case tasksObj.list.name:
         list(scope, parameters);
         break;
+      case tasksObj.package.name: {
+        const packageInstance = new PackageClass(task, scope, parameters, options);
+        packageInstance.package();
+        break;
+      }
       case tasksObj.publish.name:
         publish(task, scope, parameters, options);
         break;
       case tasksObj.remove.name:
-        remove(scope, parameters);
+        remove(scope, parameters, options);
         break;
       case tasksObj.restore.name:
         restore(task, scope, parameters, options);

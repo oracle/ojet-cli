@@ -7,7 +7,8 @@
 const CONST = require('../../lib/utils.constants');
 const fs = require('fs-extra');
 const path = require('path');
-const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
+const utils = require('../../lib/utils');
 
 module.exports = {
 
@@ -58,6 +59,10 @@ function _copyNpmTemplate(generator, templateSpec, destination) {
       isTemplateInNewFormat = true;
       break;
     }
+  }
+
+  if (!isTemplateInNewFormat) {
+    utils.log.warning('No "src" directory found. This might indicate you are using deprecated format of an app template.');
   }
 
   const entryFilter = (entryFullPath) => {
@@ -114,13 +119,11 @@ function _checkDirExists(filePath) {
 }
 
 function _installNpmTemplate(generator, npmUrl) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const cmd = `npm install ${npmUrl}`;
     const appDir = path.resolve(generator.appDir);
     fs.ensureDirSync(path.join(appDir, 'node_modules'));
-    exec(cmd, { cwd: appDir }, (err) => {
-      if (err) return reject(err);
-      return resolve();
-    });
+    execSync(cmd, { cwd: appDir });
+    resolve();
   });
 }
