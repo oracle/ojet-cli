@@ -1,7 +1,7 @@
 "use strict";
 
 import * as ko from "knockout";
-import * as componentStrings from "ojL10n!./resources/nls/@component@-strings";
+import componentStrings = require("ojL10n!./resources/nls/@component-name@-strings");
 import Context = require("ojs/ojcontext");
 import Composite = require("ojs/ojcomposite");
 import "ojs/ojknockout";
@@ -23,9 +23,9 @@ export default class ViewModel implements Composite.ViewModel<Composite.Properti
         this.composite = context.element;
 
         //Example observable
-        this.messageText = ko.observable("Hello from Example Component");
+        this.messageText = ko.observable("Hello from @full-component-name@");
         this.properties = context.properties;
-        this.res = componentStrings["@component@"];
+        this.res = componentStrings["@component-name@"];
 
         // Example for parsing context properties
         // if (context.properties.name) {

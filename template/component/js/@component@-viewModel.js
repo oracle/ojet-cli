@@ -1,10 +1,10 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 'use strict';
 define(
-    ['knockout', 'ojL10n!./resources/nls/@component@-strings', 'ojs/ojcontext', 'ojs/ojknockout'], function (ko, componentStrings, Context) {
+    ['knockout', 'ojL10n!./resources/nls/@component-name@-strings', 'ojs/ojcontext', 'ojs/ojknockout'], function (ko, componentStrings, Context) {
     
     function ExampleComponentModel(context) {
         var self = this;
@@ -17,9 +17,9 @@ define(
         self.composite = context.element;
 
         //Example observable
-        self.messageText = ko.observable('Hello from Example Component');
+        self.messageText = ko.observable('Hello from @full-component-name@');
         self.properties = context.properties;
-        self.res = componentStrings['@component@'];
+        self.res = componentStrings['@component-name@'];
         // Example for parsing context properties
         // if (context.properties.name) {
         //     parse the context properties here

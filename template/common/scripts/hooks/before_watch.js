@@ -7,7 +7,7 @@
 
 module.exports = function (configObj) {
   return new Promise((resolve, reject) => {
-  	console.log("Running after_component_build hook.");
+  	console.log("Running before_watch hook.");
   	resolve(configObj);
   });
 };

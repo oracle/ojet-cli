@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 'use strict';
@@ -16,7 +16,7 @@ const _WEB = 'web';
 
 const BLANK_TEMPLATE = 'blank';
 
-const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~8.0.0';
+const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~8.1.0';
 
 const _TEMPLATES = [BLANK_TEMPLATE, `${BLANK_TEMPLATE}-ts`, 'basic', 'basic-ts', 'navbar', 'navbar-ts', 'navdrawer', 'navdrawer-ts'];
 
@@ -39,7 +39,8 @@ function _getHandler(generator, template, templateDestDirectory) {
     return urlTemplate.handle(generator, templateUrl, templateDestDirectory);
   }
 
-  if (templateLocalPath) {
+  // Template is an existing local path, but can not point to application itself
+  if (templateLocalPath && _TEMPLATES.indexOf(template) === -1) {
     return localTemplate.handle(generator, templateLocalPath, templateDestDirectory);
   }
   const templateSpec = _resolveTemplateSpec(generator, template);

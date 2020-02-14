@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 'use strict';
@@ -13,6 +13,7 @@ module.exports = {
   DEFAULT_THEME: 'alta',
   DEFAULT_PCSS_THEME: 'web',
   APP_CONFIG_JSON: 'oraclejetconfig.json',
+  COMPONENT_JSON: 'component.json',
   JET_COMPOSITES: 'jet-composites',
   COMPONENT_FILES: ['component.json', 'loader.js', 'styles.css'],
   PATH_TO_HOOKS_CONFIG: 'scripts/hooks/hooks.json',
@@ -34,7 +35,6 @@ module.exports = {
       'app-name',
       'app-id',
       'insight',
-      'component',
       'hybrid',
       'platform',
       'platforms',

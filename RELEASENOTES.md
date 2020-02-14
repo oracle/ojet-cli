@@ -1,5 +1,11 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 8.1.0
+* package-lock.json will no longer be removed by 'ojet strip'
+* Added after_app_typescript, before_app_typescript, after_component_typescript, before_component_typescript custom hooks
+* Added after_watch custom hook
+* Updated to default to node-sass 4.13.0
+
 ### 8.0.0
 * The CLI will no longer generate source maps for theme SCSS as JET does not generate them
 * Template path_mapping.json files have been updated to support JET's ES5 IE compatibility mode.  In addition, in a non-hybrid release mode build with the OJET CLI, the code/JET bundles are now called "bundle.js" and "bundle_es5.js", with a main.js swapped in to load the appropriate bundle based on whether the user's browser is IE or not.

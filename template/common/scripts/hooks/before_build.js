@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 
@@ -8,6 +8,6 @@
 module.exports = function (configObj) {
   return new Promise((resolve, reject) => {
   	console.log("Running before_build hook.");
-  	resolve();
+  	resolve(configObj);
   });
 };

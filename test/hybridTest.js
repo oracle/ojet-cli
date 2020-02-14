@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 var env = process.env;
@@ -11,6 +11,9 @@ var util = require('./util');
 
 const platform = util.getPlatform(env.OS);
 
+
+const buildConfig = process.env.HYBRID_TEST_BUILDCONFIG ? '--build-config=' + process.env.HYBRID_TEST_BUILDCONFIG : "";
+let idName = "dummy";
 
 describe("Hybrid Test", () => {
   describe("Run Tests", () => {
@@ -49,7 +52,19 @@ describe("Hybrid Test", () => {
           let result = await util.execCmd(`${util.OJET_APP_COMMAND} build ${platform}`, {cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
           assert.equal(util.buildSuccess(result.stdout), true, result.error);
 
-          result = await util.execCmd(`${util.OJET_APP_COMMAND} build ${platform} --destination=device`, {cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
+          if (buildConfig !== "") {
+            // Need to change "dummy" to "internal" to match oracle provision if we're doing an ios buildconfig
+            idName = "internal";
+            const testDir = util.getAppDir(util.HYBRID_APP_NAME);
+            const  hybridTestDir = path.resolve(testDir, hybridDirectory);
+            const fileName = path.resolve(hybridTestDir, 'config.xml');
+            var configRead = fs.readFileSync(fileName, "utf-8");
+            configRead = configRead.replace('dummy', 'internal');
+            // write it back out
+            fs.unlinkSync(fileName);
+            fs.writeFileSync(fileName, configRead);
+          }
+          result = await util.execCmd(`${util.OJET_APP_COMMAND} build ${platform} --destination=device ${buildConfig}`, {cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
           assert.equal(util.buildSuccess(result.stdout), true, result.error);
         });
       });
@@ -70,7 +85,7 @@ describe("Hybrid Test", () => {
           // Check contents of config.xml
           var configRead = fs.readFileSync(path.resolve(hybridTestDir, 'config.xml'), "utf-8");
           assert.equal(configRead.indexOf("<name>testcase</name>") > -1, true, "config.xml missing <name>");
-          assert.equal(configRead.indexOf('id="my.id"') > -1, true, "config.xml missing correct id value");
+          assert.equal(configRead.indexOf(`id="com.oraclecorp.${idName}.myapp"`) > -1, true, "config.xml missing correct id value");
         }
       });
 
@@ -142,7 +157,7 @@ describe("Hybrid Test", () => {
     describe("compile sass", () => {
       it("should compile sass", async () => {
         let result = await util.execCmd(`${util.OJET_APP_COMMAND} build --theme=green`, {cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
-        assert.equal(util.noError(result.stdout) && /Cordova compile finished/.test(result.stdout) && /green.scss/.test(result.stdout), true, result.error);
+        assert.equal(/Cordova compile finished/.test(result.stdout) && /green.scss/.test(result.stdout), true, result.error);
       });
     }); 
   }

@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 'use strict';
@@ -9,7 +9,6 @@ const paths = require('../../util/paths');
 const path = require('path');
 const templateHandler = require('../../common/template/');
 const common = require('../../common');
-const commonComponent = require('../../common/component');
 const commonHookRunner = require('../../common/hookRunner');
 const commonHybrid = require('../../hybrid');
 const commonMessages = require('../../common/messages');
@@ -53,9 +52,7 @@ function _writeTemplate(generator, utils) {
   return new Promise((resolve, reject) => {
     const appDir = generator.appDir;
     const appDirectory = path.resolve(appDir, 'src');
-
     templateHandler.handleTemplate(generator, utils, appDirectory)
-      .then(() => commonComponent.writeComponentTemplate(generator, utils))
       .then(() => {
         resolve();
       })
@@ -76,7 +73,7 @@ function _writeTemplate(generator, utils) {
 module.exports = function (parameters, opt, utils) {
   const app = {
     options: Object.assign({ namespace: 'hybrid' }, opt),
-    appDir: opt.component ? opt.component : parameters
+    appDir: parameters
   };
 
   common.validateFlags(app)
@@ -101,12 +98,7 @@ module.exports = function (parameters, opt, utils) {
   .then(() => platformsHelper.addPlatforms(app, utils))
   .then(() => commonHybrid.updateConfigXml(app))
   .then(() => {
-    if (app.options.component) {
-      utils.log(`Your component ${app.options.component} project is scaffolded. Performing npm install may take a bit.`);
-    } else {
-      utils.log(commonMessages.scaffoldComplete());
-    }
-
+    utils.log(commonMessages.scaffoldComplete());
     if (!app.options.norestore) {
       commonRestore.npmInstall(app)
       .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
@@ -120,7 +112,9 @@ module.exports = function (parameters, opt, utils) {
         return Promise.resolve();
       })
       .then(() => utils.log(commonMessages.restoreComplete(
-        app.options.invokedByRestore, app.appDir)));
+        app.options.invokedByRestore,
+        app.appDir
+      )));
     }
   })
   .catch((err) => {

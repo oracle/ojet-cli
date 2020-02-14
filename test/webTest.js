@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 var assert = require('assert');
@@ -32,14 +32,63 @@ describe("Web Test", () => {
     });
   });
 
-  if (!util.noBuild()) {
-    describe('Build', () => {
-      it(`should build Default`, async () => {
+  describe('Build', () => {
+    if (!util.noBuild()) {
+      it(`should build default js app`, async () => {
         let result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
-    });
-  }
+    } 
+    it(`should not have bundle.js and bundle_es5.js`, async () => {
+      filelist = fs.readdirSync(path.resolve(appDir, 'web', 'js'));
+      let hasBundleJs = false;
+      let hasBundleEs5JS = false;
+      if (filelist) {
+        filelist.forEach((file) => {
+          switch(file) {
+            case 'bundle.js':
+              hasBundleJs = true;
+              break;
+            case 'bundle_es5.js':
+              hasBundleEs5JS = true;
+              break;
+            default:
+              break;
+          }
+        })
+      }
+      assert.ok(!hasBundleJs && !hasBundleEs5JS, filelist);
+    })
+  });
+
+  describe('Build (Release)', () => {
+    if (!util.noBuild()) {
+      it(`should build release js app`, async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+      });
+    } 
+    it(`should have bundle.js and bundle_es5.js`, async () => {
+      filelist = fs.readdirSync(path.resolve(appDir, 'web', 'js'));
+      let hasBundleJs = false;
+      let hasBundleEs5JS = false;
+      if (filelist) {
+        filelist.forEach((file) => {
+          switch(file) {
+            case 'bundle.js':
+              hasBundleJs = true;
+              break;
+            case 'bundle_es5.js':
+              hasBundleEs5JS = true;
+              break;
+            default:
+              break;
+          }
+        })
+      }
+      assert.ok(hasBundleJs && hasBundleEs5JS, filelist);
+    })
+  });
   
   describe('Extend to hybrid', () => {
     it('should add hybrid', async () => {

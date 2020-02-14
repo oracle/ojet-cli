@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 'use strict';
@@ -22,9 +22,13 @@ module.exports = {
   APP_NAME: 'webTest',
   HYBRID_APP_NAME: 'hybridTest',
   TS_APP_NAME: 'tsTest',
+  COMPONENT_APP_NAME: 'componentWebTest',
+  COMPONENT_TS_APP_NAME: 'componentTsTest',
 
-  execCmd: function _execCmd(cmd, options, squelch) {
-    console.log(cmd);
+  execCmd: function _execCmd(cmd, options, squelch, logCommand = true) {
+    if (logCommand) {
+      console.log(cmd);
+    }
     return new Promise((resolve, reject) => {
       let p = exec(cmd, options, (error, stdout, stderr) => {
         let result = {error: error, stdout: stdout, stderr: stderr, process: p};
@@ -121,5 +125,45 @@ module.exports = {
 
   noServe: function _noServe() {
     return process.argv.indexOf("--noserve") > -1 || _isQuick();
+  },
+
+  createComponentSuccess: function _createComponentSuccess({ stdout, component }) {
+    const regex = new RegExp(`Add component '${component}' finished`);
+    return regex.test(stdout);
+  },
+
+  createComponentFailure: function _createComponentFailure({ stderr }) {
+    const regex = new RegExp(`Invalid component name:`);
+    return regex.test(stderr);
+  },
+
+  addComponentSuccess: function _addComponentSuccess({ stdout, component }) {
+    const regex = new RegExp(`Component(s) '${component}' added`);
+    return regex.test(stdout);
+  },
+
+  buildComponentSuccess: function _buildComponentSuccess({ stdout, component }) {
+    const regex = new RegExp(`Build finished`);
+    return regex.test(stdout);
+  },
+
+  packageComponentSuccess: function _packageComponentSuccess({ stdout, component }) {
+    const regex = new RegExp(`Component ${component} was packaged`);
+    return regex.test(stdout);
+  },
+
+  createPackSuccess: function _createPackSuccess({ stdout, pack }) {
+    const regex = new RegExp(`Pack '${pack}' successfully created`);
+    return regex.test(stdout);
+  },
+
+  createComponentInPackSuccess: function _createComponentInPackSuccess({ stdout, component }) {
+    const regex = new RegExp(`Add component '${component}' finished`);
+    return regex.test(stdout);
+  },
+
+  createComponentInPackFailure: function _createComponentInPackFailure({ stderr }) {
+    const regex = new RegExp(`Invalid pack name:`);
+    return regex.test(stderr);
   }
 };

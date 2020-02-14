@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
   The Universal Permissive License (UPL), Version 1.0
 */
 'use strict';
@@ -8,81 +8,200 @@ const fs = require('fs-extra');
 const path = require('path');
 const CONSTANTS = require('../util/constants');
 const paths = require('../util/paths');
+const commonMessages = require('./messages');
 
-module.exports =
-{
+module.exports = {
+  /**
+   * ## writeComponentTemplate
+   *
+   * Create a new component from our templates
+   * in /template/component
+   *
+   * @param {object} generator object with build options
+   * @param {object} utils object with helper methods
+   * @returns {Promise}
+   */
   writeComponentTemplate: function _writeComponentTemplate(generator, utils) {
     return new Promise((resolve) => {
-      if (_getComponentName(generator)) {
-        const templateSrc = path.resolve(__dirname, utils.getComponentTemplatePath(generator));
-        const isApp = fs.existsSync(path.join(process.cwd(), CONSTANTS.APP_CONFIG_JSON))
-          || generator.appDir !== undefined;
-
-        if (!isApp) return resolve();
-
-        const destDirectory = _getComponentDestPath(generator, utils);
-        // avoid overwrite component
-        if (fs.existsSync(destDirectory)) {
-          utils.log('Component already exists.');
-          return resolve();
-        }
-
-        fs.ensureDirSync(destDirectory);
-        fs.copySync(templateSrc, destDirectory);
-        if (generator.options.pack) _updatePackInfo(generator, utils);
-        _renamePrefix(generator, utils);
-        _replaceComponentTemplateToken(generator, utils);
+      const componentName = _getComponentName(generator);
+      const componentTemplateSrc = _getComponentTemplatePath(utils);
+      const componentDestDirectory = _getComponentDestPath(generator, utils);
+      const pack = generator.options.pack;
+      // avoid overwrite component
+      if (fs.existsSync(componentDestDirectory)) {
+        utils.log.error(`Component with name '${componentName}' already exists.`);
       }
-
-      return resolve();
+      fs.ensureDirSync(componentDestDirectory);
+      fs.copySync(componentTemplateSrc, componentDestDirectory);
+      if (pack) {
+        _updatePackInfo(generator, utils, pack);
+      }
+      _renameComponentTemplatePrefix(generator, utils);
+      _replaceComponentTemplateToken(generator, utils, pack);
+      resolve();
     });
+  },
+
+  /**
+   * ## validateComponentName
+   *
+   * Make sure the provided component name meets all
+   * of our requirements
+   *
+   * @param {object} generator object with build options
+   * @param {object} utils object with helper methods
+   */
+  validateComponentName: (generator, utils) => {
+    const componentName = _getComponentName(generator);
+    const pack = generator.options.pack;
+    let errorMessage;
+    if (componentName === undefined || componentName === null) {
+      errorMessage = 'Invalid component name: must not be null or undefined.';
+      utils.log.error(errorMessage);
+    } else if (!pack && (componentName !== componentName.toLowerCase() || componentName.indexOf('-') < 0 || !/^[a-z]/.test(componentName))) {
+      errorMessage = 'Invalid component name: must be all lowercase letters and contain at least one hyphen.';
+      utils.log.error(errorMessage);
+    } else if (pack && (componentName !== componentName.toLowerCase() || !/^[a-z]/.test(componentName))) {
+      errorMessage = 'Invalid component name: must be all lowercase letters.';
+      utils.log.error(errorMessage);
+    } else if (pack && !fs.existsSync(_getPathToJETPack(generator, utils, pack))) {
+      errorMessage = 'Invalid pack name: please provide an existing JET pack';
+      utils.log.error(errorMessage);
+    }
+  },
+
+  /**
+   * ## checkThatAppExists
+   *
+   * Make sure command is being run inside of a JET app
+   *
+   * @param {object} utils object with helper methods
+   */
+  checkThatAppExists: (utils) => {
+    const errorMessage = 'Please create an application first, then create the component from within that app.'; // eslint-disable-line max-len
+    if (!utils.isCwdJetApp()) {
+      utils.log.error(errorMessage);
+    }
+  },
+
+  /**
+   * ## logSuccessMessage
+   *
+   * Log success message indicating that component has been
+   * created
+   * @param {object} generator object with build options
+   * @param {object} utils object with helper methods
+   */
+  logSuccessMessage: (generator, utils) => {
+    utils.log(commonMessages.appendJETPrefix(`Add component '${_getComponentName(generator)}' finished.`));
   }
 };
 
-function _getComponentDestPath(generator, utils) {
-  let destBase = _getCompositesBasePath(generator, utils);
+/**
+ * ## _getComponentTemplatePath
+ *
+ * Get path to component template. Either ../template/component/js
+ * or ../template/component/ts depending on whether application is
+ * Typescript or Javascript based
+ *
+ * @param {object} utils object with helper methods
+ * @returns {string} component template path
+ */
 
-  if (generator.options.pack) {
-    const packPath = path.join(destBase, generator.options.pack);
-    fs.ensureDirSync(packPath);
-    destBase = path.join(destBase, generator.options.pack);
-  }
+function _getComponentTemplatePath(utils) {
+  const componentTemplatePath = path.join(
+    '..',
+    'template',
+    'component',
+    utils.isTypescriptApplication() ? 'ts' : 'js'
+  );
+  return path.resolve(__dirname, componentTemplatePath);
+}
+
+/**
+ * ## _getPathToJETPack
+ *
+ * @param {object} generator object with build options
+ * @param {object} utils object with helper methods
+ * @param {string} pack optional name of JET pack that the component
+ * @returns {string}
+ */
+function _getPathToJETPack(generator, utils, pack) {
+  return path.join(_getComponentsBasePath(generator, utils), pack);
+}
+
+/**
+ * ## _getComponentDestPath
+ *
+ * @param {object} generator object with build options
+ * @param {object} utils object with helper methods
+ * @returns {string} component destination path
+ */
+function _getComponentDestPath(generator, utils) {
+  const pack = generator.options.pack;
+  const destBase = pack ?
+    _getPathToJETPack(generator, utils, pack) : _getComponentsBasePath(generator, utils);
   return path.join(destBase, _getComponentName(generator));
 }
 
-function _replaceComponentTemplateToken(generator, utils) {
+/**
+ * ## _replaceComponentTemplateToken
+ *
+ * Replace tokens (@component-name@ & @full-component-name@) in component templates
+ *
+ * @param {object} generator object with build options
+ * @param {object} utils object with helper methods
+ * @param {string} pack name of pack that component will belong to
+ */
+function _replaceComponentTemplateToken(generator, utils, pack) {
   const componentName = _getComponentName(generator);
-  const base = _getComponentDestPath(generator, utils);
-  _replaceComponentTokenInFileList(base, componentName, generator.options.pack);
-  _replaceComponentTokenInFileList(path.join(base, 'resources/nls'), componentName, generator.options.pack);
+  const componentBasePath = _getComponentDestPath(generator, utils);
+  const componentResourcesPath = path.join(componentBasePath, 'resources/nls');
+  _replaceComponentTokenInFileList(componentBasePath, componentName, pack);
+  _replaceComponentTokenInFileList(componentResourcesPath, componentName, pack);
 }
 
-function _replaceComponentTokenInFileList(base, componentName, packName) {
-  let useComponentName;
+/**
+ * ## _replaceComponentTokenInFileList
+ *
+ * Replace tokens (@component@) in list of component template files
+ *
+ * @param {object} componentDir directory containing component files
+ * @param {object} componentName name of component
+ * @param {string} pack name of JET pack that the component will belong to
+ */
+function _replaceComponentTokenInFileList(componentDir, componentName, pack) {
+  const fullComponentName = pack ?
+    `${pack}-${componentName}` : componentName;
   let fileContent;
-  fs.readdirSync(base).forEach((file) => {
+  fs.readdirSync(componentDir).forEach((file) => {
     if (path.extname(file).length !== 0) {
-      fileContent = fs.readFileSync(path.join(base, file), 'utf-8');
-      if (packName && file !== 'component.json') useComponentName = packName.concat('-').concat(componentName);
-      else useComponentName = componentName;
-      // For pack names, loader.js requires two different @component@ replacements:
-      // - use packName-componentName for Composite.register,
-      // - use componentName within the define block.
-      if (packName && file === 'loader.js') {
-        fileContent = fileContent.replace(new RegExp('/@component@', 'g'), componentName);
-      }
-      fs.outputFileSync(path.join(base, file), fileContent.replace(new RegExp('@component@', 'g'), useComponentName));
+      fileContent = fs.readFileSync(path.join(componentDir, file), 'utf-8');
+      // replace @full-component-name@ token with pack-component if in pack.
+      // otherwise replace with component
+      fileContent = fileContent.replace(
+        new RegExp('@full-component-name@', 'g'),
+        fullComponentName
+      );
+      // replace @component-name@ with component name
+      fileContent = fileContent.replace(new RegExp('@component-name@', 'g'), componentName);
+      fs.outputFileSync(path.join(componentDir, file), fileContent);
     }
   });
 }
 
-function _getCompositesBasePath(generator, utils) {
+/**
+ * ## _getComponentsBasePath
+ *
+ * @param {object} generator object with build options
+ * @param {object} utils object with helper methods
+ * @returns {string} component base path
+ */
+function _getComponentsBasePath(generator, utils) {
   const appDir = generator.appDir === undefined
     ? process.cwd() : path.resolve(generator.appDir);
-
   const _configPaths = generator.appDir === undefined
     ? paths.getConfiguredPaths(appDir) : paths.getDefaultPaths();
-
   return path.join(
     appDir,
     _configPaths.source,
@@ -90,37 +209,80 @@ function _getCompositesBasePath(generator, utils) {
     CONSTANTS.JET_COMPOSITES);
 }
 
+/**
+ * ## _getComponentName
+ *
+ * @param {object} generator object with build options
+ * @returns {string} component name
+ */
 function _getComponentName(generator) {
   return generator.options.componentName;
 }
 
-function _renamePrefix(generator, utils) {
-  let base = _getComponentDestPath(generator, utils);
+/**
+ * ## _renameComponentTemplatePrefix
+ *
+ * Replace token (@component@) in component file names
+ *
+ * @param {object} generator object with build options
+ * @param {object} utils object with helper methods
+ */
+function _renameComponentTemplatePrefix(generator, utils) {
+  const componentBasePath = _getComponentDestPath(generator, utils);
   const componentName = _getComponentName(generator);
-  fs.readdirSync(base).forEach((file) => {
-    if (/@component@/.test(file)) _renamePrefixFile(base, file, componentName);
+  fs.readdirSync(componentBasePath).forEach((file) => {
+    if (/@component@/.test(file)) _renameComponentTemplatePrefixFile(componentBasePath, file, componentName);
   });
-
-  base = path.join(base, 'resources/nls');
-  if (fs.existsSync(base)) {
-    fs.readdirSync(base).forEach((file) => {
-      if (/@component@/.test(file)) _renamePrefixFile(base, file, componentName);
+  const componentResourcesPath = path.join(componentBasePath, 'resources/nls');
+  if (fs.existsSync(componentResourcesPath)) {
+    fs.readdirSync(componentResourcesPath).forEach((file) => {
+      if (/@component@/.test(file)) _renameComponentTemplatePrefixFile(componentResourcesPath, file, componentName);
     });
   }
 }
 
-// replace prefix to include the component name
-function _renamePrefixFile(fileDir, file, componentName) {
-  const oldPath = path.join(fileDir, file);
-  let newPath = file.replace('@component@', componentName);
-  newPath = path.join(fileDir, newPath);
+/**
+ * ## _renameComponentTemplatePrefixFile
+ *
+ * Replace token (@component@) in component file name
+ *
+ * @param {string} componentDir name of file directory
+ * @param {string} file name of file
+ * @param {string} componentName name of component
+ */
+function _renameComponentTemplatePrefixFile(componentDir, file, componentName) {
+  const oldPath = path.join(componentDir, file);
+  const newPath = path.join(componentDir, file.replace('@component@', componentName));
   fs.renameSync(oldPath, newPath);
 }
 
-function _updatePackInfo(generator, utils) {
-  const jsonPath = path.join(_getComponentDestPath(generator, utils), 'component.json');
-  const componentJson = fs.readJsonSync(jsonPath);
-  componentJson.pack = generator.options.pack;
-  fs.outputJsonSync(jsonPath, componentJson);
+/**
+ * ## _updatePackInfo
+ *
+ * Add component to packs dependencies and set pack of component
+ * to the provided pack
+ *
+ * @param {object} generator object with build options
+ * @param {object} utils object with helper methods
+ * @param {string} pack name of JET pack that the component belongs to
+ */
+function _updatePackInfo(generator, utils, pack) {
+  // set pack of component
+  const componentJsonPath = path.join(
+    _getComponentDestPath(generator, utils),
+    CONSTANTS.COMPONENT_JSON
+  );
+  const componentJson = fs.readJSONSync(componentJsonPath);
+  componentJson.pack = pack;
+  fs.writeJSONSync(componentJsonPath, componentJson, { spaces: 2 });
+  // add component to dependencies of pack
+  const componentName = _getComponentName(generator);
+  const packComponentJsonPath = path.join(_getPathToJETPack(
+    generator, utils, pack),
+    CONSTANTS.COMPONENT_JSON
+  );
+  const packComponentJson = fs.readJSONSync(packComponentJsonPath);
+  packComponentJson.dependencies = packComponentJson.dependencies || {};
+  packComponentJson.dependencies[`${pack}-${componentName}`] = '1.0.0';
+  fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
 }
-
