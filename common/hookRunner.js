@@ -27,7 +27,7 @@ module.exports = {
       }
     });
   },
-  runAfterComponentCreateHook: function _runAfterComponentCreateHook() {
+  runAfterComponentCreateHook: function _runAfterComponentCreateHook(componentConfig) {
     return new Promise((resolve, reject) => {
       // Get hooks config
       const hooksConfig = _getHooksConfigObj();
@@ -36,7 +36,7 @@ module.exports = {
       if (hookPath && fs.existsSync(path.resolve(hookPath))) {
         const hook = require(path.resolve(hookPath)); // eslint-disable-line
         // Execute hook
-        hook()
+        hook(componentConfig)
           .then(() => resolve())
           .catch(err => reject(err));
       } else {

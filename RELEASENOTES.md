@@ -1,5 +1,8 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 8.2.0
+* The ojet-cli requires nodejs version 10 and higher
+
 ### 8.1.0
 * package-lock.json will no longer be removed by 'ojet strip'
 * Added after_app_typescript, before_app_typescript, after_component_typescript, before_component_typescript custom hooks

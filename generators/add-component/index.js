@@ -25,7 +25,8 @@ module.exports = function (parameters, opt, utils) {
   .then(() => commonComponent.checkThatAppExists(utils))
   .then(() => commonComponent.validateComponentName(addComponent, utils))
   .then(() => commonComponent.writeComponentTemplate(addComponent, utils))
-  .then(() => commonHookRunner.runAfterComponentCreateHook())
+  .then(() => commonHookRunner.runAfterComponentCreateHook(
+    { componentPath: commonComponent.getComponentDestPath(addComponent, utils) }))
   .then(() => commonComponent.logSuccessMessage(addComponent, utils))
   .catch(utils.log.error);
 };

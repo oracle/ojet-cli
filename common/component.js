@@ -70,6 +70,7 @@ module.exports = {
     }
   },
 
+
   /**
    * ## checkThatAppExists
    *
@@ -94,7 +95,19 @@ module.exports = {
    */
   logSuccessMessage: (generator, utils) => {
     utils.log(commonMessages.appendJETPrefix(`Add component '${_getComponentName(generator)}' finished.`));
-  }
+  },
+
+  /**
+   * ## getComponentDestPath
+   *
+   * Return the dest path of the component.
+   *
+   * @param {object} generator object with build options
+   * @param {object} utils object with helper methods
+   */
+  getComponentDestPath: (generator, utils) => (
+    _getComponentDestPath(generator, utils)
+  )
 };
 
 /**
@@ -286,3 +299,4 @@ function _updatePackInfo(generator, utils, pack) {
   packComponentJson.dependencies[`${pack}-${componentName}`] = '1.0.0';
   fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
 }
+
