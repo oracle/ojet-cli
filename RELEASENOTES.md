@@ -1,5 +1,7 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 8.3.0
+
 ### 8.2.0
 * The ojet-cli requires nodejs version 10 and higher
 
