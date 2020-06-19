@@ -1,8 +1,0 @@
-@full-component-name@:not(.oj-complete){
-  visibility: hidden;
-}
-
-@full-component-name@{
-	min-height: 50px;
-	width: 50px;
-}

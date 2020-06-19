@@ -1,7 +1,9 @@
 #! /usr/bin/env node
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 
 'use strict';
@@ -94,7 +96,8 @@ const config = {
           examples: ['ojet add sass']
         },
         theming: {
-          description: 'Adds PCSS compilation to the app',
+          description: 'Adds CSS Custom Property supported SASS compilation to the app,' + // eslint-disable-line
+            newLine + 'which also resolves postcss calc and autoprefixer',
           examples: ['ojet add theming']
         },
         typescript: {
@@ -139,16 +142,25 @@ const config = {
               default: 'false'
             },
             theme: {
-              description: 'Specify the theme to be used by the app',
+              description: 'Specify the theme to be used by the app,' + // eslint-disable-line
+                newLine + '-> alta themes are platform specific' +
+                newLine + '-> redwood theme is for all platforms',
               parameters: '<theme_name>[:<platform>]' + // eslint-disable-line
                 newLine + 'where <theme_name> is: alta or <custom_theme_name>' + // eslint-disable-line
                 newLine + 'and <platform> is one of: android, ios, web, windows',
-              default: 'alta for the specified platform'
+              default: 'redwood for web platform'
             },
             themes: {
               description: 'Specify multiple themes separated by comma(s)' + // eslint-disable-line
               newLine + 'When the --theme flag is missing,' +
               newLine + 'the first element in the --themes flag is identified as the default theme.'
+            },
+            cssvars: {
+              description: 'Specify to inject css file which supports css custom properties' + // eslint-disable-line
+                newLine + 'When the --cssvars flag is missing,' +
+                newLine + 'the default css preprocessor has been used to process away the custom properties.',
+              parameters: '[enabled|disabled]',
+              default: 'disabled'
             },
             'user-options': {
               description: 'Specify user-defined options - these are accessible in hooks config object',
@@ -175,6 +187,7 @@ const config = {
           },
           examples: [
             'ojet build',
+            'ojet build --cssvars=enabled',
             'ojet build ios --no-sass',
             'ojet build android --release',
             'ojet build ios --device --build-config=./buildConfig.json --theme=myCustomTheme',
@@ -270,10 +283,29 @@ const config = {
           ]
         },
         component: {
+          options: {
+            /*
+            type: {
+              description: 'Specifies the type of component to create',
+              parameters: 'vcomponent'
+            },
+            vcomponent: {
+              description: 'Creates a vcomponent.'
+            },*/
+            pack: {
+              description: 'Specifies the pack to create the component into',
+              parameters: '<pack_name>'
+            }
+          },
           aliases: ['components'],
-          description: 'Creates a component with the specified name in an existing app, or creates a component with a shell app',
+          description: 'Creates a component with the specified name within an existing app',
           parameters: '<component-name>',
-          examples: ['ojet create component demo-card']
+          examples: [
+            'ojet create component demo-card',
+            // 'ojet create component demo-card --type=vcomponent',
+            // 'ojet create component demo-card --vcomponent',
+            'ojet create component demo-card --pack=demo-pack'
+          ]
         },
         pack: {
           aliases: ['packs'],
@@ -524,16 +556,25 @@ const config = {
               default: 'false'
             },
             theme: {
-              description: 'Specify the theme to be used by the app',
+              description: 'Specify the theme to be used by the app,' + // eslint-disable-line
+                newLine + '-> alta themes are platform specific' +
+                newLine + '-> redwood theme is for all platforms',
               parameters: '<theme_name>[:<platform>]' + // eslint-disable-line
                 newLine + 'where <theme_name> is: alta or <custom_theme_name>' + // eslint-disable-line
                 newLine + 'and <platform> is one of: android, ios, web, windows',
-              default: 'alta for the specified platform'
+              default: 'redwood for web platform'
             },
             themes: {
               description: 'Specify multiple themes separated by comma.' + // eslint-disable-line
                 newLine + 'When the --theme flag is missing,' +
                 newLine + 'the first element in the --themes flag is identified as the default theme'
+            },
+            cssvars: {
+              description: 'Specify to inject css file which supports css custom properties' + // eslint-disable-line
+                newLine + 'When the --cssvars flag is missing,' +
+                newLine + 'the default will be a css without css custom properties',
+              parameters: '[enabled|disabled]',
+              default: 'disabled'
             },
             livereload: {
               description: 'Enable live reload',
@@ -584,6 +625,7 @@ const config = {
           },
           examples: [
             'ojet serve',
+            'ojet serve --cssvars=enabled',
             'ojet serve ios --no-livereload --emulator="iPad-Air, 10.2"',
             'ojet serve --device --release',
             'ojet serve windows --no-sass --livereload-port=357230',

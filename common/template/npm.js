@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -121,9 +123,13 @@ function _checkDirExists(filePath) {
 function _installNpmTemplate(generator, npmUrl) {
   return new Promise((resolve) => {
     const cmd = `npm install ${npmUrl}`;
-    const appDir = path.resolve(generator.appDir);
-    fs.ensureDirSync(path.join(appDir, 'node_modules'));
-    execSync(cmd, { cwd: appDir });
+    try {
+      const appDir = path.resolve(generator.appDir);
+      fs.ensureDirSync(path.join(appDir, 'node_modules'));
+      execSync(cmd, { cwd: appDir, stdio: 'ignore' });
+    } catch (err) {
+      utils.log.error(err);
+    }
     resolve();
   });
 }

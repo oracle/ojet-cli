@@ -1,7 +1,8 @@
 # Contributing to ojet-cli
 
 *Copyright (c) 2014, 2020 Oracle and/or its affiliates
-The Universal Permissive License (UPL), Version 1.0*
+ Licensed under The Universal Permissive License (UPL), Version 1.0
+ as shown at https://oss.oracle.com/licenses/upl/*
 
 **Pull requests are currently not being accepted for the Oracle JET project.**  
 

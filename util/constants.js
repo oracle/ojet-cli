@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -12,11 +14,14 @@ module.exports = {
   CORDOVA_CONFIG_XML: 'config.xml',
   DEFAULT_THEME: 'alta',
   DEFAULT_PCSS_THEME: 'web',
+  DEFAULT_PCSS_NAME: 'redwood',
   APP_CONFIG_JSON: 'oraclejetconfig.json',
   COMPONENT_JSON: 'component.json',
   JET_COMPOSITES: 'jet-composites',
   COMPONENT_FILES: ['component.json', 'loader.js', 'styles.css'],
   PATH_TO_HOOKS_CONFIG: 'scripts/hooks/hooks.json',
+  TSCONFIG_JSON: 'tsconfig.json',
+  VCOMPONENT: 'vcomponent',
   APP_TYPE:
   {
     HYBRID: 'hybrid',
@@ -62,7 +67,8 @@ module.exports = {
     ];
 
     const addComponentFlags = [
-      'typescript'
+      'type',
+      'vcomponent'
     ];
 
     if (/hybrid/.test(namespace)) {

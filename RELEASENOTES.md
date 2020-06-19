@@ -1,6 +1,15 @@
 ﻿## Release Notes for ojet-cli ##
 
-### 8.3.0
+### 9.0.0
+
+* The redwood theme is now the default
+* There are several breaking changes for all existing ojet applications written in typescript. Please run `ojet add typescript` before building or serving your project after migrating.
+* Using `tsc` with the special ojet flag that suppresses the typescript compilation tasks is no longer supported. As a result, `tsc && ojet build --<special-ts-suppress-flag>` and `tsc -w && ojet serve --<special-ts-suppress-flag>` will no longer work reliably. This is because ojet now performs special processing of certain typescript files that cannot be replicated using `tsc`.
+* ojet serve now uses express instead of connect.  It is API compatible but provides more options for custom middleware
+* Hook scripts must now resolve() the context object they are passed back to the caller to complete the promise.  The default hook scripts do this.  You may see a warning when creating, building, or serving that your hook script context object is null or empty.  This is because hook scripts can now modify or pass back values by modifying the context object.  In addition, make sure hook scripts do *not* remove any properties from the context object, as this could potentially affect the CLI's use of what is now the same object.  Any property modifications should be done for intentional, explicit customization of control of the CLI, such as the require* properties in the before_optimize hooks.
+* The ojet serve process now looks for several optional custom values coming back from the before_serve hook: 'express', where a user can create a custom express object and add their own middleware (note that the CLI adds its own to enable static serving and live reload); 'server', which is a complete replacement for the default HTTP NodeJS server + express object created by ojet serve (it could be HTTPS in your before_serve.js hook, for example); 'options', which will be passed as the first argument in the createServer() call if provided; 'urlPrefix', which is used to changed the default prefix to launch the server from 'http' to 'https', for example; and 'http', which allows for the before_serve hook to pass back a NodeJS HTTP or HTTPS object that ojet serve will use to instantiate its server if provided.  'liveReloadServer', used to specify the live reload server used for watches during the ojet serve.  The default is tiny-lr.
+* The properties that are now copied up to the top level of the hook context objects (theme, userOptions, requireJs, requireJsEs5, isRequireJsEs5, componentRequireJs, and typescript) will no longer be copied up to the top level of the context object in version 11.  Those properties can also be found in the 'opts' object property of the context object, and as of version 11, that will be the only place they are found and checked.
+* css references now point to the CDN if that is enabled in path_mapping.json
 
 ### 8.2.0
 * The ojet-cli requires nodejs version 10 and higher
@@ -8,7 +17,6 @@
 ### 8.1.0
 * package-lock.json will no longer be removed by 'ojet strip'
 * Added after_app_typescript, before_app_typescript, after_component_typescript, before_component_typescript custom hooks
-* Added after_watch custom hook
 * Updated to default to node-sass 4.13.0
 
 ### 8.0.0
@@ -25,7 +33,7 @@
 ### 7.2.0
 * A before_optimize user hook is now available to allow user control of the release mode build bundling
 * A 'web' option was added to the 'ojet add' command to add a web target to a hybrid app
-* Typescript-based applications can now be created and built using the --typescript option in create or the 'ojet add typescript' command for existing apps
+* Typescript-based applications can now be created and built using the `--typescript` option in create or the `ojet add typescript` command for existing apps
 * Node version 8+ is required
 
 ### 7.1.0

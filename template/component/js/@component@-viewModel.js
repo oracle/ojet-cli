@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 define(
@@ -39,7 +41,7 @@ define(
     //ExampleComponentModel.prototype.bindingsApplied = function(context){
     //};
 
-    //ExampleComponentModel.prototype.disconnect = function(context){
+    //ExampleComponentModel.prototype.disconnected = function(context){
     //};
 
     //ExampleComponentModel.prototype.propertyChanged = function(context){

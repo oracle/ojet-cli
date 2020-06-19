@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -16,6 +18,14 @@ const JET_PCSS_SRC_PATH = 'node_modules/@oracle/oraclejet/dist/pcss/oj/';
 const JET_VERSION_TOKEN = '<%= jetversion %>';
 const THEMENAME_TOKEN = '<%= themename %>';
 const COMPONENT_TOKEN = '<%= importcomponents %>';
+const COMPONENT_ALL_TOKEN = '<%= importallcomponents %>';
+const IMPORT_OJ_TAGS = '<%= importojnotags %>';
+const ALL_COMP_RW_PATH = 'oj/all-components/themes/redwood';
+const COMPONENT_LIST = {
+  all: `${ALL_COMP_RW_PATH}/_oj-all-components.scss`,
+  all_notag: `${ALL_COMP_RW_PATH}/_oj-all-components-notag.scss`,
+  common: `${ALL_COMP_RW_PATH}/_oj-all-components-common.scss`
+};
 
 function _isvalidThemeName(themeName) {
   return !(/-!$%^&*()_+|~=`{}\[\]:";'<>?,.\//.test(themeName));
@@ -33,6 +43,30 @@ function _getJETVersion() {
   let getPackageJson = path.resolve('./node_modules/@oracle/oraclejet/package.json');
   getPackageJson = fs.readJsonSync(getPackageJson);
   return getPackageJson.version;
+}
+
+function _getComponentsList() {
+  const replaceCopyright = /^\/\/.+copyright.*/gmi;
+  const srcNotagAllCompPath =
+  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, COMPONENT_LIST.all_notag);
+  const srcAllCompPath =
+  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, COMPONENT_LIST.all);
+  const srcCommonCompPath =
+  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, COMPONENT_LIST.common);
+  let notagCompContent = fs.readFileSync(srcNotagAllCompPath, 'utf-8');
+  notagCompContent = notagCompContent.replace(replaceCopyright, '')
+    .replace(/^.*components-common.*/gmi, '')
+    .replace(/^/gmi, '//');
+  let commonCompContent = fs.readFileSync(srcCommonCompPath, 'utf-8');
+  commonCompContent = commonCompContent.replace(replaceCopyright, '');
+  let allCompContent = fs.readFileSync(srcAllCompPath, 'utf-8');
+  allCompContent = allCompContent.replace(replaceCopyright, '')
+    .replace(/^.*components-common.*/gmi, commonCompContent)
+    .replace(/^/gmi, '//');
+  return {
+    notagCompContent,
+    allCompContent
+  };
 }
 
 function _getReplaceValuePairsArray(tech) {
@@ -76,7 +110,7 @@ function _injectDefaultValues(destPath, tech) {
 function _copyCssSettingsFile(themeName, destPath, setTechnology) {
   const srcSettings = _getSettingsFileByTech(setTechnology);
   const srcPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, 'redwood', srcSettings);
+  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, ALL_COMP_RW_PATH, srcSettings);
   const destSettingsFileName = _setSettingsFileByTech(setTechnology);
   const destSettingsPath = path.join(destPath, constants.DEFAULT_PCSS_THEME, destSettingsFileName);
   fs.copySync(srcPath, destSettingsPath);
@@ -114,13 +148,19 @@ function _renameFilesTokens(themeName, themePath) {
 }
 
 function _loadComponentRefrence(themeName, themeDest) {
-  const srcPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, 'redwood/oj-redwood.scss');
-  const sourceFileContent = fs.readFileSync(srcPath, 'utf-8');
+  // Imports all components url from pcss in node_modules
   const destPath = path.join(themeDest, constants.DEFAULT_PCSS_THEME, `${themeName}.scss`);
   let destFileContent = fs.readFileSync(destPath, 'utf-8');
-  destFileContent = destFileContent.replace(new RegExp(COMPONENT_TOKEN, 'g'), sourceFileContent);
+  destFileContent = destFileContent.replace(new RegExp(COMPONENT_TOKEN, 'g'), COMPONENT_LIST.all);
   fs.outputFileSync(destPath, destFileContent);
+
+  // write entire components list imports in _themename.components.scss
+  const { notagCompContent, allCompContent } = _getComponentsList();
+  const allCompDestPath = path.join(themeDest, constants.DEFAULT_PCSS_THEME, `_${themeName}.components.scss`);
+  let destAllCompContent = fs.readFileSync(allCompDestPath, 'utf-8');
+  destAllCompContent = destAllCompContent.replace(new RegExp(IMPORT_OJ_TAGS, 'g'), notagCompContent);
+  destAllCompContent = destAllCompContent.replace(new RegExp(COMPONENT_ALL_TOKEN, 'g'), allCompContent);
+  fs.outputFileSync(allCompDestPath, destAllCompContent);
 }
 
 function _addPcssTheme(addTheme) {
@@ -167,8 +207,9 @@ module.exports = function (parameters, opt, utils) {
     arguments: [parameters],
     options: Object.assign({ namespace: 'add-pcss-theme' }, opt)
   };
-  if (pcssTheme.themeName === constants.DEFAULT_PCSS_THEME) {
-    utils.log.error(`Theme ${constants.DEFAULT_PCSS_THEME} is reserved.`);
+  if (pcssTheme.themeName === constants.DEFAULT_PCSS_NAME ||
+    pcssTheme.themeName === constants.DEFAULT_THEME) {
+    utils.log.error(`Theme ${pcssTheme.themeName} is reserved.`);
   }
   if (!_isvalidThemeName(pcssTheme.themeName)) {
     utils.log.error(`Special characters invalid in theme name ${pcssTheme.themeName}.`);

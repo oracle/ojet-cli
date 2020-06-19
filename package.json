@@ -1,6 +1,6 @@
 {
   "name": "@oracle/ojet-cli",
-  "version": "8.3.0",
+  "version": "9.0.0",
   "description": "Oracle JET Command Line Interface",
   "license": "UPL-1.0",
   "homepage": "http://oraclejet.org",
@@ -11,11 +11,11 @@
     "adm-zip": "~0.4.7",
     "fs-extra": "^8.1.0",
     "inquirer": "~6.2.2",
-    "xmldom": "^0.1.27",
-    "minimist": "^1.2.0"
+    "minimist": "^1.2.0",
+    "xmldom": "^0.1.27"
   },
   "engines": {
     "node": ">=10.0.0"
-  },  
+  },
   "preferGlobal": true
 }

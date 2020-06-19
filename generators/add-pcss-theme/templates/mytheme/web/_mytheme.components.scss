@@ -1,0 +1,8 @@
+
+// To directly style HTML tag elements such as a, h1, h2, and 
+// so on uncomment the oj-tags.scss file below. If you do not 
+// want to directly style tags uncomment the oj-notags.scss 
+// file below instead. The notags file will generate classes 
+// you can set on tags, for example <a class=oj-link>.
+<%= importojnotags %>
+<%= importallcomponents %>

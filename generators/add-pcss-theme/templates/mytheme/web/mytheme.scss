@@ -6,10 +6,18 @@
 //    aggregating file (where the platform variable file will be imported).
 // 2. platform theme aggregating file
 
-//import SASS custom variable overrides
+// import SASS custom variable overrides
 @import "_<%= themename %>.sass.settings.scss";
 
-<%= importcomponents %>
+// Imports all jet components styles
+@import "<%= importcomponents %>";
 
-//import CSS Custom properties
+// To optimize performance, consider commenting out the above oj-all-components
+// import and uncomment _<%= themename %>.components.scss below.
+// Then in _<%= themename %>.components.scss uncomment only the component 
+// imports that your application needs.
+
+// @import "_<%= themename %>.components.scss";
+
+// import CSS Custom properties
 @import "_<%= themename %>.cssvars.settings.scss";

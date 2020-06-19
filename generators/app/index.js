@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -11,7 +13,6 @@ const commonRestore = require('../../common/restore');
 const templateHandler = require('../../common/template');
 const fs = require('fs');
 const path = require('path');
-const scopesApp = require('../../lib/scopes/app');
 
 function _writeTemplate(generator, utils) {
   return new Promise((resolve, reject) => {
@@ -58,13 +59,8 @@ module.exports = function (parameters, opt, utils) {
     if (!app.options.norestore) {
       commonRestore.npmInstall(app)
       .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
+      .then(() => common.addTypescript(app))
       .then(() => commonHookRunner.runAfterAppCreateHook())
-      .then(() => {
-        if (app.options.typescript) {
-          return scopesApp.addTypescript();
-        }
-        return Promise.resolve();
-      })
       .then(() => utils.log(commonMessages.restoreComplete(
         app.options.invokedByRestore,
         app.appDir

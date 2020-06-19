@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -24,7 +26,8 @@ module.exports = {
   writeComponentTemplate: function _writeComponentTemplate(generator, utils) {
     return new Promise((resolve) => {
       const componentName = _getComponentName(generator);
-      const componentTemplateSrc = _getComponentTemplatePath(utils);
+      const componentTemplateSrc = _getComponentTemplatePath(generator, utils);
+      const componentThemeTemplateSrc = _getComponentThemeTemplatePath('theme');
       const componentDestDirectory = _getComponentDestPath(generator, utils);
       const pack = generator.options.pack;
       // avoid overwrite component
@@ -33,11 +36,27 @@ module.exports = {
       }
       fs.ensureDirSync(componentDestDirectory);
       fs.copySync(componentTemplateSrc, componentDestDirectory);
-      if (pack) {
-        _updatePackInfo(generator, utils, pack);
+      fs.copySync(componentThemeTemplateSrc, componentDestDirectory);
+      // Copy theming template for composit components
+      if (utils.validCustomProperties()) {
+        const componentTemplateScssSrc = _getComponentThemeTemplatePath('pcss');
+        fs.copySync(componentTemplateScssSrc, componentDestDirectory);
+      } else {
+        const componentTemplateCssSrc = _getComponentThemeTemplatePath('css');
+        fs.copySync(componentTemplateCssSrc, componentDestDirectory);
       }
+      // replace tokens in template files and file names
       _renameComponentTemplatePrefix(generator, utils);
       _replaceComponentTemplateToken(generator, utils, pack);
+      if (pack) {
+        // update pack info
+        _updatePackInfo({ generator, utils, pack });
+      } else if (_isVComponent(generator)) {
+        // remove pack metadata from vcomponent template
+        _stripPackFromVComponet({ generator, utils, pack });
+      }
+      // if in a typescript app, create path mapping in tsconfig.json
+      _addComponentToTsconfigPathMapping(generator, utils);
       resolve();
     });
   },
@@ -121,14 +140,33 @@ module.exports = {
  * @returns {string} component template path
  */
 
-function _getComponentTemplatePath(utils) {
+function _getComponentTemplatePath(generator, utils) {
+  let componentType;
+  if (_isVComponent(generator)) {
+    componentType = 'tsx';
+  } else {
+    componentType = utils.isTypescriptApplication() ? 'ts' : 'js';
+  }
   const componentTemplatePath = path.join(
     '..',
     'template',
     'component',
-    utils.isTypescriptApplication() ? 'ts' : 'js'
+    componentType
   );
   return path.resolve(__dirname, componentTemplatePath);
+}
+
+/**
+ * ## _getComponentThemeTemplatePath
+ *
+ * Get path to component theme template.
+ *
+ * @returns {string} component template path
+ */
+
+function _getComponentThemeTemplatePath(directoryPath) {
+  const themeTemplatePath = path.join('..', 'template', 'component', directoryPath);
+  return path.resolve(__dirname, themeTemplatePath);
 }
 
 /**
@@ -169,9 +207,28 @@ function _getComponentDestPath(generator, utils) {
 function _replaceComponentTemplateToken(generator, utils, pack) {
   const componentName = _getComponentName(generator);
   const componentBasePath = _getComponentDestPath(generator, utils);
-  const componentResourcesPath = path.join(componentBasePath, 'resources/nls');
-  _replaceComponentTokenInFileList(componentBasePath, componentName, pack);
-  _replaceComponentTokenInFileList(componentResourcesPath, componentName, pack);
+  const folderPaths = [
+    componentBasePath,
+    path.join(componentBasePath, 'resources/nls'),
+    path.join(componentBasePath, 'themes/base'),
+    path.join(componentBasePath, 'themes/redwood'),
+  ];
+  folderPaths.forEach((templatepath) => {
+    if (fs.existsSync(templatepath)) {
+      _replaceComponentTokenInFileList(templatepath, componentName, pack);
+    }
+  });
+}
+
+/**
+ * ## _toCamelCase
+ *
+ * Converts a hyphenated class name, such as oj-foo, to camel case (ojFoo).
+ * @param {String} str
+ */
+function _toCamelCase(str) {
+  const camelCase = str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+  return `${camelCase[0].toUpperCase()}${camelCase.substring(1)}`;
 }
 
 /**
@@ -187,17 +244,28 @@ function _replaceComponentTokenInFileList(componentDir, componentName, pack) {
   const fullComponentName = pack ?
     `${pack}-${componentName}` : componentName;
   let fileContent;
+  let fileExt;
   fs.readdirSync(componentDir).forEach((file) => {
-    if (path.extname(file).length !== 0) {
+    fileExt = path.extname(file);
+    if (fileExt.length !== 0) {
       fileContent = fs.readFileSync(path.join(componentDir, file), 'utf-8');
-      // replace @full-component-name@ token with pack-component if in pack.
-      // otherwise replace with component
-      fileContent = fileContent.replace(
+      fileContent = (fileExt !== '.scss') ? fileContent.replace(
         new RegExp('@full-component-name@', 'g'),
         fullComponentName
+      ) : fileContent.replace(
+        new RegExp('@full-component-name@', 'g'),
+        componentName
       );
       // replace @component-name@ with component name
       fileContent = fileContent.replace(new RegExp('@component-name@', 'g'), componentName);
+      // Camel Case component name replacements are
+      // needed only for vcomponent .tsx files.
+      if (file && (fileExt === '.tsx' || fileExt === '.ts')) {
+        fileContent = fileContent.replace(
+          new RegExp('@camelcase-component-name@', 'g'),
+          _toCamelCase(componentName));
+      }
+
       fs.outputFileSync(path.join(componentDir, file), fileContent);
     }
   });
@@ -243,15 +311,19 @@ function _getComponentName(generator) {
 function _renameComponentTemplatePrefix(generator, utils) {
   const componentBasePath = _getComponentDestPath(generator, utils);
   const componentName = _getComponentName(generator);
-  fs.readdirSync(componentBasePath).forEach((file) => {
-    if (/@component@/.test(file)) _renameComponentTemplatePrefixFile(componentBasePath, file, componentName);
+  const folderPaths = [
+    componentBasePath,
+    path.join(componentBasePath, 'resources/nls'),
+    path.join(componentBasePath, 'themes/base'),
+    path.join(componentBasePath, 'themes/redwood'),
+  ];
+  folderPaths.forEach((templatepath) => {
+    if (fs.existsSync(templatepath)) {
+      fs.readdirSync(templatepath).forEach((file) => {
+        if (/@component@/.test(file)) _renameComponentTemplatePrefixFile(templatepath, file, componentName);
+      });
+    }
   });
-  const componentResourcesPath = path.join(componentBasePath, 'resources/nls');
-  if (fs.existsSync(componentResourcesPath)) {
-    fs.readdirSync(componentResourcesPath).forEach((file) => {
-      if (/@component@/.test(file)) _renameComponentTemplatePrefixFile(componentResourcesPath, file, componentName);
-    });
-  }
 }
 
 /**
@@ -279,8 +351,70 @@ function _renameComponentTemplatePrefixFile(componentDir, file, componentName) {
  * @param {object} utils object with helper methods
  * @param {string} pack name of JET pack that the component belongs to
  */
-function _updatePackInfo(generator, utils, pack) {
+function _updatePackInfo({ generator, utils, pack }) {
   // set pack of component
+  if (_isVComponent(generator)) {
+    _setVComponentPack({ generator, utils, pack });
+  } else {
+    _setCompositeComponentPack({ generator, utils, pack });
+  }
+  // add component to dependencies of pack
+  _addComponentToPackDependencies({ generator, utils, pack });
+}
+
+/**
+ * ## _updateVComponentPack
+ *
+ * @param {object} options.generator
+ * @param {object} options.utils
+ * @param {object} options.pack
+ * @param {object} options.strip
+ */
+function _updateVComponentPack({ generator, utils, pack, strip }) {
+  const vComponentPath = path.join(
+    _getComponentDestPath(generator, utils),
+    `${_getComponentName(generator)}.tsx`
+  );
+  let vComponentContent = fs.readFileSync(vComponentPath, 'utf-8');
+  if (strip) {
+    const packRegex = new RegExp('@ojmetadata pack "@pack-name@"');
+    vComponentContent = vComponentContent.replace(packRegex, '');
+  } else {
+    vComponentContent = vComponentContent.replace('@pack-name@', pack);
+  }
+  fs.outputFileSync(vComponentPath, vComponentContent);
+}
+
+/**
+ * ## _stripPackFromVComponent
+ *
+ * @param {object} options.generator
+ * @param {object} options.utils
+ * @param {object} options.pack
+ */
+function _stripPackFromVComponet({ generator, utils, pack }) {
+  _updateVComponentPack({ generator, utils, pack, strip: true });
+}
+
+/**
+ * ## _setVCompponentPack
+ *
+ * @param {object} options.generator
+ * @param {object} options.utils
+ * @param {object} options.pack
+ */
+function _setVComponentPack({ generator, utils, pack }) {
+  _updateVComponentPack({ generator, utils, pack, strip: false });
+}
+
+/**
+ * ## _setCompositeComponentPack
+ *
+ * @param {object} options.generator
+ * @param {object} options.utils
+ * @param {object} options.pack
+ */
+function _setCompositeComponentPack({ generator, utils, pack }) {
   const componentJsonPath = path.join(
     _getComponentDestPath(generator, utils),
     CONSTANTS.COMPONENT_JSON
@@ -288,15 +422,61 @@ function _updatePackInfo(generator, utils, pack) {
   const componentJson = fs.readJSONSync(componentJsonPath);
   componentJson.pack = pack;
   fs.writeJSONSync(componentJsonPath, componentJson, { spaces: 2 });
-  // add component to dependencies of pack
+}
+
+/**
+ * ## _addComponentToPackDependencies
+ *
+ * @param {object} options.generator
+ * @param {object} options.utils
+ * @param {object} options.pack
+ */
+function _addComponentToPackDependencies({ generator, utils, pack }) {
   const componentName = _getComponentName(generator);
   const packComponentJsonPath = path.join(_getPathToJETPack(
     generator, utils, pack),
     CONSTANTS.COMPONENT_JSON
   );
   const packComponentJson = fs.readJSONSync(packComponentJsonPath);
-  packComponentJson.dependencies = packComponentJson.dependencies || {};
-  packComponentJson.dependencies[`${pack}-${componentName}`] = '1.0.0';
+  packComponentJson.dependencies = {
+    ...(packComponentJson.dependencies || {}),
+    [`${pack}-${componentName}`]: '1.0.0'
+  };
   fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
 }
 
+/**
+ * ## _addComponentToTsconfigPathMapping
+ *
+ * If in a typescript application, create a path mapping for the component
+ * in the tsconfig.json file
+ *
+ * @param {object} generator object with build options
+ * @param {object} utils object with helper methods
+ */
+function _addComponentToTsconfigPathMapping(generator, utils) {
+  // dont create path mapping if not in a typescript application
+  // or if component will be in a pack. The pack will already have a
+  // path mapping that the component can be accessed through i.e
+  // <pack>/<component>
+  if (!utils.isTypescriptApplication() || generator.options.pack) {
+    return;
+  }
+ const toolingUtil = utils.loadToolingUtil();
+ toolingUtil.addComponentToTsconfigPathMapping({
+  component: _getComponentName(generator),
+  isLocal: true
+ });
+}
+
+/**
+ * ## _isVComponent
+ *
+ * @param {object} generator object with build options
+ * @returns {boolean}
+ */
+function _isVComponent(generator) {
+  const type = generator.options.type;
+  const vcomponent = generator.options.vcomponent;
+  return (type && type === CONSTANTS.VCOMPONENT) || vcomponent;
+}

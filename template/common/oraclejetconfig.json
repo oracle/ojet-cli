@@ -19,5 +19,6 @@
   
   "defaultBrowser": "chrome",
   "sassVer": "4.13.0",
-  "defaultTheme": "alta"
+  "defaultTheme": "redwood",
+  "defaultCssvars": "disabled"
 }

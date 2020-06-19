@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 var assert = require('assert');
 var fs = require('fs-extra');
@@ -89,14 +91,64 @@ describe("Web Test", () => {
       assert.ok(hasBundleJs && hasBundleEs5JS, filelist);
     })
   });
-  
-  describe('Extend to hybrid', () => {
-    it('should add hybrid', async () => {
-      filelist = fs.readdirSync(appDir);
-      const inlist = filelist.indexOf('hybrid') > -1;
-      assert.equal(inlist, true, `${appDir}/hybrid missing`);
-    });
+
+    // 
+  // BuildWithComponent verifies that proper path mapping is set for a component.
+  // 
+  // The test creates ${testComp} (ojet build component), then issues an ojet build.
+  // We then verify that the paths in main.js are correct (e.g. it has the debug
+  // version of the component).
+  // 
+  // paths: {
+  // ...
+  // "test-component":"jet-composites/test-component/1.0.0"
+  // ...
+  // }
+  //
+  // And for the release build, we verify that paths has the minified component:
+  // 
+  // "test-component":"jet-composites/test-component/1.0.0/min"
+  //
+  describe('BuildWithComponent', () => {
+    if (!util.noBuild()) {
+      let wd;
+      const testComp = 'my-comp';
+
+      before(() => {
+        wd = process.cwd();
+        process.chdir(util.getAppDir(util.APP_NAME));
+        util.execCmd(`${util.OJET_APP_COMMAND} create component ${testComp}`, { cwd: util.getAppDir(util.APP_NAME) });
+        process.chdir(wd);
+      });
+      it(`build: path mapping to debug component`, async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+        const mainContent = fs.readFileSync(path.join(appDir, 'web', 'js', 'main.js'));
+
+        assert.equal(mainContent.toString().match(`jet-composites/${testComp}/1.0.0`), `jet-composites/${testComp}/1.0.0`,
+                     `main.js should contain the debug component ${testComp}`);
+
+        assert.equal(mainContent.toString().match(`jet-composites/${testComp}/1.0.0/min`), null,
+                     `main.js should not contain the minified component ${testComp}`);
+      });
+      it(`release build:  path mapping to minified component`, async () => {
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
+        const bundleContent = fs.readFileSync(path.join(appDir, 'web', 'js', 'bundle.js'));
+        assert.equal(bundleContent.toString().match(`jet-composites/${testComp}/1.0.0/min`), `jet-composites/${testComp}/1.0.0/min`,
+                     `bundle.js should contain the minified component ${testComp}`);
+
+      });
+    } 
   });
+  
+  if (!util.noHybrid()) {
+    describe('Extend to hybrid', () => {
+      it('should add hybrid', async () => {
+        filelist = fs.readdirSync(appDir);
+        const inlist = filelist.indexOf('hybrid') > -1;
+        assert.equal(inlist, true, `${appDir}/hybrid missing`);
+      });
+    });
+  }
 });
 
 describe("Config Test", () => {
@@ -131,19 +183,21 @@ describe("Config Test", () => {
     assert(map.use === 'local');
   });
 
-  it ('should validatePlatform - android', () => {
-    const wd = process.cwd();
-    process.chdir(util.getAppDir(util.APP_NAME));
-    assert.doesNotThrow(() => {
-      ojet.config.loadOraclejetConfig("android");
-      valid.platform('android');
-      ojet.config.loadOraclejetConfig('ios');
-      valid.platform('ios');
-      ojet.config.loadOraclejetConfig('web');
-      valid.platform('web');
+  if (!util.noHybrid()) {
+    it ('should validatePlatform - android', () => {
+      const wd = process.cwd();
+      process.chdir(util.getAppDir(util.APP_NAME));
+      assert.doesNotThrow(() => {
+        ojet.config.loadOraclejetConfig("android");
+        valid.platform('android');
+        ojet.config.loadOraclejetConfig('ios');
+        valid.platform('ios');
+        ojet.config.loadOraclejetConfig('web');
+        valid.platform('web');
+      });
+      process.chdir(wd);
     });
-    process.chdir(wd);
-  });
+  }
 
   it('should validateBuildType and types', () => {
     const wd = process.cwd();
@@ -195,4 +249,28 @@ describe("add theming", () => {
     // Recopy oraclejet-tooling
     util.copyOracleJetTooling(`${util.APP_NAME}`);
   });
+});
+
+describe("test CDN", () => {
+  before(() => {
+    // Change "use" to CDN in path_mapping.json
+    const jsonFile = path.join(appDir, 'src', 'js', 'path_mapping.json');
+    let pathmapping = fs.readJsonSync(jsonFile);
+    pathmapping.use = "cdn";
+    // write it back out
+    fs.writeJsonSync(jsonFile, pathmapping);
+  });
+
+  if (!util.noBuild()) {
+    it("should build to reference the CDN", async() => {
+      let result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+      const indexFile = fs.readFileSync(path.join(appDir, 'web', 'index.html'));
+
+      const cssString = 'default/css/redwood/oj-redwood.css';
+      assert.equal(indexFile.toString().match(cssString), cssString, 'index.html should contain the CDN redwood css string');
+
+      const bundleString = 'default/js/bundles-config.js';
+      assert.equal(indexFile.toString().match(bundleString), bundleString, 'index.html should contain the CDN bundle JS reference');
+  });
+  } 
 });

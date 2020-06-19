@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -16,7 +18,7 @@ const _WEB = 'web';
 
 const BLANK_TEMPLATE = 'blank';
 
-const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~8.3.0';
+const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~9.0.0';
 
 const _TEMPLATES = [BLANK_TEMPLATE, `${BLANK_TEMPLATE}-ts`, 'basic', 'basic-ts', 'navbar', 'navbar-ts', 'navdrawer', 'navdrawer-ts'];
 

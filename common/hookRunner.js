@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -62,7 +64,7 @@ function _getHooksConfigObj() {
       configFileContentAsJson = JSON.parse(configFileContent);
       // If came to here, then valid json
     } catch (e) {
-      console.error(`\x1b[31mError: File '${configFilePath}' is not of type 'json'.\x1b[0m`);
+      console.error(`Error: File '${configFilePath}' is not of type 'json'.`);
       process.exit(1);
     }
     return configFileContentAsJson.hooks || {};

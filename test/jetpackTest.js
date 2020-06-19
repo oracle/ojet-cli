@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -13,18 +15,14 @@ const TEST_DIR = path.resolve('test_result/test');
 const PACK_NAME = 'pack-1';
 const DEFAULT_PACK_VERSION = '1.0.0';
 const COMPONENT_NAME = 'comp-1';
-
-const apps = [
-  { appName: util.COMPONENT_APP_NAME, scriptsFolder: 'js' }, 
-  { appName: util.COMPONENT_TS_APP_NAME, scriptsFolder: 'ts' }
-];
+const VCOMPONENT_NAME = 'vcomp-1';
 
 function execPackCommand({ task, app, pack }) {
   return util.execCmd(`${util.OJET_APP_COMMAND} ${task} pack ${pack}`, { cwd: util.getAppDir(app) }, true, false);
 }
 
-function execComponentInPackCommand({ task, app, pack, component }) {
-  const command = `${util.OJET_APP_COMMAND} ${task} component ${component} --pack=${pack}`;
+function execComponentInPackCommand({ task, app, pack, component, flags = '' }) {
+  const command = `${util.OJET_APP_COMMAND} ${task} component ${component} ${flags} --pack=${pack}`;
   return util.execCmd(command, { cwd: util.getAppDir(app) }, true, false);
 }
 
@@ -37,25 +35,13 @@ function beforePackTest({ task, app, pack }) {
   });
 }
 
-function beforeComponentInPackTest({ task, app, pack, component }) {
+function beforeComponentInPackTest({ task, app, pack, component, flags = '' }) {
   before(async () => {
-    let result = await execComponentInPackCommand({ task, app, pack, component });
+    let result = await execComponentInPackCommand({ task, app, pack, component, flags });
     it(`should ${task} a component in a pack`, () => {
       assert.ok(util[`${task}ComponentInPackSuccess`]({ component, stdout: result.stdout }), result.error);
     });
   });
-}
-
-function addTest({ config, test, pack, component, release }) {
-  describe(config.appName, () => {
-    test({...config, pack, component, release });
-  });
-}
-
-function addTests({ test, pack, component, release }) {
-  apps.forEach(config => {
-    addTest({ config, test, pack, component, release });
-  })
 }
 
 function createPackTest({ appName, scriptsFolder, pack }) {
@@ -87,7 +73,19 @@ function createPackTest({ appName, scriptsFolder, pack }) {
       const componentJson = fs.readJSONSync(pathToComponentJson);
       const nameMatches = componentJson.name === pack;
       assert(nameMatches, 'pack name does not match in component.json');
-    })
+    });
+    if (scriptsFolder === 'ts') {
+      it(`should have ${pack}/* in tsconfig.compilerOptions.paths`, () => {
+        const pathToTsconfig = util.getAppDir(path.join(
+          util.getAppDir(appName),
+          'tsconfig.json'
+        ));
+        const tsconfigJson = fs.readJsonSync(pathToTsconfig);
+        const tsconfigJsonEntry = `${pack}/*`;
+        const hasEntryInTsconfigJson = !!tsconfigJson.compilerOptions.paths[tsconfigJsonEntry];
+        assert.ok(hasEntryInTsconfigJson, `${tsconfigJsonEntry} not found in ${appName}/tsconfig.json`);
+      });
+    }
   });
 }
 
@@ -138,6 +136,47 @@ function createComponentInPackTest({ appName, scriptsFolder, pack, component }) 
   });
 }
 
+function createVComponentInPackTest({ appName, scriptsFolder, pack, component }) {
+  if (!util.noScaffold()) {
+    beforeComponentInPackTest({ task: 'create', app: appName, pack, component, flags: '--vcomponent' });
+  }
+  describe('check created component in pack', () => {
+    const pathToComponent = util.getAppDir(path.join(
+      util.getAppDir(appName),
+      'src',
+      scriptsFolder,
+      'jet-composites',
+      pack,
+      component,
+      `${component}.tsx`
+    ));
+    it(`should have ${appName}/src/${scriptsFolder}/${pack}/${component}/${component}.tsx`, () => {
+      const exists = fs.pathExistsSync(pathToComponent);
+      assert.ok(exists, pathToComponent);
+    });
+    it(`should have the correct pack in @ojmetadata pack jsdoc`, () => {
+      const packRegex = new RegExp('@ojmetadata pack "(?<pack>.+)"');
+      const componentContent = fs.readFileSync(pathToComponent, { encoding: 'utf-8' });
+      const matches = packRegex.exec(componentContent);
+      const packMatches = matches && matches.groups.pack === pack;
+      assert(packMatches, 'vcomponent does not have correct pack @ojmetadata pack jsdoc');
+    });
+    it('should add entry to dependencies object in pack', () => {
+      const pathToPackComponentJson = util.getAppDir(path.join(
+        util.getAppDir(appName),
+        'src',
+        scriptsFolder,
+        'jet-composites',
+        pack,
+        'component.json'
+      ));
+      const componentJson = fs.readJSONSync(pathToPackComponentJson);
+      const entryExists = !!componentJson.dependencies[`${pack}-${component}`];
+      assert(entryExists, 'did not add vcomponent entry to dependencies in pack component.json');
+    })
+  });
+}
+
 function createComponentInPackFailureTest({ appName, pack, component }) {
   describe('check create component in pack failure', () => {
     it ('should fail with "Invalid pack name:"', async () => {
@@ -148,7 +187,7 @@ function createComponentInPackFailureTest({ appName, pack, component }) {
   })
 }
 
-function buildComponentAppTest({ appName, release }) {
+function buildComponentAppTest({ appName, release, scriptsFolder }) {
   const testName = release ? 'Build (Release)' : 'Build';
   const buildType = release ? 'release' : 'default';
   describe(testName, () => {
@@ -178,26 +217,66 @@ function buildComponentAppTest({ appName, release }) {
         assert.ok(!exists, packMinDir);
       })
     }
+    if (scriptsFolder === 'ts') {
+      it('should have pack(s) with /types directory', () => {
+        const typesDir = path.join(appDir, 'web', 'js', 'jet-composites', PACK_NAME, DEFAULT_PACK_VERSION, 'types', VCOMPONENT_NAME);
+        const exists = fs.pathExistsSync(typesDir);
+        assert.ok(exists, typesDir);
+      });
+      it('should not have vcomponent(s) in pack with /types directory', () => {
+        const typesDir = path.join(appDir, 'web', 'js', 'jet-composites', PACK_NAME, DEFAULT_PACK_VERSION, VCOMPONENT_NAME, 'types');
+        const exists = fs.pathExistsSync(typesDir);
+        assert.ok(!exists, typesDir);
+      })
+    }
+  })
+}
+
+function packagePackTest({ appName, pack }) {
+  if (!util.noScaffold()) {
+    beforePackTest({ task: 'package', app: appName, pack });
+  }
+  describe('check packaged pack', () => {
+    it(`should be packaged in ${appName}/dist/${pack}.zip`, () => {
+      const packagedComponentPath = util.getAppDir(path.join(
+        util.getAppDir(appName),
+        'dist',
+        `${pack}.zip`,
+      ));
+      const exists = fs.pathExistsSync(packagedComponentPath);
+      assert.ok(exists, packagedComponentPath);
+    })
   })
 }
 
 describe("JET Pack Tests", () => {
   describe('ojet create pack', () => {
-    addTests({ test: createPackTest, pack: PACK_NAME });
-  })
+    util.runComponentTestInAllTestApps({ test: createPackTest, pack: PACK_NAME });
+  });
   describe('ojet create component --pack', () => {
     describe('valid pack name', () => {
-      addTests({ test: createComponentInPackTest, pack: PACK_NAME, component: COMPONENT_NAME });
+      util.runComponentTestInAllTestApps({ test: createComponentInPackTest, pack: PACK_NAME, component: COMPONENT_NAME });
     })
     describe('invalid pack name', () => {
-      addTests({ test: createComponentInPackFailureTest, pack: 'pack-2', component: COMPONENT_NAME });
+      util.runComponentTestInAllTestApps({ test: createComponentInPackFailureTest, pack: 'pack-2', component: COMPONENT_NAME });
     })
   });
+  describe('ojet create component --vcomponent --pack', () => {
+    util.runComponentTestInTestApp({ 
+      config: util.TYPESCRIPT_COMPONENT_APP_CONFIG, 
+      test: createVComponentInPackTest,
+      pack: PACK_NAME,
+      component: VCOMPONENT_NAME
+    });
+  });
+  describe('ojet package pack', () => {
+    util.runComponentTestInAllTestApps({ test: packagePackTest, pack: PACK_NAME });
+  });
   describe('ojet build', () => {
-    addTests({ test: buildComponentAppTest, release: false });
-  })
+    util.runComponentTestInAllTestApps({ test: buildComponentAppTest, release: false });
+  });
   describe('ojet build --release', () => {
-    addTests({ test: buildComponentAppTest, release: true });
-  })
-})
+    util.runComponentTestInAllTestApps({ test: buildComponentAppTest, release: true });
+  });
+});
 

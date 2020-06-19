@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -33,9 +35,9 @@ function _getScaffoldComplete() {
 
 function _getRestoreComplete(invokedByRestore, appDir) {
   if (invokedByRestore) {
-    return _appendSuccessPrefix('\x1b[32mYour app restore finished successfully.\x1b[0m');
+    return _appendSuccessPrefix('Your app restore finished successfully.');
   }
-  return _appendSuccessPrefix(`\x1b[32mYour app is ready! Change to your new app directory '${appDir}' and try 'ojet build' and 'ojet serve'.\x1b[0m`);
+  return _appendSuccessPrefix(`Your app is ready! Change to your new app directory '${appDir}' and try 'ojet build' and 'ojet serve'.`);
 }
 
 function _getPrefixError(error) {

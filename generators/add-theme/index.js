@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -31,8 +33,9 @@ module.exports = function (parameters, opt, utils) {
     arguments: [parameters],
     options: Object.assign({ namespace: 'add-theme' }, opt)
   };
-  if (addTheme.themeName === constants.DEFAULT_THEME) {
-    utils.log.error(`Theme ${constants.DEFAULT_THEME} is reserved.`);
+  if (addTheme.themeName === constants.DEFAULT_THEME ||
+    addTheme.themeName === constants.DEFAULT_PCSS_NAME) {
+    utils.log.error(`Theme ${addTheme.themeName} is reserved.`);
   }
 
   if (!_isValidThemeName(addTheme.themeName)) {

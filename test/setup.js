@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 var assert = require('assert');
 var fs = require('fs-extra');
@@ -23,12 +25,17 @@ before( async function () {
     // Restore
     result = await util.execCmd(`${util.OJET_APP_COMMAND} restore`, { cwd: util.getAppDir(util.APP_NAME) });
     console.log(result.stdout);
+
+    // Scaffold a basic app without a name
+    result = await util.execCmd(`${util.OJET_COMMAND} create --norestore=true`, { cwd: util.testDir });
+    // Check that it worked
+    assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
   }
 
   // Always copy
   util.copyOracleJetTooling(`${util.APP_NAME}`);
     
-  if (!util.noScaffold()) {
+  if (!util.noScaffold() && !util.noHybrid()) {
     // Add hybrid
     result = await util.execCmd(`${util.OJET_APP_COMMAND} add hybrid --platform=${platform}`, { cwd: util.getAppDir(util.APP_NAME) });
     console.log(result.stdout);
@@ -40,8 +47,10 @@ before( async function () {
     assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
   }
   
-  // Always copy
-  util.copyOracleJetTooling(`${util.HYBRID_APP_NAME}`);
+  if (!util.noHybrid()) {
+    // Always copy
+    util.copyOracleJetTooling(`${util.HYBRID_APP_NAME}`);
+  }
 
   if (!util.noScaffold()) {
     // Scaffold TS app from scratch

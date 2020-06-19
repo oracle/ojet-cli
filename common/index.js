@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -8,6 +10,8 @@ const fs = require('fs-extra');
 const path = require('path');
 const commonMessages = require('./messages');
 const CONSTANTS = require('../util/constants');
+const util = require('../lib/utils');
+const app = require('../lib/scopes/app');
 
 module.exports =
 {
@@ -126,6 +130,13 @@ module.exports =
       // file/directory does not exist
       return false;
     }
+  },
+
+  addTypescript: (generator) => {
+    if (generator.options.typescript || util.isTypescriptApplication()) {
+      return app.addTypescript();
+    }
+    return Promise.resolve();
   }
 };
 
@@ -142,6 +153,10 @@ function _fileNotHidden(filename) {
 
 function _handleAbsoluteOrMissingPath(generator) {
   let appDir = generator.appDir;
+  if (appDir === undefined || appDir === null) {
+    // Use current directory
+    appDir = path.basename('.');
+  }
   const appDirObj = path.parse(appDir);
   // appDir is absolute or missing
   if (path.isAbsolute(appDir) || appDirObj.dir) {

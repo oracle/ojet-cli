@@ -54,7 +54,7 @@ export default class ViewModel implements Composite.ViewModel<Composite.Properti
     
     };
 
-    disconnectd(element: Element): void {
+    disconnected(element: Element): void {
     
     };
 };

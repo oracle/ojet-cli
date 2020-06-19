@@ -1,6 +1,8 @@
 /**
   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
-  The Universal Permissive License (UPL), Version 1.0
+  Licensed under The Universal Permissive License (UPL), Version 1.0
+  as shown at https://oss.oracle.com/licenses/upl/
+
 */
 'use strict';
 
@@ -15,6 +17,25 @@ function _isQuick() {
   return process.argv.indexOf("--quick") > -1;
 }
 
+const COMPONENT_APP_NAME = 'componentWebTest';
+const COMPONENT_TS_APP_NAME = 'componentTsTest';
+
+const JAVASCRIPT_COMPONENT_APP_CONFIG = { appName:  COMPONENT_APP_NAME, scriptsFolder: 'js' };
+const TYPESCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_TS_APP_NAME, scriptsFolder: 'ts' };
+const COMPONENT_TEST_APP_CONFIGS = [JAVASCRIPT_COMPONENT_APP_CONFIG, TYPESCRIPT_COMPONENT_APP_CONFIG];
+
+function runComponentTestInAllTestApps({ test, pack, component, release }) {
+  COMPONENT_TEST_APP_CONFIGS.forEach(config => {
+    runComponentTestInTestApp({ config, test, pack, component, release });
+  })
+}
+
+function runComponentTestInTestApp({ config, test, pack, component, release }) {
+  describe(config.appName, () => {
+    test({...config, pack, component, release });
+  });
+}
+
 module.exports = {
   OJET_COMMAND: 'node ../../ojet',
   OJET_APP_COMMAND: 'node ../../../ojet',
@@ -22,16 +43,17 @@ module.exports = {
   APP_NAME: 'webTest',
   HYBRID_APP_NAME: 'hybridTest',
   TS_APP_NAME: 'tsTest',
-  COMPONENT_APP_NAME: 'componentWebTest',
-  COMPONENT_TS_APP_NAME: 'componentTsTest',
-
+  COMPONENT_APP_NAME,
+  COMPONENT_TS_APP_NAME,
+  JAVASCRIPT_COMPONENT_APP_CONFIG,
+  TYPESCRIPT_COMPONENT_APP_CONFIG,
   execCmd: function _execCmd(cmd, options, squelch, logCommand = true) {
     if (logCommand) {
       console.log(cmd);
     }
     return new Promise((resolve, reject) => {
       let p = exec(cmd, options, (error, stdout, stderr) => {
-        let result = {error: error, stdout: stdout, stderr: stderr, process: p};
+        let result = {error, stdout, stderr, process: p};
         if (error && !squelch) {
           console.log(result);
           reject(result);
@@ -107,6 +129,10 @@ module.exports = {
     return /succeeded/.test(std);
   },
 
+  noHybrid: function _noHybrid() {
+    return process.argv.indexOf("--nohybrid") > -1 || _isQuick();
+  },
+
   noScaffold: function _noScaffold() {
     return process.argv.indexOf("--noscaffold") > -1 || _isQuick();
   },
@@ -165,5 +191,9 @@ module.exports = {
   createComponentInPackFailure: function _createComponentInPackFailure({ stderr }) {
     const regex = new RegExp(`Invalid pack name:`);
     return regex.test(stderr);
-  }
+  },
+
+  runComponentTestInAllTestApps,
+
+  runComponentTestInTestApp
 };
