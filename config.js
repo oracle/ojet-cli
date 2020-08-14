@@ -43,9 +43,11 @@ const config = {
               default: 'true'
             },
             username: {
+              aliases: ['u'],
               description: 'The user\'s registered username'
             },
             password: {
+              aliases: ['p'],
               description: 'The user\'s registered password'
             }
           },
@@ -649,6 +651,23 @@ const config = {
       },
     }
   },
+  globalOptions: {
+    global: {
+      aliases: ['g'],
+      description: 'Global setting'
+    },
+    help: {
+      aliases: ['h'],
+      description: 'Print help for the command'
+    },
+    verbose: {
+      description: 'Print details'
+    },
+    version: {
+      aliases: ['v'],
+      description: 'Print CLI version'
+    }
+  },
   // Disabling line, can not use arrow function because it changes 'this' scope
   addNamesToTaskAndScopes: function() { // eslint-disable-line
     const tasks = this.tasks;
@@ -676,7 +695,8 @@ const config = {
     indent: 4,
     dot: '.',
     space: helpSpace
-  }
+  },
+  localStoreDir: '.ojet'
 };
 
 // Add 'name' property to all the tasks

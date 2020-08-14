@@ -1,5 +1,6 @@
 import { VComponent, customElement, h } from "ojs/ojvcomponent";
 import componentStrings = require("ojL10n!./resources/nls/@component-name@-strings");
+import "css!./@component-name@-styles";
 
 // Define component properties
 class Props {

@@ -1,5 +1,9 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 9.1.0
+
+* svg-sprite will no longer be installed by default.  If you have altered JET alta theme .svg files, builds will fail without svg-sprite installed and recommend manual installation of svg-sprite
+
 ### 9.0.0
 
 * The redwood theme is now the default

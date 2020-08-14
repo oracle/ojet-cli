@@ -7,6 +7,7 @@
 'use strict';
 
 const paths = require('../util/paths');
+const utils = require('../lib/utils');
 const fs = require('fs-extra');
 const path = require('path');
 const childProcess = require('child_process');
@@ -37,6 +38,7 @@ module.exports =
         .on('exit', (err) => {
           if (err) {
             // stop the generator as cordova create failed
+            utils.log('cordova create failed.  cordova may not be installed');
             reject(err);
           }
           resolve();

@@ -23,8 +23,7 @@ module.exports =
     return new Promise((resolve) => {
       utils.log('Writing:', ORACLE_JET_CONFIG_FILE);
 
-    // need to place the oracletjetconfig.json at origDestRoot
-
+      // need to place the oracletjetconfig.json at origDestRoot
       fs.stat(configPath, (err) => {
         const generatorVersion = _getOracleJetGeneratorVersion();
         if (err) {

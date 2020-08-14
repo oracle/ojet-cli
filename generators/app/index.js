@@ -41,36 +41,36 @@ module.exports = function (parameters, opt, utils) {
     appDir: parameters
   };
   common.validateFlags(app)
-  .then(() => common.validateAppDirNotExistsOrIsEmpty(app))
-  .then((validAppDir) => {
-    app.appDir = path.basename(validAppDir);
-    app.options.appname = app.appDir;
-    fs.mkdirSync(path.resolve(app.appDir));
-  })
-  .then(() => common.switchToAppDirectory(app))
-  .then(() => common.writeCommonTemplates())
-  .then(() => common.writeGitIgnore())
-  .then(() => common.switchFromAppDirectory())
-  .then(() => _writeTemplate(app, utils))
-  .then(() => common.switchToAppDirectory(app))
-  .then(() => common.updatePackageJSON(app))
-  .then(() => {
-    utils.log(commonMessages.scaffoldComplete());
-    if (!app.options.norestore) {
-      commonRestore.npmInstall(app)
-      .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
-      .then(() => common.addTypescript(app))
-      .then(() => commonHookRunner.runAfterAppCreateHook())
-      .then(() => utils.log(commonMessages.restoreComplete(
-        app.options.invokedByRestore,
-        app.appDir
-      )));
-    }
-  })
-  .catch((err) => {
-    if (err) {
-      utils.log(err);
-      process.exit(1);
-    }
-  });
+    .then(() => common.validateAppDirNotExistsOrIsEmpty(app))
+    .then((validAppDir) => {
+      app.appDir = path.basename(validAppDir);
+      app.options.appname = app.appDir;
+      fs.mkdirSync(path.resolve(app.appDir));
+    })
+    .then(() => common.switchToAppDirectory(app))
+    .then(() => common.writeCommonTemplates())
+    .then(() => common.writeGitIgnore())
+    .then(() => common.switchFromAppDirectory())
+    .then(() => _writeTemplate(app, utils))
+    .then(() => common.switchToAppDirectory(app))
+    .then(() => common.updatePackageJSON(app))
+    .then(() => {
+      utils.log(commonMessages.scaffoldComplete());
+      if (!app.options.norestore) {
+        commonRestore.npmInstall(app)
+          .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
+          .then(() => common.addTypescript(app))
+          .then(() => commonHookRunner.runAfterAppCreateHook())
+          .then(() => utils.log(commonMessages.restoreComplete(
+            app.options.invokedByRestore,
+            app.appDir
+          )));
+      }
+    })
+    .catch((err) => {
+      if (err) {
+        utils.log(err);
+        process.exit(1);
+      }
+    });
 };

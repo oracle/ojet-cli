@@ -24,11 +24,11 @@ module.exports = function (parameters, opt, utils) {
     options: Object.assign({ namespace: 'add-component', componentName: parameters }, opt)
   };
   common.validateFlags(addComponent)
-  .then(() => commonComponent.checkThatAppExists(utils))
-  .then(() => commonComponent.validateComponentName(addComponent, utils))
-  .then(() => commonComponent.writeComponentTemplate(addComponent, utils))
-  .then(() => commonHookRunner.runAfterComponentCreateHook(
-    { componentPath: commonComponent.getComponentDestPath(addComponent, utils) }))
-  .then(() => commonComponent.logSuccessMessage(addComponent, utils))
-  .catch(utils.log.error);
+    .then(() => commonComponent.checkThatAppExists(utils))
+    .then(() => commonComponent.validateComponentName(addComponent, utils))
+    .then(() => commonComponent.writeComponentTemplate(addComponent, utils))
+    .then(() => commonHookRunner.runAfterComponentCreateHook(
+      { componentPath: commonComponent.getComponentDestPath(addComponent, utils) }))
+    .then(() => commonComponent.logSuccessMessage(addComponent, utils))
+    .catch(utils.log.error);
 };

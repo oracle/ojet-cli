@@ -43,7 +43,7 @@ module.exports = {
  */
 function _copyNpmTemplate(generator, templateSpec, destination) {
   const templateRoot = path.join(path.resolve(generator.appDir),
-                           'node_modules', '@oracle/oraclejet-templates');
+    'node_modules', '@oracle/oraclejet-templates');
   const src = _getTemplateFromTypeSpecificDirectory(templateRoot, templateSpec) ||
               _getTemplateFromGenericDirectory(templateRoot, templateSpec);
 

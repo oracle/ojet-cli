@@ -78,45 +78,45 @@ module.exports = function (parameters, opt, utils) {
   };
 
   common.validateFlags(app)
-  .then(() => common.validateAppDirNotExistsOrIsEmpty(app))
-  .then((validAppDir) => {
-    app.appDir = path.basename(validAppDir);
+    .then(() => common.validateAppDirNotExistsOrIsEmpty(app))
+    .then((validAppDir) => {
+      app.appDir = path.basename(validAppDir);
 
-    commonHybrid.setupHybridEnv(app);
-    fs.mkdirSync(path.resolve(app.appDir));
-  })
-  .then(() => platformsHelper.getPlatforms(app, utils))
-  .then(() => common.switchToAppDirectory(app))
-  .then(() => common.writeCommonTemplates())
-  .then(() => common.writeGitIgnore())
-  .then(() => cordovaHelper.create(app))
-  .then(() => commonHybrid.copyResources())
-  .then(() => commonHybrid.removeExtraCordovaFiles())
-  .then(() => common.switchFromAppDirectory())
-  .then(() => _writeTemplate(app, utils))
-  .then(() => common.switchToAppDirectory(app))
-  .then(() => common.updatePackageJSON(app))
-  .then(() => platformsHelper.addPlatforms(app, utils))
-  .then(() => commonHybrid.updateConfigXml(app))
-  .then(() => {
-    utils.log(commonMessages.scaffoldComplete());
-    if (!app.options.norestore) {
-      commonRestore.npmInstall(app)
-      .then(() => commonHybrid.copyHooks())
-      .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
-      .then(() => _invokeCordovaPrepare(app))
-      .then(() => common.addTypescript(app))
-      .then(() => commonHookRunner.runAfterAppCreateHook())
-      .then(() => utils.log(commonMessages.restoreComplete(
-        app.options.invokedByRestore,
-        app.appDir
-      )));
-    }
-  })
-  .catch((err) => {
-    if (err) {
-      utils.log(err);
-      process.exit(1);
-    }
-  });
+      commonHybrid.setupHybridEnv(app);
+      fs.mkdirSync(path.resolve(app.appDir));
+    })
+    .then(() => platformsHelper.getPlatforms(app, utils))
+    .then(() => common.switchToAppDirectory(app))
+    .then(() => common.writeCommonTemplates())
+    .then(() => common.writeGitIgnore())
+    .then(() => cordovaHelper.create(app))
+    .then(() => commonHybrid.copyResources())
+    .then(() => commonHybrid.removeExtraCordovaFiles())
+    .then(() => common.switchFromAppDirectory())
+    .then(() => _writeTemplate(app, utils))
+    .then(() => common.switchToAppDirectory(app))
+    .then(() => common.updatePackageJSON(app))
+    .then(() => platformsHelper.addPlatforms(app, utils))
+    .then(() => commonHybrid.updateConfigXml(app))
+    .then(() => {
+      utils.log(commonMessages.scaffoldComplete());
+      if (!app.options.norestore) {
+        commonRestore.npmInstall(app)
+          .then(() => commonHybrid.copyHooks())
+          .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
+          .then(() => _invokeCordovaPrepare(app))
+          .then(() => common.addTypescript(app))
+          .then(() => commonHookRunner.runAfterAppCreateHook())
+          .then(() => utils.log(commonMessages.restoreComplete(
+            app.options.invokedByRestore,
+            app.appDir
+          )));
+      }
+    })
+    .catch((err) => {
+      if (err) {
+        utils.log(err);
+        process.exit(1);
+      }
+    });
 };

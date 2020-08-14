@@ -111,6 +111,12 @@ if (!util.noHybrid()) {
             });
             assert.equal(inlist, true, path.resolve(testDir, hybridDirectory, 'platforms/android/build/outputs/apk', 'android.apk') + " missing");
           });
+          
+          it("should reference the redwood.css from web in index.html", () => {
+            var hybridName = util.getAppDir(util.HYBRID_APP_NAME);
+            const index = fs.readFileSync(`${hybridName}/${hybridDirectory}/platforms/android/app/src/main/assets/www/index.html`);
+            assert.equal(index.indexOf('web/redwood.css') > -1, true, "android index.html missing web/redwood.css reference");
+          });
         }
 
         it("should not have 'locale_' dirs in resources", () => {

@@ -143,8 +143,7 @@ module.exports =
 function _getValidArgLength(namespace) {
   // add-hybrid allows no argument
   // add-theme, app, hybrid, optional to take 1 argument
-  return (/add-hybrid/.test(namespace))
-  ? 0 : 1;
+  return (/add-hybrid/.test(namespace)) ? 0 : 1;
 }
 
 function _fileNotHidden(filename) {

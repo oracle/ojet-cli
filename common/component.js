@@ -433,8 +433,7 @@ function _setCompositeComponentPack({ generator, utils, pack }) {
  */
 function _addComponentToPackDependencies({ generator, utils, pack }) {
   const componentName = _getComponentName(generator);
-  const packComponentJsonPath = path.join(_getPathToJETPack(
-    generator, utils, pack),
+  const packComponentJsonPath = path.join(_getPathToJETPack(generator, utils, pack),
     CONSTANTS.COMPONENT_JSON
   );
   const packComponentJson = fs.readJSONSync(packComponentJsonPath);
@@ -462,11 +461,11 @@ function _addComponentToTsconfigPathMapping(generator, utils) {
   if (!utils.isTypescriptApplication() || generator.options.pack) {
     return;
   }
- const toolingUtil = utils.loadToolingUtil();
- toolingUtil.addComponentToTsconfigPathMapping({
-  component: _getComponentName(generator),
-  isLocal: true
- });
+  const toolingUtil = utils.loadToolingUtil();
+  toolingUtil.addComponentToTsconfigPathMapping({
+    component: _getComponentName(generator),
+    isLocal: true
+  });
 }
 
 /**

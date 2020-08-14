@@ -42,7 +42,7 @@ module.exports =
 
     // prefer appname but support appName
     const appname = generator.options.appname ?
-                    generator.options.appname : generator.options.appName;
+      generator.options.appname : generator.options.appName;
     if (!appname) {
       generator.options.appname = _getAppBaseName(generator.appDir);
     } else {
@@ -137,7 +137,7 @@ module.exports =
 function _getDefaultAppId(appDirArg) {
   const appDir = _getAppBaseName(appDirArg);
 
- // strip non-word chars
+  // strip non-word chars
   let appId = appDir.replace(/\W/g, '');
 
   // make sure the id does not start with a digit or underscore

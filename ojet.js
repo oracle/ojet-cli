@@ -66,7 +66,13 @@ module.exports = (function () {
   // Is verbose?
   process.env.verbose = options.verbose || false;
 
-  // Apply aliases
+  // Print original input
+  if (utils.isVerbose()) {
+    utils.log('Original input:');
+    _printUserInput(commands, options);
+  }
+
+  // Apply task aliases
   const helpTaskNameUsed = commands.indexOf('help') === 0;
   const n = helpTaskNameUsed ? 1 : 0;
   commands[n] = _applyTaskAliases(commands[n]);
@@ -74,14 +80,15 @@ module.exports = (function () {
     commands[n + 1] = _applyScopeAliases(commands[n], commands[n + 1]);
   }
 
-  // Final user input
+  // Apply options aliases
+  if (!utils.isObjectEmpty(options)) {
+    options = _applyOptionsAliases(options);
+  }
+
+  // Print user input after applying aliases to commands and options
   if (utils.isVerbose()) {
-    if (commands.length > 0) {
-      utils.log('User input commands:', commands);
-    }
-    if (!utils.isObjectEmpty(options)) {
-      utils.log('User input options:', options);
-    }
+    utils.log('Input after aliases applied (if not used, same as above).');
+    _printUserInput(commands, options);
   }
 
   // Help flag used?
@@ -160,27 +167,28 @@ module.exports = (function () {
  * @returns {string} inputTask - task in default name || original input
  */
 function _applyTaskAliases(task) {
-  let inputTask = task; // Make a 'copy' to pass eslint (no-param-reassign)
+  let taskCopy = task; // Make a 'copy' to pass eslint (no-param-reassign)
   // Loop over tasks
-  // Disabling eslint to be able to use 'break'
-  for (const taskName in config.tasks) { // eslint-disable-line
-    if (inputTask === taskName) {
+  const tasksKeyList = Object.keys(config.tasks);
+  for (let indexTask = 0; indexTask < tasksKeyList.length; indexTask += 1) {
+    const taskKey = tasksKeyList[indexTask];
+    if (taskCopy === taskKey) {
       break; // Task matches the name. No need to loop further.
     } else {
       // Loop over all possible aliases
-      const loopedTaskObj = config.tasks[taskName];
-      if (utils.hasProperty(loopedTaskObj, 'aliases') && loopedTaskObj.aliases.indexOf(inputTask) > -1) {
+      const loopedTaskObj = config.tasks[taskKey];
+      if (utils.hasProperty(loopedTaskObj, 'aliases') && loopedTaskObj.aliases.indexOf(taskCopy) > -1) {
         // 1. Replace in process.argv so that Grunt can consume it
         const args = process.argv;
-        const i = args.indexOf(inputTask);
-        args.splice(i, 1, taskName);
+        const indexArg = args.indexOf(taskCopy);
+        args.splice(indexArg, 1, taskKey);
         // 2. Replace in user input
-        inputTask = taskName;
+        taskCopy = taskKey;
         break;
       }
     }
   }
-  return inputTask;
+  return taskCopy;
 }
 
 /**
@@ -193,22 +201,86 @@ function _applyTaskAliases(task) {
  * @param {string} scope - scope, the noun
  */
 function _applyScopeAliases(task, scope) {
-  let inputScope = scope; // Make a 'copy' to pass eslint (no-param-reassign)
+  let scopeCopy = scope; // Make a 'copy' to pass eslint (no-param-reassign)
   const taskObj = config.tasks[task];
-  if (taskObj) {
-    // Disabling eslint to be able to use 'break'
-    for (const scopeName in taskObj.scopes) { // eslint-disable-line
-      const loopedScopeObj = taskObj.scopes[scopeName];
-      if (inputScope === scopeName) {
+  if (taskObj && utils.hasProperty(taskObj, 'scopes')) {
+    const scopesKeyList = Object.keys(taskObj.scopes);
+    for (let indexScope = 0; indexScope < scopesKeyList.length; indexScope += 1) {
+      const scopeKey = scopesKeyList[indexScope];
+      const scopeObject = taskObj.scopes[scopeKey];
+      if (scopeCopy === scopeKey) {
         break; // Scope matches the name. No need to loop further.
-      } else if (utils.hasProperty(loopedScopeObj, 'aliases') && loopedScopeObj.aliases.indexOf(inputScope) > -1) {
+      } else if (utils.hasProperty(scopeObject, 'aliases') && scopeObject.aliases.indexOf(scopeCopy) > -1) {
         // Replace in user input
-        inputScope = scopeName;
+        scopeCopy = scopeKey;
         break;
       }
     }
   }
-  return inputScope;
+  return scopeCopy;
+}
+
+/**
+ * ## _applyOptionsAliases
+ *
+ * @private
+ * @param {Object} options
+ * @return {Object} optionsCopy
+ */
+function _applyOptionsAliases(options) {
+  const optionsCopy = utils.cloneObject(options);
+  Object.keys(optionsCopy).forEach((originalOptionKey) => {
+    // Check global options aliases
+    const globalOptionsKeyList = Object.keys(config.globalOptions);
+    for (let indexOption = 0; indexOption < globalOptionsKeyList.length; indexOption += 1) {
+      const globalOptionKey = globalOptionsKeyList[indexOption];
+      if (originalOptionKey === globalOptionKey) {
+        // Full name used. Alias name was not used. Stop looping.
+        break;
+      } else {
+        // Check potential aliases
+        const globalOptionObject = config.globalOptions[globalOptionKey];
+        // If alias detected, replace it with full option name
+        if (utils.hasProperty(globalOptionObject, 'aliases') &&
+          globalOptionObject.aliases.indexOf(originalOptionKey) > -1) {
+          // Create new option
+          optionsCopy[globalOptionKey] = optionsCopy[originalOptionKey];
+          // Delete original alias
+          delete optionsCopy[originalOptionKey];
+          break;
+        }
+      }
+    }
+    // Check command aliases
+    const tasksKeyList = Object.keys(config.tasks);
+    for (let indexTask = 0; indexTask < tasksKeyList.length; indexTask += 1) {
+      const taskKey = tasksKeyList[indexTask];
+      const taskObject = config.tasks[taskKey];
+      if (utils.hasProperty(taskObject, 'scopes')) {
+        const scopesKeyList = Object.keys(taskObject.scopes);
+        for (let indexScope = 0; indexScope < scopesKeyList.length; indexScope += 1) {
+          const scopeKey = scopesKeyList[indexScope];
+          const scopeObject = taskObject.scopes[scopeKey];
+          if (utils.hasProperty(scopeObject, 'options')) {
+            const optionsKeyList = Object.keys(scopeObject.options);
+            for (let indexOption = 0; indexOption < optionsKeyList.length; indexOption += 1) {
+              const optionKey = optionsKeyList[indexOption];
+              const optionObject = scopeObject.options[optionKey];
+              if (utils.hasProperty(optionObject, 'aliases') &&
+                optionObject.aliases.indexOf(originalOptionKey) > -1) {
+                // Create new option
+                optionsCopy[optionKey] = optionsCopy[originalOptionKey];
+                // Delete original alias
+                delete optionsCopy[originalOptionKey];
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+  return optionsCopy;
 }
 
 /**
@@ -221,7 +293,6 @@ function _applyScopeAliases(task, scope) {
  * @param {Object} options
  * @return {Object} optionsCopy
  */
-
 function _convertStringBooleansToRealBooleans(options) {
   const optionsCopy = utils.cloneObject(options);
   Object.keys(optionsCopy).forEach((key) => {
@@ -234,4 +305,25 @@ function _convertStringBooleansToRealBooleans(options) {
     }
   });
   return optionsCopy;
+}
+
+/**
+ * ## _printUserInput
+ *
+ * @private
+ * @param {Array} commands
+ * @param {Object} options
+ */
+function _printUserInput(commands, options) {
+  const optionsCopy = utils.cloneObject(options);
+  if (commands.length > 0) {
+    utils.log('Commands:', commands);
+  }
+  if (!utils.isObjectEmpty(optionsCopy)) {
+    if (utils.hasProperty(optionsCopy, 'password')) {
+      // Do not printout password value
+      optionsCopy.password = '*'.repeat(optionsCopy.password.length);
+    }
+    utils.log('Options:', optionsCopy);
+  }
 }

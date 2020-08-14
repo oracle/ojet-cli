@@ -241,6 +241,16 @@ describe("Paths Mapping Test", () => {
   });
 });
 
+if (!util.noServe()) {
+  describe("serve", () => {
+    it("should serve with nobuild", async () => {
+      let result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      assert.equal(/Watching files/i.test(result.stdout), true, result.stdout);
+      result.process.kill();
+    });
+  });
+}
+
 describe("add theming", () => {
   it("should add pcss generator", async () => {
     let result = await util.execCmd(`${util.OJET_APP_COMMAND} add theming`, { cwd: appDir });

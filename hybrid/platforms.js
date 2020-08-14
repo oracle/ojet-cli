@@ -106,16 +106,16 @@ module.exports =
         p = p.then(() => {
           utils.log(`Adding platform: ${value}`);
           return utils.spawn('cordova',
-          ['platform', 'add', value, '--save'], null, true, { cwd: path.resolve(cordovaDir), allowProcessOutput: false });
+            ['platform', 'add', value, '--save'], null, true, { cwd: path.resolve(cordovaDir), allowProcessOutput: false });
         });
       });
 
       p.then(() => {
         resolve(generator);
       })
-      .catch((err) => {
-        reject(commonMessages.error(err, 'addPlatforms'));
-      });
+        .catch((err) => {
+          reject(commonMessages.error(err, 'addPlatforms'));
+        });
     });
   }
 };
@@ -153,7 +153,7 @@ function _validatePlatforms(generator, utils) {
         }
         resolve(platforms);
       }
-     );
+      );
   });
 }
 
@@ -179,7 +179,7 @@ function _testPlatforms(platforms, utils) {
         // reject
         resolve(platformResults.filter(entry =>
           // return only entries that resulted in success
-           !!entry));
+          !!entry));
       });
   });
 }

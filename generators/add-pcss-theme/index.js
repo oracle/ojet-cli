@@ -215,12 +215,12 @@ module.exports = function (parameters, opt, utils) {
     utils.log.error(`Special characters invalid in theme name ${pcssTheme.themeName}.`);
   }
   common.validateArgs(pcssTheme)
-  .then(common.validateFlags)
-  .then(_addPcssTheme(pcssTheme))
-  .then(() => {
-    utils.log.success(commonMessages.appendJETPrefix(`${pcssTheme.themeName} theme added, with css variables support.`));
-  })
-  .catch((error) => {
-    utils.log(error);
-  });
+    .then(common.validateFlags)
+    .then(_addPcssTheme(pcssTheme))
+    .then(() => {
+      utils.log.success(commonMessages.appendJETPrefix(`${pcssTheme.themeName} theme added, with css variables support.`));
+    })
+    .catch((error) => {
+      utils.log(error);
+    });
 };

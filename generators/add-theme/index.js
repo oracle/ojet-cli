@@ -43,14 +43,14 @@ module.exports = function (parameters, opt, utils) {
   }
 
   common.validateArgs(addTheme)
-  .then(common.validateFlags)
-  .then(_addSassTheme(addTheme))
-  .then(() => {
-    utils.log.success(commonMessages.appendJETPrefix(`${addTheme.themeName} theme added.`));
-  })
-  .catch((error) => {
-    utils.log(error);
-  });
+    .then(common.validateFlags)
+    .then(_addSassTheme(addTheme))
+    .then(() => {
+      utils.log.success(commonMessages.appendJETPrefix(`${addTheme.themeName} theme added.`));
+    })
+    .catch((error) => {
+      utils.log(error);
+    });
 };
 
 function _addSassTheme(addTheme) {

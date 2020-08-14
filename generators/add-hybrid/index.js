@@ -79,8 +79,7 @@ function _validateHybridDirDoesNotExist() {
     const hybridPath = _configPaths.stagingHybrid;
     stats = fs.statSync(path.resolve(hybridPath));
     if (stats.isDirectory) {
-      errorMsg = `The project already contains the '${hybridPath
-                }' directory.`;
+      errorMsg = `The project already contains the '${hybridPath}' directory.`;
       return Promise.reject(commonMessages.error(errorMsg, 'validateHybridDirDoesNotExist'));
     }
   } catch (err) {
@@ -127,29 +126,29 @@ module.exports = function (parameters, opt, utils) {
 
   _setConfigPaths(paths.getConfiguredPaths(path.resolve('.')));
   common.validateArgs(addHybrid)
-  .then(_checkIfCordovaIsInstalled)
-  .then(() => common.validateFlags(addHybrid))
-  .then(() => _validateAppDirForAddHybrid(addHybrid))
-  .then(() => {
-    addHybrid.appDir = path.basename(path.resolve('.'));
-    commonHybrid.setupHybridEnv(addHybrid);
-  })
-  .then(() => platformsHelper.getPlatforms(addHybrid, utils))
-  .then(() => _createExtraSrcDirs(addHybrid))
-  .then(() => cordovaHelper.create(addHybrid))
-  .then(() => commonHybrid.copyHooks())
-  .then(() => commonHybrid.copyResources())
-  .then(_copyCordovaMocks)
-  .then(() => commonHybrid.removeExtraCordovaFiles())
-  .then(() => platformsHelper.addPlatforms(addHybrid, utils))
-  .then(() => commonHybrid.updateConfigXml(addHybrid))
-  .then(() => {
-    utils.log(commonMessages.appendJETPrefix('Add hybrid finished.'));
-  })
-  .catch((err) => {
-    if (err) {
-      utils.log(err);
-      process.exit(1);
-    }
-  });
+    .then(_checkIfCordovaIsInstalled)
+    .then(() => common.validateFlags(addHybrid))
+    .then(() => _validateAppDirForAddHybrid(addHybrid))
+    .then(() => {
+      addHybrid.appDir = path.basename(path.resolve('.'));
+      commonHybrid.setupHybridEnv(addHybrid);
+    })
+    .then(() => platformsHelper.getPlatforms(addHybrid, utils))
+    .then(() => _createExtraSrcDirs(addHybrid))
+    .then(() => cordovaHelper.create(addHybrid))
+    .then(() => commonHybrid.copyHooks())
+    .then(() => commonHybrid.copyResources())
+    .then(_copyCordovaMocks)
+    .then(() => commonHybrid.removeExtraCordovaFiles())
+    .then(() => platformsHelper.addPlatforms(addHybrid, utils))
+    .then(() => commonHybrid.updateConfigXml(addHybrid))
+    .then(() => {
+      utils.log(commonMessages.appendJETPrefix('Add hybrid finished.'));
+    })
+    .catch((err) => {
+      if (err) {
+        utils.log(err);
+        process.exit(1);
+      }
+    });
 };
