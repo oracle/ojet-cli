@@ -1,7 +1,7 @@
 {
   "name": "@component-name@",
   "version": "1.0.0",
-  "jetVersion": "^9.1.0",
+  "jetVersion": "^9.2.0",
   "displayName": "A user friendly, translatable name of the component.",
   "description": "A translatable high-level description for the component.",
   "properties": {

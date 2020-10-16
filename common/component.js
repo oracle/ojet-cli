@@ -34,6 +34,9 @@ module.exports = {
       if (fs.existsSync(componentDestDirectory)) {
         utils.log.error(`Component with name '${componentName}' already exists.`);
       }
+      if (_isVComponent(generator) && !utils.isTypescriptApplication()) {
+        utils.log.error('Cannot create a vcomponent in a Javascript application. Please run \'ojet add typescript\' to add Typescript support to your application.');
+      }
       fs.ensureDirSync(componentDestDirectory);
       fs.copySync(componentTemplateSrc, componentDestDirectory);
       fs.copySync(componentThemeTemplateSrc, componentDestDirectory);

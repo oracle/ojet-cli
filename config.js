@@ -14,7 +14,7 @@
  * @public
  * @global
  */
-const helpTitlePartLength = 37;
+const helpTitlePartLength = 42;
 const helpSpace = ' ';
 const helpDescNewLineIndent = helpSpace.repeat(helpTitlePartLength + 1);
 const newLine = `\n${helpDescNewLineIndent}`;
@@ -29,7 +29,7 @@ const config = {
       scopes: {
         component: {
           // hideFromHelp: true,
-          aliases: ['components'],
+          aliases: ['components', 'comp'],
           description: 'Adds the specified component(s) to the app',
           parameters: '<component1> [<component2>]',
           options: {
@@ -68,9 +68,11 @@ const config = {
               default: 'true'
             },
             username: {
+              aliases: ['u'],
               description: 'The user\'s registered username'
             },
             password: {
+              aliases: ['p'],
               description: 'The user\'s registered password'
             }
           },
@@ -113,6 +115,7 @@ const config = {
       },
     },
     build: {
+      aliases: ['b'],
       description: 'Builds a JET app',
       scopes: {
         app: {
@@ -122,6 +125,7 @@ const config = {
           isParameterOptional: true,
           options: {
             release: {
+              aliases: ['r'],
               description: 'Build in release mode',
               parameters: '[true|false]',
             },
@@ -299,7 +303,6 @@ const config = {
               parameters: '<pack_name>'
             }
           },
-          aliases: ['components'],
           description: 'Creates a component with the specified name within an existing app',
           parameters: '<component-name>',
           examples: [
@@ -328,10 +331,11 @@ const config = {
       commands: '[add|build|clean|configure|create|list|remove|restore|serve|strip]'
     },
     list: {
+      aliases: ['ls'],
       description: 'Lists platforms, plugins and more within a JET app',
       scopes: {
         component: {
-          aliases: ['components'],
+          aliases: ['components', 'comp'],
           description: 'Lists all installed components',
           examples: ['ojet list component']
         },
@@ -381,13 +385,14 @@ const config = {
       scopes: {
         component: {
           description: 'Publishes the specified component to the Exchange',
-          aliases: ['components'],
           parameters: '<component>',
           options: {
             username: {
+              aliases: ['u'],
               description: 'The user\'s registered username'
             },
             password: {
+              aliases: ['p'],
               description: 'The user\'s registered password'
             },
             pack: {
@@ -398,6 +403,7 @@ const config = {
               description: 'Specify the relative path to component archive',
             },
             release: {
+              aliases: ['r'],
               description: 'Whether to publish the specified component with a release build'
             },
             secure: {
@@ -417,9 +423,11 @@ const config = {
           parameters: '<pack>',
           options: {
             username: {
+              aliases: ['u'],
               description: 'The user\'s registered username'
             },
             password: {
+              aliases: ['p'],
               description: 'The user\'s registered password'
             },
             secure: {
@@ -436,10 +444,11 @@ const config = {
     },
     remove: {
       description: 'Removes platforms, plugins and more from a JET app',
+      aliases: ['rm'],
       scopes: {
         component: {
           description: 'Removes the specified component(s) from the app',
-          aliases: ['components'],
+          aliases: ['components', 'comp'],
           parameters: '<component1> [<component2>]',
           examples: ['ojet remove components flipcard dv-gantt']
         },
@@ -475,9 +484,11 @@ const config = {
               default: 'true'
             },
             username: {
+              aliases: ['u'],
               description: 'The user\'s registered username'
             },
             password: {
+              aliases: ['p'],
               description: 'The user\'s registered password'
             }
           },
@@ -501,9 +512,11 @@ const config = {
               default: 'true'
             },
             username: {
+              aliases: ['u'],
               description: 'The user\'s registered username'
             },
             password: {
+              aliases: ['p'],
               description: 'The user\'s registered password'
             },
             versions: {
@@ -518,6 +531,7 @@ const config = {
       },
     },
     serve: {
+      aliases: ['s'],
       description: 'Serves a JET app to an emulator, device or the browser',
       scopes: {
         app: {
@@ -526,6 +540,7 @@ const config = {
           isParameterOptional: true,
           options: {
             release: {
+              aliases: ['r'],
               description: 'Serve in release mode',
               parameters: '[true|false]',
             },

@@ -28,11 +28,11 @@ module.exports =
         const generatorVersion = _getOracleJetGeneratorVersion();
         if (err) {
           utils.log(`${commonMessages.appendJETPrefix()}No config file. Writing the default config.`);
-          fs.writeJSONSync(configPath, { generatorVersion });
+          fs.writeJSONSync(configPath, { generatorVersion }, { spaces: 2 });
         } else {
           const configJson = fs.readJSONSync(configPath);
           configJson.generatorVersion = generatorVersion;
-          fs.writeJSONSync(configPath, configJson);
+          fs.writeJSONSync(configPath, configJson, { spaces: 2 });
           utils.log(`${commonMessages.appendJETPrefix() + ORACLE_JET_CONFIG_FILE} file exists. Checking config.`);
         }
         resolve();

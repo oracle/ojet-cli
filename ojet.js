@@ -228,14 +228,19 @@ function _applyScopeAliases(task, scope) {
  * @return {Object} optionsCopy
  */
 function _applyOptionsAliases(options) {
-  const optionsCopy = utils.cloneObject(options);
-  Object.keys(optionsCopy).forEach((originalOptionKey) => {
-    // Check global options aliases
+  const checkedOptions = {};
+  Object.keys(options).forEach((originalOptionKey) => {
+    let globalOptionFound = false;
+    let commandOptionFound = false;
+
+    // 1. Check global options
     const globalOptionsKeyList = Object.keys(config.globalOptions);
     for (let indexOption = 0; indexOption < globalOptionsKeyList.length; indexOption += 1) {
       const globalOptionKey = globalOptionsKeyList[indexOption];
       if (originalOptionKey === globalOptionKey) {
         // Full name used. Alias name was not used. Stop looping.
+        checkedOptions[originalOptionKey] = options[originalOptionKey];
+        globalOptionFound = true;
         break;
       } else {
         // Check potential aliases
@@ -243,44 +248,57 @@ function _applyOptionsAliases(options) {
         // If alias detected, replace it with full option name
         if (utils.hasProperty(globalOptionObject, 'aliases') &&
           globalOptionObject.aliases.indexOf(originalOptionKey) > -1) {
-          // Create new option
-          optionsCopy[globalOptionKey] = optionsCopy[originalOptionKey];
-          // Delete original alias
-          delete optionsCopy[originalOptionKey];
+          checkedOptions[globalOptionKey] = options[originalOptionKey];
+          globalOptionFound = true;
           break;
         }
       }
     }
-    // Check command aliases
-    const tasksKeyList = Object.keys(config.tasks);
-    for (let indexTask = 0; indexTask < tasksKeyList.length; indexTask += 1) {
-      const taskKey = tasksKeyList[indexTask];
-      const taskObject = config.tasks[taskKey];
-      if (utils.hasProperty(taskObject, 'scopes')) {
-        const scopesKeyList = Object.keys(taskObject.scopes);
-        for (let indexScope = 0; indexScope < scopesKeyList.length; indexScope += 1) {
-          const scopeKey = scopesKeyList[indexScope];
-          const scopeObject = taskObject.scopes[scopeKey];
-          if (utils.hasProperty(scopeObject, 'options')) {
-            const optionsKeyList = Object.keys(scopeObject.options);
-            for (let indexOption = 0; indexOption < optionsKeyList.length; indexOption += 1) {
-              const optionKey = optionsKeyList[indexOption];
-              const optionObject = scopeObject.options[optionKey];
-              if (utils.hasProperty(optionObject, 'aliases') &&
-                optionObject.aliases.indexOf(originalOptionKey) > -1) {
-                // Create new option
-                optionsCopy[optionKey] = optionsCopy[originalOptionKey];
-                // Delete original alias
-                delete optionsCopy[originalOptionKey];
-                break;
+
+    // 2. Check command options
+    if (!globalOptionFound) {
+      const tasksKeyList = Object.keys(config.tasks);
+      commandOptionsIteration: // eslint-disable-line
+      for (let indexTask = 0; indexTask < tasksKeyList.length; indexTask += 1) {
+        const taskKey = tasksKeyList[indexTask];
+        const taskObject = config.tasks[taskKey];
+        if (utils.hasProperty(taskObject, 'scopes')) {
+          const scopesKeyList = Object.keys(taskObject.scopes);
+          for (let indexScope = 0; indexScope < scopesKeyList.length; indexScope += 1) {
+            const scopeKey = scopesKeyList[indexScope];
+            const scopeObject = taskObject.scopes[scopeKey];
+            if (utils.hasProperty(scopeObject, 'options')) {
+              const optionsKeyList = Object.keys(scopeObject.options);
+              for (let indexOption = 0; indexOption < optionsKeyList.length; indexOption += 1) {
+                const optionKey = optionsKeyList[indexOption];
+                const optionObject = scopeObject.options[optionKey];
+                if (originalOptionKey === optionKey) {
+                  // Full name used. Alias name was not used. Stop looping.
+                  checkedOptions[originalOptionKey] = options[originalOptionKey];
+                  commandOptionFound = true;
+                  break commandOptionsIteration; // eslint-disable-line
+                } else if (
+                  utils.hasProperty(optionObject, 'aliases') &&
+                  optionObject.aliases.indexOf(originalOptionKey) > -1
+                ) {
+                  // If alias detected, replace it with full option name
+                  checkedOptions[optionKey] = options[originalOptionKey];
+                  commandOptionFound = true;
+                  break commandOptionsIteration; // eslint-disable-line
+                }
               }
             }
           }
         }
       }
     }
+
+    // 3. Keep option as-is
+    if (!globalOptionFound && !commandOptionFound) {
+      checkedOptions[originalOptionKey] = options[originalOptionKey];
+    }
   });
-  return optionsCopy;
+  return checkedOptions;
 }
 
 /**
