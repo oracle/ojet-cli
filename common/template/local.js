@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -29,7 +29,8 @@ function _copyLocalTemplate(generator, templatePath, destination) {
   return new Promise((resolve, reject) => {
     try {
       if (fs.statSync(templatePath).isDirectory()) {
-        fs.copySync(templatePath, destination);
+        const newTemplateFormat = fs.existsSync(path.join(templatePath, 'src'));
+        fs.copySync(templatePath, newTemplateFormat ? path.join(destination, '..') : destination);
       } else if (path.extname(templatePath) === '.zip') {
         commonTemplateHandler._handleZippedTemplateArchive(templatePath, destination);
       } else {

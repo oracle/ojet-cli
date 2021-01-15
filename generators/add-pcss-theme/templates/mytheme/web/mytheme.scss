@@ -17,7 +17,7 @@
 // Then in _<%= themename %>.components.scss uncomment only the component 
 // imports that your application needs.
 
-// @import "_<%= themename %>.components.scss";
+// @import "_<%= themename %>.optimize-components.scss";
 
 // import CSS Custom properties
 @import "_<%= themename %>.cssvars.settings.scss";

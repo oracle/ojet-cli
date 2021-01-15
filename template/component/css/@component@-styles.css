@@ -1,3 +1,12 @@
+/* This file is where css selectors for the component go.
+   There will be hard coded properties and properties controlled by variables, for example
+
+   @full-component-name@ .@full-component-name@-value-text {
+   color: var(--@full-component-name@-value-text-color);
+   display: inline-block;
+	 }
+*/
+
 @full-component-name@:not(.oj-complete){
   visibility: hidden;
 }

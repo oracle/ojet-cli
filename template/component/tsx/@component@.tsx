@@ -1,4 +1,4 @@
-import { VComponent, customElement, h } from "ojs/ojvcomponent";
+import { ElementVComponent, customElement, h } from "ojs/ojvcomponent-element";
 import componentStrings = require("ojL10n!./resources/nls/@component-name@-strings");
 import "css!./@component-name@-styles";
 
@@ -21,7 +21,7 @@ type State = {
  * @ojmetadata description "A translatable high-level description for the component"
 */
 @customElement("@full-component-name@")
-export class @camelcase-component-name@ extends VComponent<Props, State> {
+export class @camelcase-component-name@ extends ElementVComponent<Props, State> {
   constructor(props: Readonly<Props>) {
     super(props);
 
@@ -30,7 +30,7 @@ export class @camelcase-component-name@ extends VComponent<Props, State> {
   }
 
   // implement render() method to return a virtual DOM representation of the component’s content
-  protected render(): VComponent.VNode {
+  protected render(): ElementVComponent.VNode {
     return <p>{this.props.messageText}</p>;
   }
 

@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -256,8 +256,8 @@ function _replaceComponentTokenInFileList(componentDir, componentName, pack) {
         new RegExp('@full-component-name@', 'g'),
         fullComponentName
       ) : fileContent.replace(
-        new RegExp('@full-component-name@', 'g'),
-        componentName
+        new RegExp('@full-component-name@', 'g'), fullComponentName).replace(
+        new RegExp('@style-component-name@', 'g'), componentName
       );
       // replace @component-name@ with component name
       fileContent = fileContent.replace(new RegExp('@component-name@', 'g'), componentName);
@@ -436,9 +436,9 @@ function _setCompositeComponentPack({ generator, utils, pack }) {
  */
 function _addComponentToPackDependencies({ generator, utils, pack }) {
   const componentName = _getComponentName(generator);
-  const packComponentJsonPath = path.join(_getPathToJETPack(generator, utils, pack),
-    CONSTANTS.COMPONENT_JSON
-  );
+  const packComponentJsonPath = path.join(
+    _getPathToJETPack(generator, utils, pack),
+    CONSTANTS.COMPONENT_JSON);
   const packComponentJson = fs.readJSONSync(packComponentJsonPath);
   packComponentJson.dependencies = {
     ...(packComponentJson.dependencies || {}),

@@ -1,5 +1,19 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 10.0.0
+
+* The before_serve hook now supports custom middleware
+configObj['middleware'] = [...];
+configObj['preMiddleware'] = [...];
+configObj['postMiddleware'] = [...];
+If 'middleware' is specified, then that is used exclusively and replaces the default middleware.  If 'preMiddleware' and/or 'postMiddleware' are specified, then those are pre- or post-pended to the default middleware.
+* Support for add-on css files
+* cssvars is now the default for theming
+* Support for creating progressive web apps
+* Applications scaffolded from none-NPM templates (`--template=<localDir>`, `--template=<localZip>` & `--template=<remoteZip>`) will:
+  * No longer have their oraclejetconfig.json and package.json replaced by ojet's default if they contain one. If the template contains a package.json but it doesn't have the @oraclejet/oraclejet and @oraclejet/oraclejet-tooling dependencies set, ojet will inject the latest versions of them
+  * No longer have their tsconfig.json renamed to tsconfig_old.json. ojet no will longer run `ojet add typescript` if it detects the presence of a tsconfig.json in the template during the scaffolding process
+
 ### 9.2.0
 
 * The JET pack packaging process during `ojet package pack <jet-pack>` and `ojet publish pack <jet-pack>` has changed. Previously, a JET pack would be packaged with the type definitions and minified files of its member components in the `types` and `min` folders respectively i.e `<jet-pack>/min/<member-component>` and `<jet-pack>/types/<member-component>`. Now, a JET pack is only packaged with its own resources (e.g its `component.json`). The type definitions and minified files of its member components are packaged with the associated component i.e `<member-component>/types` and `<member-component>/min`. No changes are required unless your application relied on the packaged JET pack to contain the `types` and `min` folders of its member components. ojet-cli will automatically rearrange these folders to the previous layout when a JET pack is downloaded from the exchange via `ojet add pack <jet-pack>` to main compatibility with local JET packs.
@@ -7,6 +21,7 @@
 ### 9.1.0
 
 * svg-sprite will no longer be installed by default.  If you have altered JET alta theme .svg files, builds will fail without svg-sprite installed and recommend manual installation of svg-sprite
+* ojet build will now return a non-zero error code if optimization fails
 
 ### 9.0.0
 

@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -87,10 +87,6 @@ function _getReplaceValuePairsArray(tech) {
       {
         findstr: new RegExp('.*\\$fontDir.*'),
         replacewith: `$fontDir:  "../../../redwood/${JET_VERSION_TOKEN}/web/fonts/" !default;`,
-      },
-      {
-        findstr: new RegExp('.*\\$commonImageDir.*'),
-        replacewith: `$commonImageDir:  "../../../redwood/${JET_VERSION_TOKEN}/common/images/" !default;`,
       }
     ];
   } else { return false; } //eslint-disable-line
@@ -156,7 +152,7 @@ function _loadComponentRefrence(themeName, themeDest) {
 
   // write entire components list imports in _themename.components.scss
   const { notagCompContent, allCompContent } = _getComponentsList();
-  const allCompDestPath = path.join(themeDest, constants.DEFAULT_PCSS_THEME, `_${themeName}.components.scss`);
+  const allCompDestPath = path.join(themeDest, constants.DEFAULT_PCSS_THEME, `_${themeName}.optimize-components.scss`);
   let destAllCompContent = fs.readFileSync(allCompDestPath, 'utf-8');
   destAllCompContent = destAllCompContent.replace(new RegExp(IMPORT_OJ_TAGS, 'g'), notagCompContent);
   destAllCompContent = destAllCompContent.replace(new RegExp(COMPONENT_ALL_TOKEN, 'g'), allCompContent);

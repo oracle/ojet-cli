@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -10,7 +10,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const commonMessages = require('./messages');
 const CONSTANTS = require('../util/constants');
-const util = require('../lib/utils');
 const app = require('../lib/scopes/app');
 
 module.exports =
@@ -133,8 +132,15 @@ module.exports =
   },
 
   addTypescript: (generator) => {
-    if (generator.options.typescript || util.isTypescriptApplication()) {
+    if (generator.options.typescript) {
       return app.addTypescript();
+    }
+    return Promise.resolve();
+  },
+
+  addpwa: (generator) => {
+    if (generator.options.pwa) {
+      return app.addpwa();
     }
     return Promise.resolve();
   }

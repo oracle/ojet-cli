@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -108,6 +108,10 @@ const config = {
           description: 'Adds Typescript compilation to the app',
           examples: ['ojet add typescript']
         },
+        pwa: {
+          description: 'Adds pwa support to the app',
+          examples: ['ojet add pwa']
+        },
         web: {
           description: 'Adds a web app target to the web app',
           examples: ['ojet add web']
@@ -210,6 +214,14 @@ const config = {
           examples: [
             'ojet build component demo-card // component build'
           ]
+        },
+        pack: {
+          description: 'Builds an optimized pack for the specified pack name' + // eslint-disable-line
+          newLine + 'Use ojet build pack pack_name to build an optimized pack',
+          parameters: 'pack name',
+          examples: [
+            'ojet build pack demo-card-pack // pack build'
+          ]
         }
       }
     },
@@ -261,6 +273,9 @@ const config = {
             typescript: {
               description: 'Create a typescript-based app',
             },
+            pwa: {
+              description: 'Create a pwa-supported app',
+            },
           },
           hybridOnlyOptions: {
             appid: {
@@ -283,6 +298,7 @@ const config = {
           examples: [
             'ojet create myWebApp --template=navbar',
             'ojet create myWebApp --template=navbar --typescript',
+            'ojet create myWebApp --template=navbar --pwa',
             'ojet create myHybridApp --hybrid --appid="com.oracle.myApp" --appname="My App" --platforms=ios,android --template=navdrawer',
             'ojet create myApp --web --template=basic:hybrid',
             'ojet create FixItFast --template=http://www.oracle.com/webfolder/technetwork/jet/public_samples/FixItFast.zip'
@@ -314,7 +330,7 @@ const config = {
         },
         pack: {
           aliases: ['packs'],
-          description: 'Creates a pack with the specified name in an existing app, or creates a pack with a shell app',
+          description: 'Creates a pack with the specified name in an existing app',
           parameters: '<pack-name>',
           examples: ['ojet create pack component demo-pack']
         },

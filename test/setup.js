@@ -1,16 +1,16 @@
 /**
-  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
 */
-var assert = require('assert');
-var fs = require('fs-extra');
-var util = require('./util');
+const assert = require('assert');
+const fs = require('fs-extra');
+const util = require('./util');
 
-var env = process.env;
+const env = process.env;
 
-before( async function () {
+before(async () => {
   const platform = util.getPlatform(env.OS);
 
   if (!util.noScaffold()) {
@@ -34,10 +34,10 @@ before( async function () {
 
   // Always copy
   util.copyOracleJetTooling(`${util.APP_NAME}`);
-    
+
   if (!util.noScaffold() && !util.noHybrid()) {
     // Add hybrid
-    result = await util.execCmd(`${util.OJET_APP_COMMAND} add hybrid --platform=${platform}`, { cwd: util.getAppDir(util.APP_NAME) });
+    let result = await util.execCmd(`${util.OJET_APP_COMMAND} add hybrid --platform=${platform}`, { cwd: util.getAppDir(util.APP_NAME) });
     console.log(result.stdout);
 
     // Scaffold hybrid app from scratch
@@ -46,7 +46,7 @@ before( async function () {
     // Check output
     assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
   }
-  
+
   if (!util.noHybrid()) {
     // Always copy
     util.copyOracleJetTooling(`${util.HYBRID_APP_NAME}`);
@@ -54,18 +54,18 @@ before( async function () {
 
   if (!util.noScaffold()) {
     // Scaffold TS app from scratch
-    result = await util.execCmd(`${util.OJET_COMMAND} create ${util.TS_APP_NAME} --template=navbar --typescript`, { cwd: util.testDir });
+    const result = await util.execCmd(`${util.OJET_COMMAND} create ${util.TS_APP_NAME} --template=navbar --typescript`, { cwd: util.testDir });
     console.log(result.stdout);
     // Check output
     assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
   }
-  
+
   // Always copy
   util.copyOracleJetTooling(`${util.TS_APP_NAME}`);
-  
+
   if (!util.noScaffold()) {
     // Scaffold component js app from scratch
-    result = await util.execCmd(`${util.OJET_COMMAND} create ${util.COMPONENT_APP_NAME} --template=navbar`, { cwd: util.testDir });
+    let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.COMPONENT_APP_NAME} --template=navbar`, { cwd: util.testDir });
     console.log(result.stdout);
     // Check output
     assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
@@ -73,13 +73,13 @@ before( async function () {
     result = await util.execCmd(`${util.OJET_APP_COMMAND} configure --exchange-url=https://exchange.oraclecorp.com/api/0.2.0/`, { cwd: util.getAppDir(util.COMPONENT_APP_NAME) });
     console.log(result.stdout);
   }
-  
+
   // Always copy
   util.copyOracleJetTooling(`${util.COMPONENT_APP_NAME}`);
 
   if (!util.noScaffold()) {
     // Scaffold component ts app from scratch
-    result = await util.execCmd(`${util.OJET_COMMAND} create ${util.COMPONENT_TS_APP_NAME} --template=navbar --typescript`, { cwd: util.testDir });
+    let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.COMPONENT_TS_APP_NAME} --template=navbar --typescript`, { cwd: util.testDir });
     console.log(result.stdout);
     // Check output
     assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
@@ -87,7 +87,34 @@ before( async function () {
     result = await util.execCmd(`${util.OJET_APP_COMMAND} configure --exchange-url=https://exchange.oraclecorp.com/api/0.2.0/`, { cwd: util.getAppDir(util.COMPONENT_TS_APP_NAME) });
     console.log(result.stdout);
   }
-  
+
   // Always copy
   util.copyOracleJetTooling(`${util.COMPONENT_TS_APP_NAME}`); 
+
+  if (!util.noScaffold()) {
+    // Scaffold a basic web app
+    let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.THEME_APP_NAME} --norestore=true`, { cwd: util.testDir });
+    console.log(result.stdout);
+    // Check that it output the right text to the command line
+    assert.strictEqual(util.norestoreSuccess(result.stdout), true, result.stderr);
+    // Restore
+    result = await util.execCmd(`${util.OJET_APP_COMMAND} restore`, { cwd: util.getAppDir(util.THEME_APP_NAME) });
+  }
+
+  // Always copy
+  util.copyOracleJetTooling(`${util.THEME_APP_NAME}`);
+
+  if (!util.noScaffold()) {
+    // Scaffold component pwa app from scratch
+    let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.PWA_APP_NAME}`, { cwd: util.testDir });
+    console.log(result.stdout);
+    // Check output
+    assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
+    // copy oraclejet-tooling into app
+    util.copyOracleJetTooling(`${util.PWA_APP_NAME}`); 
+    // convert app to pwa
+    result = await util.execCmd(`${util.OJET_APP_COMMAND} add pwa`, { cwd: util.getAppDir(util.PWA_APP_NAME) });
+    // check for correct output
+    assert.ok(/add pwa complete/.test(result.stdout), result.error);
+  }
 });

@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -24,6 +24,7 @@ module.exports =
       utils.log('Writing:', ORACLE_JET_CONFIG_FILE);
 
       // need to place the oracletjetconfig.json at origDestRoot
+
       fs.stat(configPath, (err) => {
         const generatorVersion = _getOracleJetGeneratorVersion();
         if (err) {
