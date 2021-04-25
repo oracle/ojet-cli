@@ -1,5 +1,9 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 10.1.0
+
+* Hybrid build/serve capability based on Cordova is deprecated and is planned for removal in version 12.0.0
+
 ### 10.0.0
 
 * The before_serve hook now supports custom middleware

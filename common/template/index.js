@@ -17,7 +17,7 @@ const CONSTANTS = require('../../lib/utils.constants');
 const _HYBRID = 'hybrid';
 const _WEB = 'web';
 
-const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~10.0.0';
+const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~10.1.0';
 
 module.exports =
 {

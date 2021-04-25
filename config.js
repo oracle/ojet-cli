@@ -125,7 +125,8 @@ const config = {
         app: {
           description: 'Builds a JET app for the specified platform,' + // eslint-disable-line
           newLine + 'where [app] is the directory context of the JET app.' + newLine, // eslint-disable-line
-          parameters: '[android|ios|windows|web] - specifies the build platform',
+          parameters: '[android|ios|windows|web] - specifies the build platform' + // eslint-disable-line
+              newLine + 'The default platform is \'web\'',
           isParameterOptional: true,
           options: {
             release: {
@@ -400,7 +401,8 @@ const config = {
       description: 'Publishes components to the Exchange',
       scopes: {
         component: {
-          description: 'Publishes the specified component to the Exchange',
+          description: 'Publishes the specified component to the Exchange' + // eslint-disable-line
+              newLine + 'This is the default scope',
           parameters: '<component>',
           options: {
             username: {
@@ -416,7 +418,8 @@ const config = {
               parameters: '<pack_name>'
             },
             path: {
-              description: 'Specify the relative path to component archive',
+              description: 'Specify the path to component archive',
+              parameters: '<path>'
             },
             release: {
               aliases: ['r'],
@@ -430,7 +433,9 @@ const config = {
           },
           examples: [
             'ojet publish component flipcard',
-            'ojet publish component demo-card --path="./dist/demo-card.zip"'
+            'ojet publish component --path="./dist/demo-card.zip"',
+            'ojet publish --path="./dist/flip-card.zip"',
+            'ojet publish --path="/Users/john/my-project/built/demo-card.zip"'
           ]
         },
         pack: {
@@ -456,7 +461,7 @@ const config = {
             'ojet publish pack oj-dvt'
           ]
         }
-      },
+      }
     },
     remove: {
       description: 'Removes platforms, plugins and more from a JET app',
