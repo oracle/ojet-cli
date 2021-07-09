@@ -76,7 +76,7 @@ describe('Customization Test', () => {
     process.chdir(util.getAppDir(util.APP_NAME));
     const isJetApp = ojetUtil.ensureJetApp();
     process.chdir(wd);
-    assert(_.isEqual(isJetApp, undefined));
+    assert(isJetApp);
   });
 
   it('should validate util ensure parameters', () => {

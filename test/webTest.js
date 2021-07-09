@@ -12,7 +12,7 @@ const _ = require('lodash');
 const util = require('./util');
 
 let filelist;
-const testDir = path.resolve('test_result/test');
+const testDir = path.resolve('../test_result');
 const appDir = path.resolve(testDir, util.APP_NAME);
 
 describe('Web Test', () => {
@@ -37,25 +37,10 @@ describe('Web Test', () => {
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
     }
-    it('should not have bundle.js and bundle_es5.js', async () => {
-      filelist = fs.readdirSync(path.resolve(appDir, 'web', 'js'));
-      let hasBundleJs = false;
-      let hasBundleEs5JS = false;
-      if (filelist) {
-        filelist.forEach((file) => {
-          switch (file) {
-            case 'bundle.js':
-              hasBundleJs = true;
-              break;
-            case 'bundle_es5.js':
-              hasBundleEs5JS = true;
-              break;
-            default:
-              break;
-          }
-        })
-      }
-      assert.ok(!hasBundleJs && !hasBundleEs5JS, filelist);
+    it('should not have bundle.js', async () => {
+      const{ pathToBundleJs } = util.getAppPathData({ appName: util.APP_NAME })
+      const hasBundleJs = fs.existsSync(pathToBundleJs);
+      assert.ok(!hasBundleJs, pathToBundleJs);
     })
   });
 
@@ -66,25 +51,15 @@ describe('Web Test', () => {
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
     }
-    it('should have bundle.js and bundle_es5.js', async () => {
-      filelist = fs.readdirSync(path.resolve(appDir, 'web', 'js'));
-      let hasBundleJs = false;
-      let hasBundleEs5JS = false;
-      if (filelist) {
-        filelist.forEach((file) => {
-          switch (file) {
-            case 'bundle.js':
-              hasBundleJs = true;
-              break;
-            case 'bundle_es5.js':
-              hasBundleEs5JS = true;
-              break;
-            default:
-              break;
-          }
-        })
-      }
-      assert.ok(hasBundleJs && hasBundleEs5JS, filelist);
+    it('should have bundle.js', async () => {
+      const{ pathToBundleJs } = util.getAppPathData({ appName: util.APP_NAME })
+      const hasBundleJs = fs.existsSync(pathToBundleJs);
+      assert.ok(hasBundleJs, pathToBundleJs);
+    })
+    it('should not have main.js', async () => {
+      const{ pathToMainJs } = util.getAppPathData({ appName: util.APP_NAME })
+      const hasMainJs = fs.existsSync(pathToMainJs);
+      assert.ok(!hasMainJs, pathToMainJs);
     })
   });
 
@@ -128,7 +103,8 @@ describe('Web Test', () => {
       });
       it('release build:  path mapping to minified component', async () => {
         await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
-        const bundleContent = fs.readFileSync(path.join(appDir, 'web', 'js', 'bundle.js'));
+        const{ pathToBundleJs } = util.getAppPathData({ appName: util.APP_NAME })
+        const bundleContent = fs.readFileSync(pathToBundleJs);
         assert.equal(bundleContent.toString().match(`jet-composites/${testComp}/1.0.0/min`), `jet-composites/${testComp}/1.0.0/min`,
           `bundle.js should contain the minified component ${testComp}`);
 
@@ -244,7 +220,7 @@ describe('Paths Mapping Test', () => {
 if (!util.noServe()) {
   describe('serve', () => {
     it('should serve with nobuild', async () => {
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 30000, timeout:40000, killSignal:'SIGTERM' }, true);
       assert.equal(/Watching files/i.test(result.stdout), true, result.stdout);
       result.process.kill();
     });

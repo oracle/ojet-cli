@@ -77,7 +77,7 @@ module.exports = function (parameters, opt, utils) {
     appDir: parameters
   };
 
-  common.validateFlags(app)
+  return common.validateFlags(app)
     .then(() => common.validateAppDirNotExistsOrIsEmpty(app))
     .then((validAppDir) => {
       app.appDir = path.basename(validAppDir);
@@ -87,7 +87,7 @@ module.exports = function (parameters, opt, utils) {
     })
     .then(() => platformsHelper.getPlatforms(app, utils))
     .then(() => common.switchToAppDirectory(app))
-    .then(() => common.writeCommonTemplates())
+    .then(() => common.writeCommonTemplates(app))
     .then(() => common.writeGitIgnore())
     .then(() => cordovaHelper.create(app))
     .then(() => commonHybrid.copyResources())
@@ -101,7 +101,7 @@ module.exports = function (parameters, opt, utils) {
     .then(() => {
       utils.log(commonMessages.scaffoldComplete());
       if (!app.options.norestore) {
-        commonRestore.npmInstall(app)
+        return commonRestore.npmInstall(app)
           .then(() => commonHybrid.copyHooks())
           .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
           .then(() => _invokeCordovaPrepare(app))
@@ -112,11 +112,12 @@ module.exports = function (parameters, opt, utils) {
             app.appDir
           )));
       }
+      return Promise.resolve();
     })
     .catch((err) => {
       if (err) {
-        utils.log(err);
-        process.exit(1);
+        utils.log.error(err);
       }
+      return Promise.reject();
     });
 };

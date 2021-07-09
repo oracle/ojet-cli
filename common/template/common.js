@@ -45,8 +45,15 @@ function _injectTemplateFiles({ generator, namespace }) {
     .readdirSync({ dir: pathToTemplates, recursive: true })
     .filter(_templateFileFilter);
   if (utils.isNPMTemplate(template)) {
-    // is NPM template, inject all files from templates folder
-    filesToCopy.forEach(_copyFile);
+    // is NPM template, filter out /src/* files since NPM templates
+    // have all the required files and then inject remaining files from
+    // templates folder into the app
+    filesToCopy
+      .filter((file) => {
+        const filePathInApp = path.relative(pathToTemplates, file);
+        return !filePathInApp.startsWith('src');
+      })
+      .forEach(_copyFile);
   } else {
     // not NPM template, selectively inject files from templates folder
     const pathToAppPackageJson = path.join(pathToApp, 'package.json');

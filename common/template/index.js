@@ -17,7 +17,7 @@ const CONSTANTS = require('../../lib/utils.constants');
 const _HYBRID = 'hybrid';
 const _WEB = 'web';
 
-const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~10.1.0';
+const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~11.0.0';
 
 module.exports =
 {
@@ -63,7 +63,11 @@ function _resolveTemplateSpec(generator, template) {
   let templateName = res[0];
   const templateType = (res.length > 1) ? res[1] : _getGeneratorType(generator.options.namespace);
 
-  if (templateName.endsWith('-ts')) {
+  if (templateName.endsWith('-ts') || templateName.endsWith('-vdom')) {
+    // eslint-disable-next-line no-param-reassign
+    generator.options.typescript = true;
+  } else if (generator.options.vdom) {
+    templateName = `${templateName}-vdom`;
     // eslint-disable-next-line no-param-reassign
     generator.options.typescript = true;
   } else if (generator.options.typescript) {

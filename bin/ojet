@@ -1,0 +1,15 @@
+#! /usr/bin/env node
+
+'use strict';
+
+const argv = require('minimist')(process.argv.slice(2));
+const tasks = require('../lib/tasks');
+const utils = require('../lib/utils');
+// Extract commands
+const commands = [...argv._];
+// Delete commands leaving only options
+delete argv._;
+// Convert boolean string options
+const options = utils.convertStringBooleansToRealBooleans(argv);
+// Run ojet task with options
+tasks(commands, options);

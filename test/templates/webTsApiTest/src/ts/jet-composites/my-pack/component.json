@@ -1,0 +1,12 @@
+{
+  "name": "my-pack",
+  "version": "1.0.0",
+  "jetVersion": "^10.0.0",
+  "type": "pack",
+  "displayName": "A user friendly, translatable name of the pack.",
+  "description": "A translatable high-level description for the pack.",
+  "dependencies": {
+    "my-pack-component": "1.0.0",
+    "my-pack-resources": "1.0.0"
+  }
+}

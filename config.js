@@ -112,6 +112,10 @@ const config = {
           description: 'Adds pwa support to the app',
           examples: ['ojet add pwa']
         },
+        webpack: {
+          description: 'Adds webpack support to the app',
+          examples: ['ojet add webpack']
+        },
         web: {
           description: 'Adds a web app target to the web app',
           examples: ['ojet add web']
@@ -268,8 +272,8 @@ const config = {
             },
             template: {
               description: 'Use a pre-defined app template',
-              parameters: 'blank|basic[:web|:hybrid]|navbar[:web|:hybrid]|' + // eslint-disable-line
-                newLine + ' navdrawer[:web|:hybrid]|<URL_to_zip_file>'
+              parameters: 'blank[-ts]|basic[-ts|-vdom][:web|:hybrid]|navbar[-ts][:web|:hybrid]|' + // eslint-disable-line
+                newLine + ' navdrawer[-ts][:web|:hybrid]|<URL_to_zip_file>'
             },
             typescript: {
               description: 'Create a typescript-based app',
@@ -277,6 +281,12 @@ const config = {
             pwa: {
               description: 'Create a pwa-supported app',
             },
+            webpack: {
+              description: 'Create a webpack-supported app',
+            },
+            'use-global-tooling': {
+              description: 'Use the globally-installed tooling library installed with ojet-cli'
+            }
           },
           hybridOnlyOptions: {
             appid: {
@@ -339,7 +349,7 @@ const config = {
           aliases: ['themes'],
           description: 'Creates a custom theme with the specified name',
           parameters: '<theme-name>',
-          examples: ['ojet create theme red']
+          examples: ['ojet create theme xyz --basetheme=stable | redwood']
         }
       },
     },

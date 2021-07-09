@@ -10,7 +10,9 @@ const fs = require('fs-extra');
 const path = require('path');
 const commonMessages = require('./messages');
 const CONSTANTS = require('../util/constants');
+const constants = require('../lib/utils.constants');
 const app = require('../lib/scopes/app');
+const utils = require('../lib/utils');
 
 module.exports =
 {
@@ -29,23 +31,47 @@ module.exports =
     });
   },
 
-  writeCommonTemplates: function _writeCommonTemplates() {
+  writeCommonTemplates: function _writeCommonTemplates(generator) {
     const templateSrc = path.resolve(__dirname, '../template/common');
     const templateDest = path.resolve('.');
     return new Promise((resolve, reject) => {
-      fs.copy(templateSrc, templateDest, (err) => {
-        if (err) {
-          reject(commonMessages.error(err, 'writeCommonTemplates'));
-        } else {
-          resolve();
+      function filter(src, dest) {
+        const isOracleJetConfigJson = path.basename(src) === CONSTANTS.APP_CONFIG_JSON;
+        const isVDOMTemplate = utils.isVDOMTemplate(generator);
+        if (isVDOMTemplate && isOracleJetConfigJson) {
+          // for vdom templates, update the oracljetconfig.json to
+          // support the new architecture
+          const oraclejetConfigJson = fs.readJSONSync(src);
+          oraclejetConfigJson[constants.APPLICATION_ARCHITECTURE] = constants.VDOM_ARCHITECTURE;
+          oraclejetConfigJson.paths.source.javascript = '.';
+          oraclejetConfigJson.paths.source.typescript = '.';
+          oraclejetConfigJson.paths.source.styles = 'styles';
+          oraclejetConfigJson.paths.source.components = 'components';
+          oraclejetConfigJson.paths.source.exchangeComponents = 'exchange_components';
+          fs.writeJSONSync(dest, oraclejetConfigJson, { spaces: 2 });
+          return false;
+        } else if (isOracleJetConfigJson) {
+          // for none-vdom templates, update oraclejetconfig.json
+          // to indicate that architecture is mvvm (model-view-view-model)
+          const oraclejetConfigJson = fs.readJSONSync(src);
+          oraclejetConfigJson[constants.APPLICATION_ARCHITECTURE] = constants.MVVM_ARCHITECTURE;
+          fs.writeJSONSync(dest, oraclejetConfigJson, { spaces: 2 });
+          return false;
         }
-      });
+        return true;
+      }
+      try {
+        fs.copySync(templateSrc, templateDest, { filter });
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
     });
   },
 
   updatePackageJSON: function _updatePacakgeJSON(generator) {
     return new Promise((resolve) => {
-      _updateJSONAppName(generator, 'package.json');
+      _updateJSON(generator, 'package.json');
       resolve(generator);
     });
   },
@@ -121,16 +147,6 @@ module.exports =
     });
   },
 
-  fsExistsSync(filePath) {
-    try {
-      fs.statSync(filePath);
-      return true;
-    } catch (err) {
-      // file/directory does not exist
-      return false;
-    }
-  },
-
   addTypescript: (generator) => {
     if (generator.options.typescript) {
       return app.addTypescript();
@@ -141,6 +157,13 @@ module.exports =
   addpwa: (generator) => {
     if (generator.options.pwa) {
       return app.addpwa();
+    }
+    return Promise.resolve();
+  },
+
+  addwebpack: (generator) => {
+    if (generator.options.webpack) {
+      return app.addwebpack();
     }
     return Promise.resolve();
   }
@@ -175,10 +198,15 @@ function _handleAbsoluteOrMissingPath(generator) {
   return appDir;
 }
 
-function _updateJSONAppName(generator, jsonPath) {
+function _updateJSON(generator, jsonPath) {
   const json = fs.readJSONSync(path.resolve('.', jsonPath));
   // space in app name will result in npm install failure
   json.name = _removeSpaceInAppName(generator.options.appname);
+  if (generator.options['use-global-tooling']) {
+    // If create wants to use the global oraclejet-tooling,
+    // then remove the dependency link in the created package.json
+    delete json.devDependencies[constants.ORACLEJET_TOOLING_PACKAGE_JSON_NAME];
+  }
   fs.writeJSONSync(path.resolve('.', jsonPath), json);
 }
 

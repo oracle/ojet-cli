@@ -19,6 +19,7 @@
         "before_app_typescript": "scripts/hooks/before_app_typescript.js",
         "before_component_typescript": "scripts/hooks/before_component_typescript.js",
         "after_app_typescript": "scripts/hooks/after_app_typescript.js",
-        "after_component_typescript": "scripts/hooks/after_component_typescript.js"
+        "after_component_typescript": "scripts/hooks/after_component_typescript.js",
+        "before_webpack": "scripts/hooks/before_webpack.js"
     }
 }

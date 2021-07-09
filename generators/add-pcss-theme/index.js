@@ -20,19 +20,19 @@ const THEMENAME_TOKEN = '<%= themename %>';
 const COMPONENT_TOKEN = '<%= importcomponents %>';
 const COMPONENT_ALL_TOKEN = '<%= importallcomponents %>';
 const IMPORT_OJ_TAGS = '<%= importojnotags %>';
-const ALL_COMP_RW_PATH = 'oj/all-components/themes/redwood';
+const ALL_COMP_RW_PATH = 'oj/all-components/themes/';
 const COMPONENT_LIST = {
-  all: `${ALL_COMP_RW_PATH}/_oj-all-components.scss`,
-  all_notag: `${ALL_COMP_RW_PATH}/_oj-all-components-notag.scss`,
-  common: `${ALL_COMP_RW_PATH}/_oj-all-components-common.scss`
+  all: '/_oj-all-components.scss',
+  all_notag: '/_oj-all-components-notag.scss',
+  common: '/_oj-all-components-common.scss'
 };
 
 function _isvalidThemeName(themeName) {
   return !(/-!$%^&*()_+|~=`{}\[\]:";'<>?,.\//.test(themeName));
 }
 
-function _getSettingsFileByTech(tech) {
-  return (tech === 'sass') ? '_oj.redwood.settings.scss' : 'oj.redwood.cssvars.settings.css';
+function _getSettingsFileByTech(basetheme, tech) {
+  return (tech === 'sass') ? `_oj.${basetheme}.settings.scss` : `oj.${basetheme}.cssvars.settings.css`;
 }
 
 function _setSettingsFileByTech(tech) {
@@ -45,14 +45,19 @@ function _getJETVersion() {
   return getPackageJson.version;
 }
 
-function _getComponentsList() {
+function _getComponentsList(baseName) {
   const replaceCopyright = /^\/\/.+copyright.*/gmi;
-  const srcNotagAllCompPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, COMPONENT_LIST.all_notag);
+  const componentNotag = ALL_COMP_RW_PATH + baseName + COMPONENT_LIST.all_notag;
+  const componentAll = ALL_COMP_RW_PATH + baseName + COMPONENT_LIST.all;
+  const componentCommon = ALL_COMP_RW_PATH + baseName + COMPONENT_LIST.common;
+
   const srcAllCompPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, COMPONENT_LIST.all);
+  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, componentAll);
   const srcCommonCompPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, COMPONENT_LIST.common);
+  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, componentCommon);
+  const srcNotagAllCompPath =
+  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, componentNotag);
+
   let notagCompContent = fs.readFileSync(srcNotagAllCompPath, 'utf-8');
   notagCompContent = notagCompContent.replace(replaceCopyright, '')
     .replace(/^.*components-common.*/gmi, '')
@@ -69,7 +74,7 @@ function _getComponentsList() {
   };
 }
 
-function _getReplaceValuePairsArray(tech) {
+function _getReplaceValuePairsArray(basetheme, tech) {
   if (tech === 'sass') {
     return [
       {
@@ -82,19 +87,19 @@ function _getReplaceValuePairsArray(tech) {
       },
       {
         findstr: new RegExp('.*\\$imageDir.*'),
-        replacewith: `$imageDir: "../../../redwood/${JET_VERSION_TOKEN}/web/images/" !default;`
+        replacewith: `$imageDir: "../../../${basetheme}/${JET_VERSION_TOKEN}/web/images/" !default;`
       },
       {
         findstr: new RegExp('.*\\$fontDir.*'),
-        replacewith: `$fontDir:  "../../../redwood/${JET_VERSION_TOKEN}/web/fonts/" !default;`,
+        replacewith: `$fontDir:  "../../../${basetheme}/${JET_VERSION_TOKEN}/web/fonts/" !default;`,
       }
     ];
   } else { return false; } //eslint-disable-line
 }
 
-function _injectDefaultValues(destPath, tech) {
+function _injectDefaultValues(basetheme, destPath, tech) {
   let destFileContent = fs.readFileSync(destPath, 'utf-8');
-  const valueReplacePairs = _getReplaceValuePairsArray(tech);
+  const valueReplacePairs = _getReplaceValuePairsArray(basetheme, tech);
   if (valueReplacePairs) {
     valueReplacePairs.forEach((valuePair) => {
       destFileContent = destFileContent.replace(valuePair.findstr, valuePair.replacewith);
@@ -103,14 +108,15 @@ function _injectDefaultValues(destPath, tech) {
   }
 }
 
-function _copyCssSettingsFile(themeName, destPath, setTechnology) {
-  const srcSettings = _getSettingsFileByTech(setTechnology);
+function _copyCssSettingsFile(addTheme, destPath, setTechnology) {
+  const whichTheme = addTheme.themeOptionValue;
+  const srcSettings = _getSettingsFileByTech(whichTheme, setTechnology);
   const srcPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, ALL_COMP_RW_PATH, srcSettings);
+  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, ALL_COMP_RW_PATH, whichTheme, srcSettings);
   const destSettingsFileName = _setSettingsFileByTech(setTechnology);
   const destSettingsPath = path.join(destPath, constants.DEFAULT_PCSS_THEME, destSettingsFileName);
   fs.copySync(srcPath, destSettingsPath);
-  _injectDefaultValues(destSettingsPath, setTechnology);
+  _injectDefaultValues(whichTheme, destSettingsPath, setTechnology);
 }
 
 function _isSassCssFile(file) {
@@ -143,15 +149,23 @@ function _renameFilesTokens(themeName, themePath) {
   });
 }
 
-function _loadComponentRefrence(themeName, themeDest) {
+function _isThemeExist(themePath) {
+  const isExist = fs.existsSync(themePath);
+  return isExist;
+}
+
+function _loadComponentRefrence(addTheme, themeDest) {
+  const themeName = addTheme.themeName;
+  const baseName = addTheme.themeOptionValue;
   // Imports all components url from pcss in node_modules
   const destPath = path.join(themeDest, constants.DEFAULT_PCSS_THEME, `${themeName}.scss`);
   let destFileContent = fs.readFileSync(destPath, 'utf-8');
-  destFileContent = destFileContent.replace(new RegExp(COMPONENT_TOKEN, 'g'), COMPONENT_LIST.all);
+  const componentAllPath = ALL_COMP_RW_PATH + baseName + COMPONENT_LIST.all;
+  destFileContent = destFileContent.replace(new RegExp(COMPONENT_TOKEN, 'g'), componentAllPath);
   fs.outputFileSync(destPath, destFileContent);
 
   // write entire components list imports in _themename.components.scss
-  const { notagCompContent, allCompContent } = _getComponentsList();
+  const { notagCompContent, allCompContent } = _getComponentsList(baseName);
   const allCompDestPath = path.join(themeDest, constants.DEFAULT_PCSS_THEME, `_${themeName}.optimize-components.scss`);
   let destAllCompContent = fs.readFileSync(allCompDestPath, 'utf-8');
   destAllCompContent = destAllCompContent.replace(new RegExp(IMPORT_OJ_TAGS, 'g'), notagCompContent);
@@ -170,19 +184,42 @@ function _addPcssTheme(addTheme) {
   const source = path.resolve(__dirname, 'templates', DEFAULT_THEME);
   // Create templates and default theme folder from generator template
   fs.ensureDirSync(themeDestPath);
+
   return new Promise((resolve, reject) => {
     try {
       // Copy pcss theme template to project folder under src
       fs.copySync(source, themeDestPath);
       // Copy sass settings file
-      _copyCssSettingsFile(themeName, themeDestPath, 'sass');
+      _copyCssSettingsFile(addTheme, themeDestPath, 'sass');
       // Copy css vars settings file
-      _copyCssSettingsFile(themeName, themeDestPath, 'cssvars');
+      _copyCssSettingsFile(addTheme, themeDestPath, 'cssvars');
       // rename copied template files with created theme name
       _renameFilesTokens(themeName, themeDestPath, 'sass');
       // load component refrence data dynamically from source
-      _loadComponentRefrence(themeName, themeDestPath);
+      _loadComponentRefrence(addTheme, themeDestPath);
       resolve(addTheme);
+    } catch (err) {
+      reject();
+    }
+  });
+}
+
+function _updateBaseTheme(themeAdded, utils) {
+  const themeName = themeAdded.themeName;
+  const _configpaths = paths.getConfiguredPaths(path.resolve('.'));
+  const srcPath = _configpaths.source;
+  const srcThemes = _configpaths.sourceThemes;
+  // Desination path of created theme folder
+  const themeDestPath = path.resolve(srcPath, srcThemes, themeName);
+  const themeConfigPath = path.join(themeDestPath, 'theme.json');
+
+  return new Promise((resolve, reject) => {
+    try {
+      utils.log(`'Adding basetheme: ${themeAdded.themeOptionValue} to ${themeConfigPath}'.`);
+      const themeConfigJson = utils.readJsonAndReturnObject(themeConfigPath);
+      themeConfigJson.basetheme = themeAdded.themeOptionValue;
+      fs.writeFileSync(themeConfigPath, JSON.stringify(themeConfigJson, null, 2));
+      resolve(themeAdded);
     } catch (err) {
       reject();
     }
@@ -199,24 +236,44 @@ function _addPcssTheme(addTheme) {
  */
 module.exports = function (parameters, opt, utils) {
   const pcssTheme = {
+    themeOption: Object.prototype.hasOwnProperty.call(opt, constants.PCSS_THEME_FLAG),
+    themeOptionValue: opt[constants.PCSS_THEME_FLAG],
     themeName: parameters,
     arguments: [parameters],
     options: Object.assign({ namespace: 'add-pcss-theme' }, opt)
   };
+
+  const baseValues = [constants.PCSS_STABLE_FLAG, constants.DEFAULT_PCSS_NAME];
+
+  if (!pcssTheme.themeOption || baseValues.indexOf(pcssTheme.themeOptionValue) === -1) {
+    utils.log.error('The flag --basetheme is required. It supports values for two themes, redwood and stable. For example, "ojet create theme myCustomTheme --basetheme=stable"\n\nredwood: Redwood is the theme for Oracle applications. Oracle will make future changes to this theme that can affect custom themes that use it as the base theme.\n\nstable: Use the Stable theme as the base theme for your custom theme if you want to minimize the possibility that your custom theme will be affected by future changes to the base theme.\n');
+  }
+
   if (pcssTheme.themeName === constants.DEFAULT_PCSS_NAME ||
     pcssTheme.themeName === constants.DEFAULT_THEME) {
     utils.log.error(`Theme ${pcssTheme.themeName} is reserved.`);
   }
+
   if (!_isvalidThemeName(pcssTheme.themeName)) {
     utils.log.error(`Special characters invalid in theme name ${pcssTheme.themeName}.`);
   }
-  common.validateArgs(pcssTheme)
+
+  const srcThemePath = path.resolve(path.resolve('./'),
+    paths.getDefaultPaths().source, paths.getDefaultPaths().sourceThemes, pcssTheme.themeName);
+
+  if (_isThemeExist(srcThemePath)) {
+    utils.log.error(`Theme name ${pcssTheme.themeName} already exists, please use different name.`);
+  }
+
+  return common.validateArgs(pcssTheme)
     .then(common.validateFlags)
     .then(_addPcssTheme(pcssTheme))
+    .then(_updateBaseTheme(pcssTheme, utils))
     .then(() => {
       utils.log.success(commonMessages.appendJETPrefix(`${pcssTheme.themeName} theme added, with css variables support.`));
     })
     .catch((error) => {
       utils.log(error);
+      return Promise.reject();
     });
 };

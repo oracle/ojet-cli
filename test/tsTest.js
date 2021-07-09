@@ -11,7 +11,7 @@ const path = require('path');
 const util = require('./util');
 
 let filelist;
-const testDir = path.resolve('test_result/test');
+const testDir = path.resolve('../test_result');
 const appDir = path.resolve(testDir, util.TS_APP_NAME);
 
 describe('Typescript Test', () => {

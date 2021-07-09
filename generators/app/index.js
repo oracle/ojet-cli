@@ -11,6 +11,7 @@ const commonHookRunner = require('../../common/hookRunner');
 const commonMessages = require('../../common/messages');
 const commonRestore = require('../../common/restore');
 const templateHandler = require('../../common/template');
+const scopesApp = require('../../lib/scopes/app');
 const fs = require('fs');
 const path = require('path');
 
@@ -40,7 +41,7 @@ module.exports = function (parameters, opt, utils) {
     options: Object.assign({ namespace: 'app' }, opt),
     appDir: parameters
   };
-  common.validateFlags(app)
+  return common.validateFlags(app)
     .then(() => common.validateAppDirNotExistsOrIsEmpty(app))
     .then((validAppDir) => {
       app.appDir = path.basename(validAppDir);
@@ -48,7 +49,7 @@ module.exports = function (parameters, opt, utils) {
       fs.mkdirSync(path.resolve(app.appDir));
     })
     .then(() => common.switchToAppDirectory(app))
-    .then(() => common.writeCommonTemplates())
+    .then(() => common.writeCommonTemplates(app))
     .then(() => common.writeGitIgnore())
     .then(() => common.switchFromAppDirectory())
     .then(() => _writeTemplate(app, utils))
@@ -57,21 +58,28 @@ module.exports = function (parameters, opt, utils) {
     .then(() => {
       utils.log(commonMessages.scaffoldComplete());
       if (!app.options.norestore) {
-        commonRestore.npmInstall(app)
+        return commonRestore.npmInstall(app)
           .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
           .then(() => common.addTypescript(app))
           .then(() => common.addpwa(app))
-          .then(() => commonHookRunner.runAfterAppCreateHook())
-          .then(() => utils.log(commonMessages.restoreComplete(
-            app.options.invokedByRestore,
-            app.appDir
-          )));
+          .then(() => common.addwebpack(app))
+          .then(scopesApp.addComponents)
+          .then(commonHookRunner.runAfterAppCreateHook)
+          .then(() => {
+            utils.log(
+              commonMessages.restoreComplete(
+                app.options.invokedByRestore,
+                app.appDir
+              )
+            );
+          });
       }
+      return Promise.resolve();
     })
     .catch((err) => {
       if (err) {
-        utils.log(err);
-        process.exit(1);
+        utils.log.error(err);
       }
+      return Promise.reject();
     });
 };

@@ -9,7 +9,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const util = require('./util');
 
-const testDir = path.resolve('test_result/test');
+const testDir = path.resolve('../test_result');
 const appDir = path.resolve(testDir, util.PWA_APP_NAME);
 
 describe('PWA Test', () => {

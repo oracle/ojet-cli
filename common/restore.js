@@ -11,33 +11,30 @@ const fs = require('fs-extra');
 const path = require('path');
 const commonMessages = require('./messages');
 const generatorJSON = require('../package.json');
-
-const ORACLE_JET_CONFIG_FILE = 'oraclejetconfig.json';
+const CONSTANTS = require('../lib/utils.constants');
 
 module.exports =
 {
   writeOracleJetConfigFile: function _writeOracleJetConfigFile(generator, utils) {
     const destinationRoot = path.resolve('.');
-    const configPath = path.resolve(destinationRoot, ORACLE_JET_CONFIG_FILE);
-
+    const configPath = path.resolve(destinationRoot, CONSTANTS.APP_CONFIG_JSON);
     return new Promise((resolve) => {
-      utils.log('Writing:', ORACLE_JET_CONFIG_FILE);
-
-      // need to place the oracletjetconfig.json at origDestRoot
-
-      fs.stat(configPath, (err) => {
-        const generatorVersion = _getOracleJetGeneratorVersion();
-        if (err) {
-          utils.log(`${commonMessages.appendJETPrefix()}No config file. Writing the default config.`);
-          fs.writeJSONSync(configPath, { generatorVersion }, { spaces: 2 });
-        } else {
-          const configJson = fs.readJSONSync(configPath);
-          configJson.generatorVersion = generatorVersion;
-          fs.writeJSONSync(configPath, configJson, { spaces: 2 });
-          utils.log(`${commonMessages.appendJETPrefix() + ORACLE_JET_CONFIG_FILE} file exists. Checking config.`);
-        }
-        resolve();
-      });
+      const generatorVersion = generatorJSON.version;
+      let configJson;
+      if (!fs.existsSync(configPath)) {
+        utils.log(`${commonMessages.appendJETPrefix()}No ${CONSTANTS.APP_CONFIG_JSON}, writing default`);
+        configJson = utils.readJsonAndReturnObject(path.join(
+          __dirname,
+          '../../template/common',
+          CONSTANTS.APP_CONFIG_JSON
+        ));
+      } else {
+        utils.log(`${commonMessages.appendJETPrefix() + CONSTANTS.APP_CONFIG_JSON} file exists, updating generatorVersion`);
+        configJson = utils.readJsonAndReturnObject(configPath);
+      }
+      configJson.generatorVersion = generatorVersion;
+      fs.writeFileSync(configPath, JSON.stringify(configJson, null, 2));
+      resolve();
     });
   },
 
@@ -50,14 +47,4 @@ module.exports =
     });
   }
 };
-
-/*
- * Gets the generator version
- */
-function _getOracleJetGeneratorVersion() {
-  // We intend to read the top level package.json for the generator-oraclejet module.
-  // Note this path to package.json depends on the location of this file within the
-  // module (common/restore.js)
-  return generatorJSON.version;
-}
 

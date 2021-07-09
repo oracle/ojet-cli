@@ -9,3 +9,11 @@ Composite.register("@full-component-name@", {
   viewModel: viewModel,
   metadata: JSON.parse(metadata)
 });
+
+declare global {
+  namespace preact.JSX {
+    interface IntrinsicElements {
+     "@full-component-name@": any;
+    }
+  }
+}

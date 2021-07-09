@@ -42,7 +42,7 @@ module.exports = function (parameters, opt, utils) {
     utils.log.error(`Special characters invalid in theme name ${addTheme.themeName}.`);
   }
 
-  common.validateArgs(addTheme)
+  return common.validateArgs(addTheme)
     .then(common.validateFlags)
     .then(_addSassTheme(addTheme))
     .then(() => {
@@ -50,6 +50,7 @@ module.exports = function (parameters, opt, utils) {
     })
     .catch((error) => {
       utils.log(error);
+      return Promise.reject();
     });
 };
 

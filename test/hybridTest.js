@@ -21,9 +21,9 @@ let idName = 'dummy';
 if (!util.noHybrid()) {
   describe('Hybrid Test', () => {
     describe('Run Tests', () => {
-      describe('Invalid arugments & check error messages', () => {
+      describe('Invalid arguments & check error messages', () => {
         it('should complain about generating app to non-empty appDir', async () => {
-          const result = await util.execCmd(`${util.OJET_COMMAND} create hybridTest --hybrid --platforms=${platform}`, { cwd: util.testDir }, true);
+          const result = await util.execCmd(`${util.OJET_COMMAND} create ${util.HYBRID_APP_NAME} --hybrid --platforms=${platform}`, { cwd: util.testDir }, true);
           const errLogCorrect = /path already exists/.test(result.stdout);
           assert.equal(errLogCorrect, true, result.stdout);
         });
@@ -31,7 +31,7 @@ if (!util.noHybrid()) {
         it('should complain about unsupported platform android1', async () => {
           const result = await util.execCmd(`${util.OJET_APP_COMMAND} build android1`, { cwd: util.getAppDir(util.HYBRID_APP_NAME) }, true);
 
-          const errLogCorrect = /Invalid platform/i.test(result.error);
+          const errLogCorrect = /Invalid platform/i.test(result.stdout);
           assert.equal(errLogCorrect, true, result.error);
         });
 
@@ -45,7 +45,7 @@ if (!util.noHybrid()) {
         it('should complain about unsupported build argument', async () => {
           const result = await util.execCmd(`${util.OJET_APP_COMMAND} build xyz ${platform}`, { cwd: util.getAppDir(util.HYBRID_APP_NAME) }, true);
 
-          const errLogCorrect = /Invalid platform xyz/.test(result.error);
+          const errLogCorrect = /Invalid platform xyz/.test(result.stdout);
           assert.equal(errLogCorrect, true, result.error);
         });
       });
@@ -153,7 +153,7 @@ if (!util.noHybrid()) {
           assert.equal(/add sass complete/.test(result.stdout), true, result.stdout);
 
           // Recopy oraclejet-tooling
-          util.copyOracleJetTooling(`${util.HYBRID_APP_NAME}`);
+          //util.copyOracleJetTooling(`${util.HYBRID_APP_NAME}`);
         });
       });
 

@@ -1,3 +1,3 @@
 {"eslintDirs": ["../ojet-cli"],
- "eslintFilter": ["!../ojet-cli/test/**", "!../ojet-cli/test_result/**", "!../ojet-cli/generators/**/*template*/**/*.js", "!../ojet-cli/Gruntfile.js", "!../ojet-cli/test/**/*.js", "!../ojet-cli/config/**/*.js", "!../ojet-cli/template/**/*.js"],
+ "eslintFilter": ["!../ojet-cli/test/**", "!../ojet-cli/generators/**/*template*/**/*.js", "!../ojet-cli/Gruntfile.js", "!../ojet-cli/test/**/*.js", "!../ojet-cli/config/**/*.js", "!../ojet-cli/template/**/*.js"],
  "fixup": ["package.json", "index.js"]}

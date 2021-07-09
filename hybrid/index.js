@@ -8,13 +8,13 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const common = require('../common');
 const constants = require('../util/constants');
 const commonMessages = require('../common/messages');
 const DOMParser = require('xmldom').DOMParser;
 const endOfLine = require('os').EOL;
 const graphics = require('./graphics');
 const paths = require('../util/paths');
+const utils = require('../lib/utils');
 
 const ORACLEJET_APP_ID = 'org.oraclejet.';
 const iOSPlugins = ['cordova-plugin-wkwebview-file-xhr',
@@ -105,7 +105,7 @@ module.exports =
         _addWindowsPreferences(document);
         _addIcons(document);
         _addSplash(document);
-        fs.writeFileSync(configXml, document);
+        fs.writeFileSync(configXml, document.toString());
         resolve();
       } catch (err) {
         reject(commonMessages.error(err, 'updateConfigXml'));
@@ -114,25 +114,24 @@ module.exports =
   },
 
   copyHooks() {
-    const source = path.resolve('node_modules/@oracle/oraclejet-tooling/hooks/');
-    const dest = _getHybridPath('scripts/hooks/');
+    const toolingSource = utils.getToolingPath();
 
     return new Promise((resolve, reject) => {
-      if (common.fsExistsSync(source)) {
-        fs.copy(source, dest, (err) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          resolve();
-        });
-      } else {
+      if (toolingSource === null) {
         reject('Missing folder \'@oracle/oraclejet-tooling/hooks/\'.');
       }
+      const source = path.join(toolingSource, 'hooks');
+      const dest = _getHybridPath('scripts/hooks/');
+      fs.copy(source, dest, (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
     });
   }
 };
-
 
 function _getDefaultAppId(appDirArg) {
   const appDir = _getAppBaseName(appDirArg);

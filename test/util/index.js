@@ -12,45 +12,55 @@ const path = require('path');
 
 const exec = require('child_process').exec;
 
-const td = path.resolve('test_result/test');
+const td = path.resolve('../test_result');
 const pkg = require('../../package.json');
 
 function _isQuick() {
   return process.argv.indexOf('--quick') > -1;
 }
 
-const COMPONENT_APP_NAME = 'componentWebTest';
-const COMPONENT_TS_APP_NAME = 'componentTsTest';
+const COMPONENT_APP_NAME = 'webJsComponentTest';
+const COMPONENT_TS_APP_NAME = 'webTsComponentTest';
 
 const JAVASCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_APP_NAME, scriptsFolder: 'js' };
 const TYPESCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_TS_APP_NAME, scriptsFolder: 'ts' };
 const COMPONENT_TEST_APP_CONFIGS = [JAVASCRIPT_COMPONENT_APP_CONFIG, TYPESCRIPT_COMPONENT_APP_CONFIG];
 
-function runComponentTestInAllTestApps({ test, pack, component, vcomponent, release }) {
+function runComponentTestInAllTestApps({ test, pack, component, vcomponent, release, bundle}) {
   COMPONENT_TEST_APP_CONFIGS.forEach((config) => {
-    runComponentTestInTestApp({ config, test, pack, component, vcomponent, release });
+    runComponentTestInTestApp({ config, test, pack, component, vcomponent, release, bundle});
   })
 }
 
-function runComponentTestInTestApp({ config, test, pack, component, vcomponent, release }) {
+function runComponentTestInTestApp({ config, test, pack, component, vcomponent, release, bundle}) {
   describe(config.appName, () => {
-    test({...config, pack, component, vcomponent, release });
+    test({...config, pack, component, vcomponent, release, bundle});
   });
 }
 
+const ORACLJET_CONFIG_JSON = 'oraclejetconfig.json';
+const DEFAULT_COMPONENTS_FOLDER = 'jet-composites';
+const OMIT_COMPONENT_VERSION_FLAG = 'omit-component-version';
+
 module.exports = {
-  OJET_COMMAND: 'node ../../ojet',
-  OJET_APP_COMMAND: 'node ../../../ojet',
+  OJET_COMMAND: 'node ../ojet-cli/bin/ojet',
+  OJET_APP_COMMAND: 'node ../../ojet-cli/bin/ojet',
   testDir: td,
-  APP_NAME: 'webTest',
-  HYBRID_APP_NAME: 'hybridTest',
-  TS_APP_NAME: 'tsTest',
-  THEME_APP_NAME: 'themeTest',
+  APP_NAME: 'webJsTest',
+  HYBRID_APP_NAME: 'hybridJsTest',
+  TS_APP_NAME: 'webTsTest',
+  THEME_APP_NAME: 'webJsThemeTest',
+  PWA_APP_NAME: 'webJsPwaTest',
+  API_APP_NAME: 'webTsApiTest',
+  VDOM_APP_NAME: 'vdomTest',
   COMPONENT_APP_NAME,
   COMPONENT_TS_APP_NAME,
   JAVASCRIPT_COMPONENT_APP_CONFIG,
   TYPESCRIPT_COMPONENT_APP_CONFIG,
-  PWA_APP_NAME: 'pwaTest',
+  EXCHANGE_URL: 'https://exchange.oraclecorp.com/api/0.2.0',
+  ORACLJET_CONFIG_JSON,
+  DEFAULT_COMPONENTS_FOLDER,
+  OMIT_COMPONENT_VERSION_FLAG,
   execCmd: function _execCmd(cmd, options, squelch, logCommand = true) {
     if (logCommand) {
       console.log(cmd);
@@ -72,7 +82,7 @@ module.exports = {
   copyOracleJetTooling: function _copyOracleJetTooling(app) {
     try {
       const src = path.resolve('..', '..', '..', 'oraclejet-tooling', 'dist');
-      const dest = path.resolve(td, app, 'node_modules', '@oracle');
+      const dest = app ? path.resolve(td, app, 'node_modules', '@oracle') : path.resolve('node_modules', '@oracle');
       console.log(src);
       console.log(dest);
       console.log('Copying oraclejet-tooling/dist/oraclejet-tooling to ojet-cli installation');
@@ -157,9 +167,9 @@ module.exports = {
     return regex.test(stdout);
   },
 
-  createComponentFailure: function _createComponentFailure({ stderr }) {
+  createComponentFailure: function _createComponentFailure({ stdout }) {
     const regex = new RegExp('Invalid component name:');
-    return regex.test(stderr);
+    return regex.test(stdout);
   },
 
   addComponentSuccess: function _addComponentSuccess({ stdout, component }) {
@@ -187,12 +197,42 @@ module.exports = {
     return regex.test(stdout);
   },
 
-  createComponentInPackFailure: function _createComponentInPackFailure({ stderr }) {
+  createComponentInPackFailure: function _createComponentInPackFailure({ stdout }) {
     const regex = new RegExp('Invalid pack name:');
-    return regex.test(stderr);
+    return regex.test(stdout);
   },
 
   runComponentTestInAllTestApps,
 
-  runComponentTestInTestApp
+  runComponentTestInTestApp,
+
+  getOracleJetConfigJson: function _getOracleJetConfigJson({ appName }) {
+    const oraclejetConfigJsonPath = path.join(this.getAppDir(appName), ORACLJET_CONFIG_JSON);
+    const oraclejetConfigJson = fs.readJSONSync(oraclejetConfigJsonPath);
+    return oraclejetConfigJson;
+  },
+
+  getAppPathData: function _getAppPathData({ appName }) {
+    const oraclejetConfigJson = this.getOracleJetConfigJson({ appName });
+    const componentsFolder = oraclejetConfigJson.paths.source.components || DEFAULT_COMPONENTS_FOLDER;
+    const stagingFolder = oraclejetConfigJson.paths.staging.web;
+    const javascriptFolder = oraclejetConfigJson.paths.source.javascript;
+    const typescriptFolder = oraclejetConfigJson.paths.source.javascript;
+    const sourceFolder = oraclejetConfigJson.paths.source.common;
+    const pathToApp = this.getAppDir(appName);
+    const pathToBuiltComponents = path.join(pathToApp, stagingFolder, javascriptFolder, componentsFolder);
+    const pathToMainJs = path.join(pathToApp, stagingFolder, javascriptFolder, 'main.js');
+    const pathToBundleJs = path.join(pathToApp, stagingFolder, javascriptFolder, 'bundle.js');
+    return {
+      componentsFolder,
+      stagingFolder,
+      sourceFolder,
+      javascriptFolder,
+      typescriptFolder,
+      pathToApp,
+      pathToBuiltComponents,
+      pathToMainJs,
+      pathToBundleJs
+    }
+  }
 };

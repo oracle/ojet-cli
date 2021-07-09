@@ -18,6 +18,6 @@
   },
   
   "defaultBrowser": "chrome",
-  "sassVer": "4.13.0",
+  "sassVer": "5.0.0",
   "defaultTheme": "redwood"
 }

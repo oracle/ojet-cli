@@ -6,11 +6,11 @@
 */
 'use strict';
 
-const CONST = require('../../lib/utils.constants');
 const fs = require('fs-extra');
 const path = require('path');
 const execSync = require('child_process').execSync;
 const utils = require('../../lib/utils');
+const injectorUtils = require('../../lib/utils.injectors');
 
 module.exports = {
 
@@ -64,31 +64,70 @@ function _copyNpmTemplate(generator, templateSpec, destination) {
   }
 
   if (!isTemplateInNewFormat) {
-    utils.log.warning('No "src" directory found. This might indicate you are using deprecated format of an app template.');
+    utils.log.error('No "src" directory found. This might indicate you are using deprecated format of an app template.');
   }
 
-  const entryFilter = (entryFullPath) => {
-    const entryName = entryFullPath.split(`${templateSpec.name}/${templateSpec.type}/`).pop();
+  const isVDOMTemplate = utils.isVDOMTemplate(generator);
+  const filesToCopy = utils.readdirSync({ dir: src, recursive: true });
+  const templateSegment = path.join(templateSpec.name, templateSpec.type);
 
-    if (isTemplateInNewFormat) {
-      // Unpack the archive to the app root except of protected objects
-      if (CONST.APP_PROTECTED_OBJECTS.indexOf(entryName) === -1) {
-        fs.copySync(entryFullPath, path.join(destination, '..'));
+  filesToCopy.forEach((filePath) => {
+    // go from node_modules/@oracle/oraclejet-templates/<template-name>/<template-type>/path/to/file
+    // to path/to/file
+    let filePathDest;
+    const filePathFromTemplateRoot = filePath.split(templateSegment).pop();
+    const isPathMappingJson = path.basename(filePath) === 'path_mapping.json';
+    const isIndexHtml = path.basename(filePath) === 'index.html';
+    if (isVDOMTemplate) {
+      if (isPathMappingJson) {
+        const pathMappingJson = fs.readJSONSync(filePath);
+        // baseUrl will be set from javascript location in oraclejetconfig.json
+        delete pathMappingJson.baseUrl;
+        // write to root of the app and not /src
+        filePathDest = path.join(destination, '../path_mapping.json');
+        fs.writeJSONSync(filePathDest, pathMappingJson, { spaces: 2 });
+      } else if (isIndexHtml) {
+        // remove content between injector:theme and injector:scripts tokens,
+        // they will be added during the build
+        let indexHTML = fs.readFileSync(filePath, { encoding: 'utf-8' });
+        const scriptsInjector = injectorUtils.scriptsInjector;
+        const themeInjector = injectorUtils.themeInjector;
+        // remove content between injector:scripts token
+        indexHTML = injectorUtils.removeInjectorTokensContent({
+          content: indexHTML,
+          pattern: injectorUtils.getInjectorTagsRegExp(
+            scriptsInjector.startTag,
+            scriptsInjector.endTag
+          ),
+          eol: injectorUtils.getLineEnding(indexHTML),
+          startTag: `\t\t${scriptsInjector.startTag}`,
+          endTag: `\t\t${scriptsInjector.endTag}`
+        });
+        // remove content between injector:theme token
+        indexHTML = injectorUtils.removeInjectorTokensContent({
+          content: indexHTML,
+          pattern: injectorUtils.getInjectorTagsRegExp(
+            themeInjector.startTag,
+            themeInjector.endTag
+          ),
+          eol: injectorUtils.getLineEnding(indexHTML),
+          startTag: `\t\t${themeInjector.startTag}`,
+          endTag: `\t\t${themeInjector.endTag}`
+        });
+        // write to /src
+        filePathDest = path.join(destination, '..', filePathFromTemplateRoot);
+        fs.outputFileSync(filePathDest, indexHTML, { encoding: 'utf-8' });
+      } else {
+        // copy to /src
+        filePathDest = path.join(destination, '..', filePathFromTemplateRoot);
+        fs.copySync(filePath, filePathDest);
       }
-      return false;
+    } else {
+      // copy to /src
+      filePathDest = path.join(destination, '..', filePathFromTemplateRoot);
+      fs.copySync(filePath, filePathDest);
     }
-    // Unpack the archive content to 'src/' except of 'scripts/'
-    if (entryName.startsWith('scripts/')) {
-      // Exception, copy to app root
-      fs.copySync(entryFullPath, path.join(destination, '..'));
-      return false;
-    }
-    return true;
-  };
-
-  // 2. Process via copySync entryFilter. Apply logic similar to zipHandler
-  // https://github.com/jprichardson/node-fs-extra/blob/HEAD/docs/copy-sync.md
-  fs.copySync(src, destination, { filter: entryFilter });
+  });
 }
 
 function _getTemplateFromTypeSpecificDirectory(templateRoot, templateSpec) {

@@ -11,7 +11,6 @@ const fs = require('fs-extra');
 const util = require('./util');
 const path = require('path');
 
-const TEST_DIR = path.resolve('test_result/test');
 const COMPONENT_NAME = 'comp-1';
 // Component with type:composite
 const COMPONENT_NAME_COMPOSITE = 'comp-composite';
@@ -31,11 +30,11 @@ const EXCHANGE_COMPONENT_VERSION = '9.0.0-alpha10';
 // Use SLASH_STAR to avoid code editor malformatting
 const SLASH_STAR = '/*';
 
-function execComponentCommand({ task, app, component, flags }) {
-  return util.execCmd(`${util.OJET_APP_COMMAND} ${task} component ${component} ${flags}`, { cwd: util.getAppDir(app) }, true, false);
+function execComponentCommand({ task, app, component, flags = '' }) {
+  return util.execCmd(`${util.OJET_APP_COMMAND} ${task} component ${component} ${flags}`, { cwd: util.getAppDir(app) }, true, true);
 }
 
-function beforeComponentTest({ task, app, component, flags = '' }) {
+function beforeComponentTest({ task, app, component, flags }) {
   before(async () => {
     const result = await execComponentCommand({ task, app, component, flags });
     it(`should ${task} a component`, () => {
@@ -49,7 +48,7 @@ function createComponentTest({ appName, scriptsFolder, component }) {
     beforeComponentTest({ task: 'create', app: appName, component });
   }
   describe('check created component', () => {
-    it(`should have ${appName}/src/${scriptsFolder}/${component}/component.json`, () => {
+    it(`should have ${appName}/src/${scriptsFolder}/jet-composites/${component}/component.json`, () => {
       const pathToComponentJson = util.getAppDir(path.join(
         util.getAppDir(appName),
         'src',
@@ -116,7 +115,7 @@ function createComponentTypeCompositeTest({ appName, scriptsFolder, component })
     beforeComponentTest({ task: 'create', app: appName, component });
   }
   describe('check created component', () => {
-    it(`should have ${appName}/src/${scriptsFolder}/${component}/component.json`, () => {
+    it(`should have ${appName}/src/${scriptsFolder}/${component}/jet-composites/component.json`, () => {
       const pathToComponentJson = path.join(
         util.getAppDir(appName), 'src', scriptsFolder,
         'jet-composites', component, 'component.json');
@@ -144,7 +143,7 @@ function createComponentTypeDemoTest({ appName, scriptsFolder, component }) {
     beforeComponentTest({ task: 'create', app: appName, component });
   }
   describe('check created demo component', () => {
-    it(`should have ${appName}/src/${scriptsFolder}/${component}/component.json`, () => {
+    it(`should have ${appName}/src/${scriptsFolder}/${component}/jet-composites/component.json`, () => {
       const pathToComponentJson = path.join(
         util.getAppDir(appName), 'src', scriptsFolder,
         'jet-composites', component, 'component.json');
@@ -195,7 +194,7 @@ function createComponentFailureTest({ appName, component }) {
     it ('should fail with "Invalid component name:"', async () => {
       const task = 'create';
       const result = await execComponentCommand({ task, app: appName, component });
-      assert.ok(util[`${task}ComponentFailure`]({ component, stderr: result.stderr }), result.error);
+      assert.ok(util[`${task}ComponentFailure`]({ component, stdout: result.stdout }), result.error);
     })
   })
 }
@@ -268,7 +267,7 @@ function buildComponentTest({ appName, component }) {
     beforeComponentTest({ task: 'build', app: appName, component });
   }
   describe('check built component', () => {
-    const appDir = path.resolve(TEST_DIR, appName);
+    const appDir = util.getAppDir(appName);
     it(`should be built in ${appName}/web/js/jet-composites/${component}/${DEFAULT_COMPONENT_VERSION}`, () => {
       const builtComponentPath = path.join(appDir, 'web', 'js', 'jet-composites', component, DEFAULT_COMPONENT_VERSION);
       const exists = fs.pathExistsSync(builtComponentPath);
@@ -296,7 +295,7 @@ function releaseBuildComponentTypeDemoTest({ appName, component }) {
 
     if (!util.noBuild()) {
 
-      const appDir = path.resolve(TEST_DIR, appName);
+      const appDir = util.getAppDir(appName);
 
       it('should build release js app (type:demo) ', async () => {
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir });
@@ -306,8 +305,9 @@ function releaseBuildComponentTypeDemoTest({ appName, component }) {
       // Verify that the path mapping for the demo component in the bundle 
       // points to the debug area.
       it('release build:  path mapping to debug type:demo component', async () => {
+        const{ pathToBundleJs } = util.getAppPathData({ appName });
 
-        const bundleContent = fs.readFileSync(path.join(appDir, 'web', 'js', 'bundle.js'));
+        const bundleContent = fs.readFileSync(pathToBundleJs);
         
         assert.equal(bundleContent.toString().match(`jet-composites/${component}/1.0.0`), `jet-composites/${component}/1.0.0`,
                      `bundle.js should contain the debug component ${component}`);
@@ -329,7 +329,7 @@ function packageComponentTest({ appName, component }) {
       const packagedComponentPath = util.getAppDir(path.join(
         util.getAppDir(appName),
         'dist',
-        `${component}.zip`,
+        `${component}_1-0-0.zip`,
       ));
       const exists = fs.pathExistsSync(packagedComponentPath);
       assert.ok(exists, packagedComponentPath);
@@ -350,13 +350,13 @@ function buildComponentAppTest({ appName, component, release, scriptsFolder }) {
       it(`should build ${buildType} component app`, async () => {
         let command = `${util.OJET_APP_COMMAND} build`;
         command = release ? command + ' --release' : command;
-        let result = await util.execCmd(command, { cwd: util.getAppDir(appName) }, true, false);
+        let result = await util.execCmd(command, { cwd: util.getAppDir(appName) }, true, true);
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
     }
     // dont run for vcomponent if javascript application
     component.filter(_component => scriptsFolder === 'js' ? _component !== VCOMPONENT_NAME : true).forEach((individualComponent) => {
-      const appDir = path.resolve(TEST_DIR, appName);
+      const appDir = util.getAppDir(appName);
       const componentsDir = path.join(appDir, 'web', 'js', 'jet-composites');
       const componentLoader = path.join(componentsDir, individualComponent, DEFAULT_COMPONENT_VERSION,'loader.js');
       const componentMinDir = path.join(componentsDir, individualComponent, DEFAULT_COMPONENT_VERSION, 'min');
@@ -393,7 +393,7 @@ function buildComponentAppTest({ appName, component, release, scriptsFolder }) {
 
 function buildTsComponentAppWithDeclarationFalse({ appName   }) {
   describe('Build (declaration = false)', () => {
-    const appDir = path.resolve(TEST_DIR, appName);
+    const appDir = util.getAppDir(appName);
     if (!util.noBuild()) {
       it(`should build typescript component app with declaration = false`, async () => {
         // set tsconfig.compilerOptions.declaration = false
@@ -403,7 +403,7 @@ function buildTsComponentAppWithDeclarationFalse({ appName   }) {
         fs.writeJsonSync(tsconfigJsonPath, tsconfigJson, { spaces: 2 });
         // build typescript component app
         const command = `${util.OJET_APP_COMMAND} build`;
-        const result = await util.execCmd(command, { cwd: util.getAppDir(appName) }, true, false);
+        const result = await util.execCmd(command, { cwd: util.getAppDir(appName) }, true, true);
         // set declaration back to true for downstream tests
         tsconfigJson.compilerOptions.declaration = true;
         fs.writeJsonSync(tsconfigJsonPath, tsconfigJson, { spaces: 2 });
@@ -415,6 +415,46 @@ function buildTsComponentAppWithDeclarationFalse({ appName   }) {
         assert.ok(!exists, typesDir);
       });
     }
+  });
+}
+
+function omitComponentVerstionTest({ appName }) {
+  describe(`Build ${appName} with --${util.OMIT_COMPONENT_VERSION_FLAG}`, () => {
+    const components = [COMPONENT_NAME, COMPONENT_NAME_COMPOSITE, COMPONENT_NAME_DEMO, VCOMPONENT_NAME];
+    if (!util.noBuild()) {
+      it(`should build ${appName} with --${util.OMIT_COMPONENT_VERSION_FLAG}`, async () => {
+        const command = `${util.OJET_APP_COMMAND} build --${util.OMIT_COMPONENT_VERSION_FLAG}`;
+        const result = await util.execCmd(command, { cwd: util.getAppDir(appName) }, true, false);
+        assert.ok(util.buildSuccess(result.stdout), result.error);
+      });
+    }
+    it(`should build ${components} without a version folder`, () => {
+      const { pathToBuiltComponents } = util.getAppPathData({ appName });
+      components.forEach(component => {
+        const pathToBuiltComponent = path.join(pathToBuiltComponents, component);
+        const componentExists = fs.existsSync(pathToBuiltComponent);
+        if (componentExists) {
+          const pathToBuiltComponentWithVersion = path.join(pathToBuiltComponent, DEFAULT_COMPONENT_VERSION);
+          const componentVersionFolderExists = fs.existsSync(pathToBuiltComponentWithVersion);
+          assert.ok(!componentVersionFolderExists, pathToBuiltComponentWithVersion);
+        }
+      });
+    });
+    it(`should build main.js without versioned path mappings for ${components}`, () => {
+      const { pathToBuiltComponents, pathToMainJs, componentsFolder } = util.getAppPathData({ appName });
+      const mainJs = fs.readFileSync(pathToMainJs);
+      components.forEach(component => {
+        const pathToBuiltComponent = path.join(pathToBuiltComponents, component);
+        const componentExists = fs.existsSync(pathToBuiltComponent);
+        if (componentExists) {
+          const unversionedPathMapping = `"${component}":"${componentsFolder}/${component}"`;
+          const versionedPathMapping = `"${component}":"${componentsFolder}/${component}/${DEFAULT_COMPONENT_VERSION}"`;
+          const unversionedPathMappingExists = mainJs.includes(unversionedPathMapping);
+          const versionedPathMappinExists = mainJs.includes(versionedPathMapping);
+          assert.ok(unversionedPathMappingExists && !versionedPathMappinExists, versionedPathMapping);
+        }
+      });
+    });
   });
 }
 
@@ -434,7 +474,7 @@ describe('Component Tests', () => {
       util.runComponentTestInAllTestApps({ test: createComponentFailureTest, component: 'comp1' });
     });
     describe('capital letter in name', () => {
-      util.runComponentTestInAllTestApps({ test: createComponentFailureTest, component: 'Comp1' });
+      util.runComponentTestInAllTestApps({ test: createComponentFailureTest, component: 'Comp-1' });
     });
   });
   describe('ojet add component', () => {
@@ -471,6 +511,9 @@ describe('Component Tests', () => {
   describe('ojet build --release', () => {
     util.runComponentTestInAllTestApps({ test: buildComponentAppTest, component: [COMPONENT_NAME, COMPONENT_NAME_COMPOSITE, VCOMPONENT_NAME], release: true });
   });
+  describe(`ojet build --${util.OMIT_COMPONENT_VERSION_FLAG}`, () => {
+    util.runComponentTestInAllTestApps({ test: omitComponentVerstionTest });
+  });
 
   // 
   // The remove component test is causing some errors in the pack tests.
@@ -480,7 +523,7 @@ describe('Component Tests', () => {
   //       componentTsTest
   //         check packaged pack
   //           should be packaged in componentTsTest/dist/pack-1.zip:
-  //              AssertionError [ERR_ASSERTION]: /scratch/lmolesky/tool6/ojet-cli/dist/ojet-cli/test_result/test/componentTsTest/dist/pack-1.zip
+  //              AssertionError [ERR_ASSERTION]: /scratch/lmolesky/tool6/ojet-cli/test_result/componentTsTest/dist/pack-1.zip
   // 
   // Which is unexpected since the component parameters are comp-1 (and vcomp-1), (so the .zip should not be pack-1.zip).
   // This should be investigated further.

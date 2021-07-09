@@ -34,7 +34,7 @@ module.exports = {
       if (fs.existsSync(componentDestDirectory)) {
         utils.log.error(`Component with name '${componentName}' already exists.`);
       }
-      if (_isVComponent(generator) && !utils.isTypescriptApplication()) {
+      if (_isVComponent(generator, utils) && !utils.isTypescriptApplication()) {
         utils.log.error('Cannot create a vcomponent in a Javascript application. Please run \'ojet add typescript\' to add Typescript support to your application.');
       }
       fs.ensureDirSync(componentDestDirectory);
@@ -54,7 +54,7 @@ module.exports = {
       if (pack) {
         // update pack info
         _updatePackInfo({ generator, utils, pack });
-      } else if (_isVComponent(generator)) {
+      } else if (_isVComponent(generator, utils)) {
         // remove pack metadata from vcomponent template
         _stripPackFromVComponet({ generator, utils, pack });
       }
@@ -145,7 +145,7 @@ module.exports = {
 
 function _getComponentTemplatePath(generator, utils) {
   let componentType;
-  if (_isVComponent(generator)) {
+  if (_isVComponent(generator, utils)) {
     componentType = 'tsx';
   } else {
     componentType = utils.isTypescriptApplication() ? 'ts' : 'js';
@@ -215,6 +215,7 @@ function _replaceComponentTemplateToken(generator, utils, pack) {
     path.join(componentBasePath, 'resources/nls'),
     path.join(componentBasePath, 'themes/base'),
     path.join(componentBasePath, 'themes/redwood'),
+    path.join(componentBasePath, 'themes/stable')
   ];
   folderPaths.forEach((templatepath) => {
     if (fs.existsSync(templatepath)) {
@@ -290,7 +291,7 @@ function _getComponentsBasePath(generator, utils) {
     appDir,
     _configPaths.source,
     utils.isTypescriptApplication() ? _configPaths.sourceTypescript : _configPaths.sourceJavascript,
-    CONSTANTS.JET_COMPOSITES);
+    _configPaths.components);
 }
 
 /**
@@ -319,6 +320,7 @@ function _renameComponentTemplatePrefix(generator, utils) {
     path.join(componentBasePath, 'resources/nls'),
     path.join(componentBasePath, 'themes/base'),
     path.join(componentBasePath, 'themes/redwood'),
+    path.join(componentBasePath, 'themes/stable')
   ];
   folderPaths.forEach((templatepath) => {
     if (fs.existsSync(templatepath)) {
@@ -356,7 +358,7 @@ function _renameComponentTemplatePrefixFile(componentDir, file, componentName) {
  */
 function _updatePackInfo({ generator, utils, pack }) {
   // set pack of component
-  if (_isVComponent(generator)) {
+  if (_isVComponent(generator, utils)) {
     _setVComponentPack({ generator, utils, pack });
   } else {
     _setCompositeComponentPack({ generator, utils, pack });
@@ -477,8 +479,8 @@ function _addComponentToTsconfigPathMapping(generator, utils) {
  * @param {object} generator object with build options
  * @returns {boolean}
  */
-function _isVComponent(generator) {
+function _isVComponent(generator, utils) {
   const type = generator.options.type;
   const vcomponent = generator.options.vcomponent;
-  return (type && type === CONSTANTS.VCOMPONENT) || vcomponent;
+  return (type && type === CONSTANTS.VCOMPONENT) || vcomponent || utils.isVDOMApplication();
 }

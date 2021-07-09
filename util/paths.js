@@ -43,6 +43,8 @@ function _deriveConfiguredPaths(appDir) {
   Object.defineProperty(configurePaths, 'stagingHybrid', _getValueObj(conf.staging.hybrid, _defaultPaths.stagingHybrid));
   Object.defineProperty(configurePaths, 'stagingWeb', _getValueObj(conf.staging.web, _defaultPaths.stagingWeb));
   Object.defineProperty(configurePaths, 'stagingThemes', _getValueObj(conf.staging.themes, _defaultPaths.stagingThemes));
+  Object.defineProperty(configurePaths, 'components', _getValueObj(conf.source.components, _defaultPaths.components));
+  Object.defineProperty(configurePaths, 'exchangeComponents', _getValueObj(conf.source.exchangeComponents, _defaultPaths.exchangeComponents));
   return configurePaths;
 }
 
@@ -58,6 +60,8 @@ function _getDefaultPaths() {
   Object.defineProperty(defaultPaths, 'stagingHybrid', _getValueObj('hybrid'));
   Object.defineProperty(defaultPaths, 'stagingWeb', _getValueObj('web'));
   Object.defineProperty(defaultPaths, 'stagingThemes', _getValueObj('themes'));
+  Object.defineProperty(defaultPaths, 'components', _getValueObj(constants.JET_COMPOSITES));
+  Object.defineProperty(defaultPaths, 'exchangeComponents', _getValueObj(constants.JET_COMPONENTS));
   return defaultPaths;
 }
 

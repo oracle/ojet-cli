@@ -1,5 +1,22 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 11.0.0
+
+* Support for es5 code for IE11 has been removed.  There will no longer be a "main_es5.js" or "batch_es5.js" generated in builds.  Therefore, release builds will now directly load the bundle.js after bundling and minifying all code from main.js and the application into it. Previous versions attempted to modify portions of the main.js to refer to the bundled and minified bundle.js for release builds.
+* Support has been added for script tag injector tokens in `src/index.html` that will automatically be replaced with the required scripts tags (instead of having to manually specify them). During debug builds, the tokens will be replaced with script tags that will load `require.js` and `main.js`. During release builds, the tokens will be replaced with script tags that load `require.js` and `bundle.js`. Because it is no longer used during release builds, `main.js` will be deleted at the end of the build. This means that if your application does not use the script tag injector tokens, it will have to include a script tag in `src/index.html` that loads `bundle.js` instead of `main.js`. The required tokens can be seen below:
+```
+<!-- This injects script tags for the main javascript files -->
+<!-- injector:scripts -->
+<!-- endinjector -->
+```
+* node-sass updated to 5.0.0
+* ojet-cli now requires node 12.21 or later
+* A --use-global-tooling flag has been added to 'ojet create'.  This can be used to share a global CLI module among applications to save space and create time.  If this flag is not specified, ojet create will install oraclejet-tooling locally to the created application as in previous versions
+* A --basetheme option has been added to ojet create theme to allow the base theme to be redwood or stable.  It is required when creating a theme.
+* Failed downloads for Exchange components will now automatically retry
+* An add webpack option has been added to facilitate webpack-based release bundling (as an alternative to requirejs bundling)
+* 'ojet publish pack' is now atomic. In case of validation issues with any of the components, the publishing request is rejected as a whole, and no artifacts are uploaded to Exchange
+
 ### 10.1.0
 
 * Hybrid build/serve capability based on Cordova is deprecated and is planned for removal in version 12.0.0

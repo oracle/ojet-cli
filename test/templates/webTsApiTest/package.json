@@ -1,0 +1,16 @@
+{
+  "name": "webTsApiTest",
+  "version": "1.0.0",
+  "description": "An Oracle JavaScript Extension Toolkit(JET) web app",
+  "dependencies": {
+    "@oracle/oraclejet": "https://artifacthub-phx.oci.oraclecorp.com/ojet-dev-local/oracle-oraclejet-11.0.0.tgz"
+  },
+  "devDependencies": {
+    "@oracle/oraclejet-tooling": "https://artifacthub-phx.oci.oraclecorp.com/ojet-dev-local/oracle-oraclejet-tooling-12.0.0.tgz",
+    "typescript": "4.0.2"
+  },
+  "engines": {
+    "node": ">=12.21.0"
+  },
+  "private": true
+}

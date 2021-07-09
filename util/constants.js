@@ -15,9 +15,12 @@ module.exports = {
   DEFAULT_THEME: 'alta',
   DEFAULT_PCSS_THEME: 'web',
   DEFAULT_PCSS_NAME: 'redwood',
+  PCSS_STABLE_FLAG: 'stable',
+  PCSS_THEME_FLAG: 'basetheme',
   APP_CONFIG_JSON: 'oraclejetconfig.json',
   COMPONENT_JSON: 'component.json',
   JET_COMPOSITES: 'jet-composites',
+  JET_COMPONENTS: 'jet_components',
   COMPONENT_FILES: ['component.json', 'loader.js', 'styles.css'],
   PATH_TO_HOOKS_CONFIG: 'scripts/hooks/hooks.json',
   TSCONFIG_JSON: 'tsconfig.json',
@@ -44,7 +47,8 @@ module.exports = {
       'platform',
       'platforms',
       'pack',
-      'componentName'
+      'componentName',
+      'basetheme'
     ];
 
     const hybridFlags = [
@@ -60,7 +64,10 @@ module.exports = {
       'template',
       'norestore',
       'typescript',
-      'pwa'
+      'pwa',
+      'webpack',
+      'vdom',
+      'use-global-tooling'
     ];
 
     const restoreFlags = [

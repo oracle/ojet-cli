@@ -15,6 +15,7 @@ const commonMessages = require('../../common/messages');
 const commonHybrid = require('../../hybrid');
 const cordovaHelper = require('../../hybrid/cordova');
 const platformsHelper = require('../../hybrid/platforms');
+const util = require('../../util');
 
 const _configPaths = {};
 
@@ -95,7 +96,7 @@ function _copyCordovaMocks() {
   const dest = path.resolve(`./${srcHybridPath}/${srcJsPath}/`);
 
   return new Promise((resolve, reject) => {
-    if (common.fsExistsSync(source)) {
+    if (util.fsExistsSync(source)) {
       fs.copy(source, dest, (err) => {
         if (err) {
           reject(err);
@@ -125,7 +126,7 @@ module.exports = function (parameters, opt, utils) {
   };
 
   _setConfigPaths(paths.getConfiguredPaths(path.resolve('.')));
-  common.validateArgs(addHybrid)
+  return common.validateArgs(addHybrid)
     .then(_checkIfCordovaIsInstalled)
     .then(() => common.validateFlags(addHybrid))
     .then(() => _validateAppDirForAddHybrid(addHybrid))
@@ -148,7 +149,7 @@ module.exports = function (parameters, opt, utils) {
     .catch((err) => {
       if (err) {
         utils.log(err);
-        process.exit(1);
       }
+      return Promise.reject();
     });
 };
