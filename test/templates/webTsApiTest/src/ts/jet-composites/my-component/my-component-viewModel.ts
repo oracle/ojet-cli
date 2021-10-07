@@ -6,7 +6,7 @@ import Context = require("ojs/ojcontext");
 import Composite = require("ojs/ojcomposite");
 import "ojs/ojknockout";
 import "css!./my-component-styles";
-import "ojcss!my-pack/resources/css/shared";
+import "ojs/ojcss!my-pack/resources/css/shared";
 
 export default class ViewModel implements Composite.ViewModel<Composite.PropertiesType> {
     busyResolve: (() => void);

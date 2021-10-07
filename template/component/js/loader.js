@@ -4,7 +4,7 @@
   as shown at https://oss.oracle.com/licenses/upl/
 
 */
-define(['ojs/ojcomposite', 'text!./@component-name@-view.html', './@component-name@-viewModel', 'text!./component.json', 'css!./@component-name@-styles'],
+define(['ojs/ojcomposite', 'text!./@component-name@-view.html', './@component-name@-viewModel', 'text!./component.json', 'css!./@component-name@-styles.css'],
   function(Composite, view, viewModel, metadata) {
     Composite.register('@full-component-name@', {
       view: view,

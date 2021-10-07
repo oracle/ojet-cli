@@ -28,13 +28,14 @@ class Ojet {
    * @param {Object} options.options options to execute the task with
    * @returns {Promise<undefined>}
    */
-  async execute({ task, scope, parameters = [], options }) {
+  async execute({ task, scope, parameters = [], options = {} }) {
     this._setOptions();
     let result;
     // eslint-disable-next-line prefer-rest-params
     this._logExecuteSummary(arguments[0]);
     try {
-      result = await tasks([task, scope, ...parameters], options);
+      const tasksList = [task, ...(scope ? [scope, ...parameters] : parameters)];
+      result = await tasks(tasksList, options);
     } catch (error) {
       result = Promise.reject(error);
     } finally {

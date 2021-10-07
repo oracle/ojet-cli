@@ -1,5 +1,9 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 11.1.0
+
+* ojs/ojcss is supported as a name for the ojcss plugin
+
 ### 11.0.0
 
 * Support for es5 code for IE11 has been removed.  There will no longer be a "main_es5.js" or "batch_es5.js" generated in builds.  Therefore, release builds will now directly load the bundle.js after bundling and minifying all code from main.js and the application into it. Previous versions attempted to modify portions of the main.js to refer to the bundled and minified bundle.js for release builds.

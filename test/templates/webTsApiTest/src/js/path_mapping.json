@@ -2,11 +2,11 @@
   "use": "local",
   "cdns": {
     "jet": {
-      "prefix": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_v11.0.0/lastSuccessfulBuild/artifact/cdn/v11.0.0/default/js",
-      "css": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_v11.0.0//lastSuccessfulBuild/artifact/cdn/v11.0.0/default/css",
+      "prefix": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_v11.1.0/lastSuccessfulBuild/artifact/cdn/v11.1.0/default/js",
+      "css": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_v11.1.0//lastSuccessfulBuild/artifact/cdn/v11.1.0/default/css",
       "config": "bundles-config.js"
     },
-    "3rdparty": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_v11.0.0/lastSuccessfulBuild/artifact/cdn/v11.0.0/3rdparty"
+    "3rdparty": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_v11.1.0/lastSuccessfulBuild/artifact/cdn/v11.1.0/3rdparty"
   },
   "libs": {
     "knockout": {
@@ -338,6 +338,22 @@
         "pathSuffix": "/min/ojcss'",
         "cdnPath": "ojcss"
       }
-    }
+    },
+    "ojs/ojcss": {
+      "cdn": "jet",
+      "cwd": "node_modules/@oracle/oraclejet/dist/js/libs/oj",
+      "debug": {
+        "src": ["debug/ojcss.js"],
+        "path": "libs/oj/v#{version}",
+        "pathSuffix": "/debug/ojcss'",
+        "cdnPath": "ojcss"
+      },
+      "release": {
+        "src": ["min/ojcss.js"],
+        "path": "libs/oj/v#{version}",
+        "pathSuffix": "/min/ojcss'",
+        "cdnPath": "ojcss"
+      }
+    }    
   }
 }

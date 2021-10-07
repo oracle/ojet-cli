@@ -103,4 +103,71 @@ describe('VDOM Test', () => {
       });
     }
   });
+
+  describe('Webpack', () => {
+    describe('Add webpack', () => {
+      if (!util.noScaffold()) {
+        it('should run "ojet add webpack"', async () => {
+          const { pathToApp } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
+          const ojet = new Ojet({ cwd: pathToApp, logs: false });
+          try {
+            await ojet.execute({ 
+              task: 'add', 
+              parameters: ['webpack']
+            });
+            assert.ok(true);
+          } catch {
+            assert.ok(false);
+          }
+        });
+      }
+      it('should check that webpack and its dependencies are listed in package.json', () => {
+        const { pathToApp } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
+        const packageJson = fs.readJsonSync(path.join(pathToApp, 'package.json'));
+        util.WEBPACK_DEPENDENCIES.forEach((dependency) => {
+          assert.ok(packageJson.devDependencies[dependency], `${dependency} not installed`);
+        });
+      });
+      it('should check that bundler and bundleName properties were added to oraclejetconfig.json', () => {
+        const oraclejetConfigJson = util.getOracleJetConfigJson({ appName: util.VDOM_APP_NAME });
+        assert.ok(oraclejetConfigJson.bundler === 'webpack', 'bundler not equal to "webpack"');
+        assert.ok(oraclejetConfigJson.bundleName === 'bundle.js', 'bundleName not equal to "bundle.js');
+      });
+    });
+    describe('Build debug', () => {
+      it('should build in debug mode', async () => {
+        const { pathToApp } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
+        const ojet = new Ojet({ cwd: pathToApp, logs: false });
+        try {
+          await ojet.execute({ task: 'build' });
+          assert.ok(true);
+        } catch {
+          assert.ok(false);
+        }
+      });
+    });
+    describe('Build release', () => {
+      it('should build in release mode', async () => {
+        const { pathToApp } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
+        const ojet = new Ojet({ cwd: pathToApp, logs: false });
+        try {
+          await ojet.execute({ task: 'build', options: { release: true }});
+          assert.ok(true);
+        } catch {
+          assert.ok(false);
+        }
+      });
+      it('should have bundle file', () => {
+        const { pathToBundleJs } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
+        const bundleFileExists = fs.existsSync(pathToBundleJs);
+        assert.ok(bundleFileExists, `${pathToBundleJs} does not exist`);
+      });
+      it('should not load require.js in index.html', () => {
+        const { pathToIndexHtml } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
+        const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
+        const loadsRequireJs = /require\/require\.js'><\/script>/.test(indexHtmlContent);
+        assert.ok(!loadsRequireJs, `${pathToIndexHtml} loads require.js`);
+      });
+    });
+  });
 });

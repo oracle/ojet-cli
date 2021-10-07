@@ -1,9 +1,9 @@
 {
   "name": "@oracle/ojet-cli",
-  "version": "11.0.0",
+  "version": "11.1.0",
   "description": "Oracle JET Command Line Interface",
   "license": "UPL-1.0",
-  "homepage": "http://oraclejet.org",
+  "homepage": "http://www.oracle.com/jet",
   "bin": {
     "ojet": "bin/ojet"
   },
@@ -14,7 +14,7 @@
     "inquirer": "~6.2.2",
     "minimist": "^1.2.0",
     "xmldom": "0.5.0",
-    "@oracle/oraclejet-tooling": "~11.0.0"
+    "@oracle/oraclejet-tooling": "~11.1.0"
   },
   "engines": {
     "node": ">=12.21.0"

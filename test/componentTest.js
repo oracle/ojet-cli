@@ -420,7 +420,7 @@ function buildTsComponentAppWithDeclarationFalse({ appName   }) {
 
 function omitComponentVerstionTest({ appName }) {
   describe(`Build ${appName} with --${util.OMIT_COMPONENT_VERSION_FLAG}`, () => {
-    const components = [COMPONENT_NAME, COMPONENT_NAME_COMPOSITE, COMPONENT_NAME_DEMO, VCOMPONENT_NAME];
+    const components = [COMPONENT_NAME, COMPONENT_NAME_COMPOSITE, COMPONENT_NAME_DEMO, VCOMPONENT_NAME, EXCHANGE_COMPONENT_PACK];
     if (!util.noBuild()) {
       it(`should build ${appName} with --${util.OMIT_COMPONENT_VERSION_FLAG}`, async () => {
         const command = `${util.OJET_APP_COMMAND} build --${util.OMIT_COMPONENT_VERSION_FLAG}`;

@@ -26,21 +26,22 @@ const JAVASCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_APP_NAME, scriptsFo
 const TYPESCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_TS_APP_NAME, scriptsFolder: 'ts' };
 const COMPONENT_TEST_APP_CONFIGS = [JAVASCRIPT_COMPONENT_APP_CONFIG, TYPESCRIPT_COMPONENT_APP_CONFIG];
 
-function runComponentTestInAllTestApps({ test, pack, component, vcomponent, release, bundle}) {
+function runComponentTestInAllTestApps({ test, pack, component, vcomponent, release, bundle, resourceComponent }) {
   COMPONENT_TEST_APP_CONFIGS.forEach((config) => {
-    runComponentTestInTestApp({ config, test, pack, component, vcomponent, release, bundle});
+    runComponentTestInTestApp({ config, test, pack, component, vcomponent, release, bundle, resourceComponent });
   })
 }
 
-function runComponentTestInTestApp({ config, test, pack, component, vcomponent, release, bundle}) {
+function runComponentTestInTestApp({ config, test, pack, component, vcomponent, release, bundle, resourceComponent }) {
   describe(config.appName, () => {
-    test({...config, pack, component, vcomponent, release, bundle});
+    test({...config, pack, component, vcomponent, release, bundle, resourceComponent });
   });
 }
 
 const ORACLJET_CONFIG_JSON = 'oraclejetconfig.json';
 const DEFAULT_COMPONENTS_FOLDER = 'jet-composites';
 const OMIT_COMPONENT_VERSION_FLAG = 'omit-component-version';
+const  WEBPACK_DEPENDENCIES = ['webpack', 'css-loader', 'style-loader', 'text-loader'];
 
 module.exports = {
   OJET_COMMAND: 'node ../ojet-cli/bin/ojet',
@@ -61,6 +62,7 @@ module.exports = {
   ORACLJET_CONFIG_JSON,
   DEFAULT_COMPONENTS_FOLDER,
   OMIT_COMPONENT_VERSION_FLAG,
+  WEBPACK_DEPENDENCIES,
   execCmd: function _execCmd(cmd, options, squelch, logCommand = true) {
     if (logCommand) {
       console.log(cmd);
@@ -223,6 +225,7 @@ module.exports = {
     const pathToBuiltComponents = path.join(pathToApp, stagingFolder, javascriptFolder, componentsFolder);
     const pathToMainJs = path.join(pathToApp, stagingFolder, javascriptFolder, 'main.js');
     const pathToBundleJs = path.join(pathToApp, stagingFolder, javascriptFolder, 'bundle.js');
+    const pathToIndexHtml = path.join(pathToApp, stagingFolder, 'index.html');
     return {
       componentsFolder,
       stagingFolder,
@@ -232,7 +235,12 @@ module.exports = {
       pathToApp,
       pathToBuiltComponents,
       pathToMainJs,
-      pathToBundleJs
+      pathToBundleJs,
+      pathToIndexHtml
     }
+  },
+
+  getTemplatesDir: function _getTempatesDir() {
+    return path.resolve(__dirname, '..', 'templates');
   }
 };

@@ -1,7 +1,7 @@
 import { customElement, ExtendGlobalProps } from "ojs/ojvcomponent";
 import { h, Component, ComponentChild } from "preact";
 import componentStrings = require("ojL10n!./resources/nls/@component-name@-strings");
-import "css!./@component-name@-styles";
+import "css!./@component-name@-styles.css";
 
 type Props = {
   message?: string;

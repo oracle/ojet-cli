@@ -676,7 +676,7 @@ const config = {
             'ojet serve --cssvars=enabled',
             'ojet serve ios --no-livereload --emulator="iPad-Air, 10.2"',
             'ojet serve --device --release',
-            'ojet serve windows --no-sass --livereload-port=357230',
+            'ojet serve windows --no-sass --livereload-port=35723',
             'ojet serve android --browser',
             'ojet serve --browser=edge',
             'ojet serve ios --device --build-config ./buildConfig.json --theme myCustomTheme',

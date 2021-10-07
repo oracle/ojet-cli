@@ -16,6 +16,7 @@ const PACK_NAME = 'pack-1';
 const DEFAULT_PACK_VERSION = '1.0.0';
 const COMPONENT_NAME = 'comp-1';
 const VCOMPONENT_NAME = 'vcomp-1';
+const RESOURCE_COMPONENT_NAME = 'resources';
 const EXCHANGE_PACK = 'oj-gbu-app';
 const EXCHANGE_PACK_VERSION = '3.0.0';
 const EXCHANGE_PACK_BUNDLE = 'shell-bundle';
@@ -226,6 +227,71 @@ function createVComponentInPackTest({ appName, scriptsFolder, pack, component })
         fs.writeJsonSync(pathToPackComponentJson, packComponentJson, { spaces: 2 });
       }
     });
+  });
+}
+
+function createResourceComponentInPackTest({ appName, pack, scriptsFolder, resourceComponent, component }) {
+  if (!util.noScaffold()) {
+    before(() => {
+      // Create resource component
+      const { pathToApp, sourceFolder, componentsFolder } = util.getAppPathData({ appName });
+      const resourceComponentTemplatePath = path.join(util.getTemplatesDir(), 'resource-component');
+      const packComponentPath = path.join(pathToApp, sourceFolder, scriptsFolder, componentsFolder, pack);
+      const resourceComponentPath = path.join(packComponentPath, resourceComponent);
+      fs.ensureDirSync(resourceComponentPath);
+      // Copy script agnostic files e.g component.json, *.css
+      fs
+        .readdirSync(resourceComponentTemplatePath, { withFileTypes: true })
+        .filter((dirEntry) => {
+          // TODO: support nested, script agnotic files
+          return dirEntry.isFile();
+        })
+        .forEach((dirEntry) => {
+          const file = dirEntry.name;
+          const srcPath = path.join(resourceComponentTemplatePath, file);
+          const destPath = path.join(resourceComponentPath, file);
+          if (path.basename(srcPath) == 'component.json') {
+            // Set pack and create dependencies
+            const componentJson = fs.readJsonSync(srcPath);
+            componentJson.name = resourceComponent;
+            componentJson.pack = pack;
+            componentJson.dependencies = {
+              [`${pack}-${component}`]: '1.0.0'
+            };
+            fs.writeJsonSync(destPath, componentJson, { spaces: 2 });
+          } else {
+            fs.copyFileSync(srcPath, destPath);
+          }
+        });
+      // Copy script files based on scriptsFolder
+      const scriptFilePath = path.join(resourceComponentTemplatePath, scriptsFolder)
+      fs
+        .readdirSync(scriptFilePath)
+        .forEach((file) => {
+          const srcPath = path.join(scriptFilePath, file);
+          const destPath = path.join(resourceComponentPath, file);
+          fs.copyFileSync(srcPath, destPath);
+        });
+      // No need to add resource component to pack's dependencies list
+    });
+  }
+  it('should check that resource component is in pack', () => {
+    const { pathToApp, sourceFolder, componentsFolder } = util.getAppPathData({ appName });
+    const packComponentPath = path.join(pathToApp, sourceFolder, scriptsFolder, componentsFolder, pack);
+    const resourceComponentPath = path.join(packComponentPath, resourceComponent);
+    assert.ok(fs.existsSync(resourceComponentPath), `${resourceComponent} not found in ${pack}`);
+  });
+  it(`should check that resource component has correct component.json`, () => {
+    const { pathToApp, sourceFolder, componentsFolder } = util.getAppPathData({ appName });
+    const packComponentPath = path.join(pathToApp, sourceFolder, scriptsFolder, componentsFolder, pack);
+    const resourceComponentPath = path.join(packComponentPath, resourceComponent);
+    if (fs.existsSync(resourceComponentPath)) {
+      const componentJson = fs.readJsonSync(path.join(resourceComponentPath, 'component.json'));
+      assert.strictEqual(componentJson.name,  resourceComponent, `${resourceComponent}'s name is not ${resourceComponent} in component.json`);
+      assert.strictEqual(componentJson.pack, pack, `${resourceComponent}'s pack is not ${pack} in component.json`);
+      assert.strictEqual(componentJson.type, 'resource', `${resourceComponent}'s type is not resource in component.json}`);
+      assert.ok(componentJson.dependencies, `${resourceComponent}'s component.json does not have dependencies`);
+    }
   });
 }
 
@@ -525,6 +591,14 @@ describe('JET Pack Tests', () => {
       test: createVComponentInPackTest,
       pack: PACK_NAME,
       component: VCOMPONENT_NAME
+    });
+  });
+  describe('create resource component', () => {
+    util.runComponentTestInAllTestApps({
+      test: createResourceComponentInPackTest, 
+      pack: PACK_NAME,
+      component: COMPONENT_NAME,
+      resourceComponent: RESOURCE_COMPONENT_NAME
     });
   });
   describe('ojet add pack', () => {

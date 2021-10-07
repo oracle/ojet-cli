@@ -133,7 +133,7 @@ before(async () => {
         task: 'create',
         parameters: [util.API_APP_NAME],
         options: {
-          template: path.join(__dirname, 'templates', util.API_APP_NAME),
+          template: path.join(util.getTemplatesDir(), util.API_APP_NAME),
         }
       });
       assert.ok(true);
@@ -154,8 +154,7 @@ before(async () => {
         parameters: [util.VDOM_APP_NAME],
         options: {
           template: 'basic',
-          vdom: true,
-          'use-global-tooling': true
+          vdom: true
         }
       };
       await ojet.execute(executeOptions);
@@ -166,5 +165,5 @@ before(async () => {
   }
 
   // Always copy
-  //util.copyOracleJetTooling(util.VDOM_APP_NAME);
+  util.copyOracleJetTooling(util.VDOM_APP_NAME);
 });

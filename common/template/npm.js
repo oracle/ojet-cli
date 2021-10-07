@@ -78,50 +78,44 @@ function _copyNpmTemplate(generator, templateSpec, destination) {
     const filePathFromTemplateRoot = filePath.split(templateSegment).pop();
     const isPathMappingJson = path.basename(filePath) === 'path_mapping.json';
     const isIndexHtml = path.basename(filePath) === 'index.html';
-    if (isVDOMTemplate) {
-      if (isPathMappingJson) {
-        const pathMappingJson = fs.readJSONSync(filePath);
-        // baseUrl will be set from javascript location in oraclejetconfig.json
-        delete pathMappingJson.baseUrl;
-        // write to root of the app and not /src
-        filePathDest = path.join(destination, '../path_mapping.json');
-        fs.writeJSONSync(filePathDest, pathMappingJson, { spaces: 2 });
-      } else if (isIndexHtml) {
-        // remove content between injector:theme and injector:scripts tokens,
-        // they will be added during the build
-        let indexHTML = fs.readFileSync(filePath, { encoding: 'utf-8' });
-        const scriptsInjector = injectorUtils.scriptsInjector;
-        const themeInjector = injectorUtils.themeInjector;
-        // remove content between injector:scripts token
-        indexHTML = injectorUtils.removeInjectorTokensContent({
-          content: indexHTML,
-          pattern: injectorUtils.getInjectorTagsRegExp(
-            scriptsInjector.startTag,
-            scriptsInjector.endTag
-          ),
-          eol: injectorUtils.getLineEnding(indexHTML),
-          startTag: `\t\t${scriptsInjector.startTag}`,
-          endTag: `\t\t${scriptsInjector.endTag}`
-        });
-        // remove content between injector:theme token
-        indexHTML = injectorUtils.removeInjectorTokensContent({
-          content: indexHTML,
-          pattern: injectorUtils.getInjectorTagsRegExp(
-            themeInjector.startTag,
-            themeInjector.endTag
-          ),
-          eol: injectorUtils.getLineEnding(indexHTML),
-          startTag: `\t\t${themeInjector.startTag}`,
-          endTag: `\t\t${themeInjector.endTag}`
-        });
-        // write to /src
-        filePathDest = path.join(destination, '..', filePathFromTemplateRoot);
-        fs.outputFileSync(filePathDest, indexHTML, { encoding: 'utf-8' });
-      } else {
-        // copy to /src
-        filePathDest = path.join(destination, '..', filePathFromTemplateRoot);
-        fs.copySync(filePath, filePathDest);
-      }
+    if (isVDOMTemplate && isPathMappingJson) {
+      const pathMappingJson = fs.readJSONSync(filePath);
+      // baseUrl will be set from javascript location in oraclejetconfig.json
+      delete pathMappingJson.baseUrl;
+      // write to root of the app and not /src
+      filePathDest = path.join(destination, '../path_mapping.json');
+      fs.writeJSONSync(filePathDest, pathMappingJson, { spaces: 2 });
+    } else if (isIndexHtml) {
+      // remove content between injector:theme and injector:scripts tokens,
+      // they will be added during the build
+      let indexHTML = fs.readFileSync(filePath, { encoding: 'utf-8' });
+      const scriptsInjector = injectorUtils.scriptsInjector;
+      const themeInjector = injectorUtils.themeInjector;
+      // remove content between injector:scripts token
+      indexHTML = injectorUtils.removeInjectorTokensContent({
+        content: indexHTML,
+        pattern: injectorUtils.getInjectorTagsRegExp(
+          scriptsInjector.startTag,
+          scriptsInjector.endTag
+        ),
+        eol: injectorUtils.getLineEnding(indexHTML),
+        startTag: `\t\t${scriptsInjector.startTag}`,
+        endTag: `\t\t${scriptsInjector.endTag}`
+      });
+      // remove content between injector:theme token
+      indexHTML = injectorUtils.removeInjectorTokensContent({
+        content: indexHTML,
+        pattern: injectorUtils.getInjectorTagsRegExp(
+          themeInjector.startTag,
+          themeInjector.endTag
+        ),
+        eol: injectorUtils.getLineEnding(indexHTML),
+        startTag: `\t\t${themeInjector.startTag}`,
+        endTag: `\t\t${themeInjector.endTag}`
+      });
+      // write to /src
+      filePathDest = path.join(destination, '..', filePathFromTemplateRoot);
+      fs.outputFileSync(filePathDest, indexHTML, { encoding: 'utf-8' });
     } else {
       // copy to /src
       filePathDest = path.join(destination, '..', filePathFromTemplateRoot);
