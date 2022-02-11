@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -9,8 +9,31 @@ const fs = require('fs-extra');
 const path = require('path');
 const util = require('./util');
 const Ojet = require('../ojet');
+const _DUMMY = 'dummy_dir';
 
 describe('CLI API Tests', () => {
+  before(async () => {
+    if (!util.noScaffold()) {
+      util.removeAppDir(util.API_APP_NAME);
+  
+      // Scaffold webTsApiTest application using ojet API
+      const ojet = new Ojet({ cwd: util.testDir, logs: false });
+      try {
+        await ojet.execute({
+          task: 'create',
+          parameters: [util.API_APP_NAME],
+          options: {
+            template: path.join(util.getTemplatesDir(), util.API_APP_NAME),
+          }
+        });
+        assert.ok(true);
+      } catch (e) {
+        console.log(e);
+        assert.ok(false, 'Error running ojet.execute({ task: "create" })');
+      }
+    }
+  });
+
   describe('ojet build', () => {
     describe('debug', () => {
       it('should run `ojet.execute({ task: "build" })`', async () => {
@@ -50,7 +73,7 @@ describe('CLI API Tests', () => {
         assert.ok(webExists, pathToWeb);
       });
       it(`should have ${util.API_APP_NAME}/web/js/bundle.js`, () => {
-        const{ pathToBundleJs } = util.getAppPathData({ appName: util.API_APP_NAME });
+        const{ pathToBundleJs } = util.getAppPathData(util.API_APP_NAME);
         const hasBundleJs = fs.existsSync(pathToBundleJs);
         assert.ok(hasBundleJs, pathToBundleJs);
       });
@@ -192,6 +215,46 @@ describe('CLI API Tests', () => {
         util.getAppDir(util.API_APP_NAME),
         'jet_components'
       );
+      assert.ok(fs.existsSync(pathToNodeModules), pathToNodeModules);
+      assert.ok(fs.existsSync(pathToJetComponents), pathToJetComponents);
+    });
+  });
+  describe('ojet strip using oraclejetconfig.json property', () => {    
+    it(`should have ${util.API_APP_NAME}/node_modules && ${util.API_APP_NAME}/jet_components`, () => {
+      const appName = util.API_APP_NAME;
+      const pathToApp = util.getAppPathData(appName);
+      assert.ok(fs.existsSync(pathToApp.pathToNodeModules), pathToApp.pathToNodeModules);
+      assert.ok(fs.existsSync(pathToApp.pathToExchangeComponents), pathToApp.pathToExchangeComponents);
+    });
+    it('should run `ojet.execute({ task: "strip" })` using stripFiles config property', async () => {
+      // Empty "cache"
+      const env = process.env;
+      delete env.oraclejetConfigJson;
+
+      // Inject 'stripList' into oraclejetconfig.json, and create fake directory we want to strip
+      let json = util.getOracleJetConfigJson(util.API_APP_NAME);
+      // Add a dummy dir, and create the dir
+      json.stripList = [_DUMMY];
+      util.writeOracleJetConfigJson(util.API_APP_NAME, json);
+      fs.mkdirSync(path.join(util.getAppDir(util.API_APP_NAME), _DUMMY));
+      const ojet = new Ojet({ cwd: util.getAppDir(util.API_APP_NAME), logs: false });
+      try {
+        await ojet.execute({ task: 'strip' });
+        assert.ok(true);
+      } catch {
+        assert.ok(false);
+      }
+    });
+    it ('should not have dummy_dir', () => {
+      const pathToDummy = path.join(util.getAppDir(util.API_APP_NAME), _DUMMY);
+      assert.ok(!fs.existsSync(pathToDummy), pathToDummy);
+    });
+    it(`should have ${util.API_APP_NAME}/node_modules && ${util.API_APP_NAME}/jet_components`, () => {
+      const appName = util.API_APP_NAME;
+      const pathToApp = util.getAppPathData(appName);
+
+      const pathToNodeModules = pathToApp.pathToNodeModules;
+      const pathToJetComponents =  pathToApp.pathToExchangeComponents;
       assert.ok(fs.existsSync(pathToNodeModules), pathToNodeModules);
       assert.ok(fs.existsSync(pathToJetComponents), pathToJetComponents);
     });

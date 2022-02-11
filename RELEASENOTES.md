@@ -1,5 +1,16 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 12.0.0
+
+* Add optional 'stripList' property to oraclejetconfig.json to allow providing the list of files/directories to delete instead of using .gitignore
+* Add optional '--ci' flag to restore to use npm ci instead of the default npm install
+* The third party library 'svgo' by oraclejet-tooling was updated.  If you run into problems during an 'ojet build' surrounding 'svgo', ensure that you have version svgo 2.7.0+ installed in your application's node_modules.  If in the rare case you have an svgMin section in your oraclejetconfig.json, its plugin section may need to be updated per the svgo 2.7.0 documentation
+* Custom hooks have been added to run before/after package creation
+* Webpack support has been expanded to both debug and release builds
+* Added --installer option/installer property for oraclejetconfig.json
+* Updated default typescript version to 4.5.4
+* Remove obsolete "generatorVersion" from oraclejetconfig.json
+
 ### 11.1.0
 
 * ojs/ojcss is supported as a name for the ojcss plugin

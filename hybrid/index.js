@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -8,13 +8,13 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const constants = require('../util/constants');
+const constants = require('../lib/util/constants');
 const commonMessages = require('../common/messages');
 const DOMParser = require('xmldom').DOMParser;
 const endOfLine = require('os').EOL;
 const graphics = require('./graphics');
-const paths = require('../util/paths');
-const utils = require('../lib/utils');
+const paths = require('../lib/util/paths');
+const utils = require('../lib/util/utils');
 
 const ORACLEJET_APP_ID = 'org.oraclejet.';
 const iOSPlugins = ['cordova-plugin-wkwebview-file-xhr',

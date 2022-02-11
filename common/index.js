@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -9,10 +9,9 @@
 const fs = require('fs-extra');
 const path = require('path');
 const commonMessages = require('./messages');
-const CONSTANTS = require('../util/constants');
-const constants = require('../lib/utils.constants');
+const constants = require('../lib/util/constants');
 const app = require('../lib/scopes/app');
-const utils = require('../lib/utils');
+const utils = require('../lib/util/utils');
 
 module.exports =
 {
@@ -36,7 +35,7 @@ module.exports =
     const templateDest = path.resolve('.');
     return new Promise((resolve, reject) => {
       function filter(src, dest) {
-        const isOracleJetConfigJson = path.basename(src) === CONSTANTS.APP_CONFIG_JSON;
+        const isOracleJetConfigJson = path.basename(src) === constants.APP_CONFIG_JSON;
         const isVDOMTemplate = utils.isVDOMTemplate(generator);
         if (isVDOMTemplate && isOracleJetConfigJson) {
           // for vdom templates, update the oracljetconfig.json to
@@ -133,7 +132,7 @@ module.exports =
   validateFlags: function _validateFlags(generator) {
     return new Promise((resolve, reject) => {
       const flags = generator.options;
-      const SUPPORTED_FLAGS = CONSTANTS.SUPPORTED_FLAGS(flags.namespace);
+      const SUPPORTED_FLAGS = constants.SUPPORTED_FLAGS(flags.namespace);
       Object.keys(flags).forEach((key) => {
         if (SUPPORTED_FLAGS.indexOf(key) === -1) {
           if (['platforms', 'platform', 'appid', 'appname'].indexOf(key) !== -1) {
@@ -149,7 +148,12 @@ module.exports =
 
   addTypescript: (generator) => {
     if (generator.options.typescript) {
-      return app.addTypescript();
+      return app.addTypescript(generator.options)
+        .then(() => {
+          if (generator.options.webpack && utils.isVDOMTemplate(generator)) {
+            _customizeVDOMTemplateTsconfigForWebpack();
+          }
+        });
     }
     return Promise.resolve();
   },
@@ -163,7 +167,12 @@ module.exports =
 
   addwebpack: (generator) => {
     if (generator.options.webpack) {
-      return app.addwebpack();
+      return app.addwebpack(generator.options)
+        .then(() => {
+          if (utils.isVDOMTemplate(generator)) {
+            _customizeVDOMTemplateForWebpack();
+          }
+        });
     }
     return Promise.resolve();
   }
@@ -202,14 +211,84 @@ function _updateJSON(generator, jsonPath) {
   const json = fs.readJSONSync(path.resolve('.', jsonPath));
   // space in app name will result in npm install failure
   json.name = _removeSpaceInAppName(generator.options.appname);
-  if (generator.options['use-global-tooling']) {
+  if (generator.options[constants.USE_GLOBAL_TOOLING]) {
     // If create wants to use the global oraclejet-tooling,
     // then remove the dependency link in the created package.json
     delete json.devDependencies[constants.ORACLEJET_TOOLING_PACKAGE_JSON_NAME];
   }
-  fs.writeJSONSync(path.resolve('.', jsonPath), json);
+  utils.loadToolingUtil().writeObjectAsJsonFile(path.resolve('.', jsonPath), json);
 }
 
 function _removeSpaceInAppName(appName) {
   return appName.replace(/\s/g, '-');
+}
+
+function _customizeVDOMTemplateTsconfigForWebpack() {
+  // Add resolveJsonModule and esModuleInterop to app's tsconfig.json
+  const pathToApp = '.';
+  const pathToOraclejetConfigJson = path.join(pathToApp, 'oraclejetconfig.json');
+  const oraclejetConfigJson = fs.readJSONSync(pathToOraclejetConfigJson);
+  const pathToTsconfigJson = path.join(pathToApp, 'tsconfig.json');
+  const tsconfigJson = fs.readJSONSync(pathToTsconfigJson);
+  tsconfigJson.compilerOptions.rootDir = `./${oraclejetConfigJson.paths.source.common}`;
+  tsconfigJson.compilerOptions.outDir = `./${oraclejetConfigJson.paths.staging.web}`;
+  tsconfigJson.compilerOptions.typeRoots.unshift('./types');
+  tsconfigJson.compilerOptions.resolveJsonModule = true;
+  tsconfigJson.compilerOptions.esModuleInterop = true;
+  tsconfigJson.compilerOptions.paths.react = [
+    './node_modules/preact/compat/src/index.d.ts'
+  ];
+  tsconfigJson.compilerOptions.paths['react-dom'] = [
+    './node_modules/preact/compat/src/index.d.ts'
+  ];
+  fs.writeJSONSync(pathToTsconfigJson, tsconfigJson, { spaces: 2 });
+}
+
+function _customizeVDOMTemplateForWebpack() {
+  const pathToApp = '.';
+  const pathToOraclejetConfigJson = path.join(pathToApp, 'oraclejetconfig.json');
+  const oraclejetConfigJson = fs.readJSONSync(pathToOraclejetConfigJson);
+  // Remove injector tokens from index.html
+  const pathToIndexHtml = path.join(
+    pathToApp,
+    oraclejetConfigJson.paths.source.common,
+    'index.html'
+  );
+  let indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' }).toString();
+  indexHtmlContent = indexHtmlContent.replace(/<!-- .* -->/gm, '').replace(/^\s*\n/gm, '');
+  indexHtmlContent = indexHtmlContent.replace(/(<meta name="description".* \/>)/, '$1\n    <!-- css:redwood -->');
+  fs.outputFileSync(pathToIndexHtml, indexHtmlContent);
+  // Delete ./src/main.js since webpack entry point is index.ts
+  const pathToMainJs = path.join(
+    pathToApp,
+    oraclejetConfigJson.paths.source.common,
+    oraclejetConfigJson.paths.source.javascript,
+    'main.js'
+  );
+  fs.removeSync(pathToMainJs);
+  // Delete ./scripts since not used by webpack build
+  const pathToScriptsFolder = path.join(pathToApp, 'scripts');
+  fs.removeSync(pathToScriptsFolder);
+  // Delete ./path_mapping.json since not used by webpack build
+  const pathToPathMappingJson = path.join(pathToApp, 'path_mapping.json');
+  fs.removeSync(pathToPathMappingJson);
+  // Replace ./.gitignore and replace
+  const pathToGitIgnore = path.join(pathToApp, '.gitignore');
+  const gitIgnoreContent =
+  `/node_modules
+/${oraclejetConfigJson.paths.source.exchangeComponents}
+/${oraclejetConfigJson.paths.staging.web}
+.DS_Store`.trim();
+  fs.outputFileSync(pathToGitIgnore, gitIgnoreContent);
+  // Inject ./types/components/index.ts
+  const pathToComponentTypes = path.join(pathToApp, 'types/components/index.d.ts');
+  const componentTypesContent = `
+  // Add custom element entries to preact.JSX.IntrinsicElements for custom elements
+  // used in JSX that do not have the required type definitions
+  declare namespace preact.JSX {
+    interface IntrinsicElements {
+
+    }
+  }`;
+  fs.outputFileSync(pathToComponentTypes, componentTypesContent);
 }

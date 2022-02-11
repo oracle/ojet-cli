@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -12,13 +12,14 @@ const commonMessages = require('../../common/messages');
 const commonRestore = require('../../common/restore');
 const templateHandler = require('../../common/template');
 const scopesApp = require('../../lib/scopes/app');
+const utils = require('../../lib/util/utils');
 const fs = require('fs');
 const path = require('path');
 
-function _writeTemplate(generator, utils) {
+function _writeTemplate(generator) {
   return new Promise((resolve, reject) => {
     const appDirectory = path.resolve(path.join(generator.appDir, 'src'));
-    templateHandler.handleTemplate(generator, utils, appDirectory)
+    templateHandler.handleTemplate(generator, appDirectory)
       .then(() => {
         resolve();
       })
@@ -34,9 +35,8 @@ function _writeTemplate(generator, utils) {
  * @public
  * @param {Array} parameters
  * @param {Object} options
- * @param {utils} utility module
  */
-module.exports = function (parameters, opt, utils) {
+module.exports = function (parameters, opt) {
   const app = {
     options: Object.assign({ namespace: 'app' }, opt),
     appDir: parameters
@@ -52,17 +52,17 @@ module.exports = function (parameters, opt, utils) {
     .then(() => common.writeCommonTemplates(app))
     .then(() => common.writeGitIgnore())
     .then(() => common.switchFromAppDirectory())
-    .then(() => _writeTemplate(app, utils))
+    .then(() => _writeTemplate(app))
     .then(() => common.switchToAppDirectory(app))
     .then(() => common.updatePackageJSON(app))
     .then(() => {
       utils.log(commonMessages.scaffoldComplete());
       if (!app.options.norestore) {
-        return commonRestore.npmInstall(app)
-          .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
-          .then(() => common.addTypescript(app))
+        return commonRestore.npmInstall(app, opt)
+          .then(() => commonRestore.writeOracleJetConfigFile())
+          .then(() => common.addTypescript(app, opt))
           .then(() => common.addpwa(app))
-          .then(() => common.addwebpack(app))
+          .then(() => common.addwebpack(app, opt))
           .then(scopesApp.addComponents)
           .then(commonHookRunner.runAfterAppCreateHook)
           .then(() => {

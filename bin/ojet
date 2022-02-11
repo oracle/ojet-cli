@@ -4,7 +4,7 @@
 
 const argv = require('minimist')(process.argv.slice(2));
 const tasks = require('../lib/tasks');
-const utils = require('../lib/utils');
+const utils = require('../lib/util/utils');
 // Extract commands
 const commands = [...argv._];
 // Delete commands leaving only options

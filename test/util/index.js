@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -12,7 +12,9 @@ const path = require('path');
 
 const exec = require('child_process').exec;
 
-const td = path.resolve('../test_result');
+const TEST_DIR = 'test_result';
+
+const td = path.resolve(`../${TEST_DIR}`);
 const pkg = require('../../package.json');
 
 function _isQuick() {
@@ -26,22 +28,49 @@ const JAVASCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_APP_NAME, scriptsFo
 const TYPESCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_TS_APP_NAME, scriptsFolder: 'ts' };
 const COMPONENT_TEST_APP_CONFIGS = [JAVASCRIPT_COMPONENT_APP_CONFIG, TYPESCRIPT_COMPONENT_APP_CONFIG];
 
-function runComponentTestInAllTestApps({ test, pack, component, vcomponent, release, bundle, resourceComponent }) {
+function runComponentTestInAllTestApps(options) {
   COMPONENT_TEST_APP_CONFIGS.forEach((config) => {
-    runComponentTestInTestApp({ config, test, pack, component, vcomponent, release, bundle, resourceComponent });
+    runComponentTestInTestApp(config, options);
   })
 }
 
-function runComponentTestInTestApp({ config, test, pack, component, vcomponent, release, bundle, resourceComponent }) {
+function runComponentTestInTestApp(config, options) {
   describe(config.appName, () => {
-    test({...config, pack, component, vcomponent, release, bundle, resourceComponent });
+    options.test({...config, ...options});
   });
 }
 
-const ORACLJET_CONFIG_JSON = 'oraclejetconfig.json';
+function _replaceOraclejetToolingProp(packageJson) {
+  packageJson.devDependencies['@oracle/oraclejet-tooling'] = `file:${path.join('..', '..',
+  'ojet-cli', 'node_modules', '@oracle', 'oraclejet-tooling')}`;
+}
+
+const ORACLEJET_CONFIG_JSON = 'oraclejetconfig.json';
 const DEFAULT_COMPONENTS_FOLDER = 'jet-composites';
 const OMIT_COMPONENT_VERSION_FLAG = 'omit-component-version';
-const  WEBPACK_DEPENDENCIES = ['webpack', 'css-loader', 'style-loader', 'text-loader'];
+const WEBPACK_LEGACY_DEPENDENCIES = ['webpack', 'css-loader', 'style-loader', 'text-loader'];
+const WEBPACK_DEPENDENCIES = [
+  'webpack',
+  'webpack-dev-server',
+  'style-loader', 
+  'css-loader', 
+  'ts-loader',
+  'raw-loader',
+  'noop-loader',
+  'html-webpack-plugin',
+  'html-replace-webpack-plugin',
+  'copy-webpack-plugin',
+  '@prefresh/webpack',
+  '@prefresh/babel-plugin',
+  'webpack-merge',
+  'compression-webpack-plugin',
+  'mini-css-extract-plugin',
+  'zlib'
+];
+const COMPONENT_JSON_DEPENDENCIES_TOKEN = '@dependencies@';
+const COMPONENT_JSON = 'component.json';
+const OJET_CONFIG_JS = 'ojet.config.js';
+const TSCONFIG_JSON = 'tsconfig.json';
 
 module.exports = {
   OJET_COMMAND: 'node ../ojet-cli/bin/ojet',
@@ -54,16 +83,24 @@ module.exports = {
   PWA_APP_NAME: 'webJsPwaTest',
   API_APP_NAME: 'webTsApiTest',
   VDOM_APP_NAME: 'vdomTest',
+  WEBPACK_APP_NAME: 'webpackTest',
+  WEBPACK_LEGACY_APP_NAME: 'webpackLegacyTest',
   COMPONENT_APP_NAME,
   COMPONENT_TS_APP_NAME,
   JAVASCRIPT_COMPONENT_APP_CONFIG,
   TYPESCRIPT_COMPONENT_APP_CONFIG,
   EXCHANGE_URL: 'https://exchange.oraclecorp.com/api/0.2.0',
-  ORACLJET_CONFIG_JSON,
+  ORACLEJET_CONFIG_JSON,
   DEFAULT_COMPONENTS_FOLDER,
   OMIT_COMPONENT_VERSION_FLAG,
+  TEST_DIR,
   WEBPACK_DEPENDENCIES,
-  execCmd: function _execCmd(cmd, options, squelch, logCommand = true) {
+  WEBPACK_LEGACY_DEPENDENCIES,
+  COMPONENT_JSON_DEPENDENCIES_TOKEN,
+  COMPONENT_JSON,
+  OJET_CONFIG_JS,
+  TSCONFIG_JSON,
+  execCmd: function _execCmd(cmd, options, squelch = false, logCommand = true) {
     if (logCommand) {
       console.log(cmd);
     }
@@ -78,6 +115,23 @@ module.exports = {
         }
       });
     })
+  },
+
+  makePackageSymlink: function _makePackageSymlink() {
+    function _updatePackageFile(dir) {
+      let src = path.resolve('generators', dir, 'templates', 'common', 'package.json');
+      let json = fs.readJSONSync(src);
+      // Replace the property
+      _replaceOraclejetToolingProp(json);
+      // Write it back out
+      fs.writeJsonSync(src, json);  
+    }
+
+    // Update the two package.json files in our built ojet-cli common templates
+    _updatePackageFile('app');
+
+    // do hybrid
+    _updatePackageFile('hybrid');
   },
 
   // Copy over oraclejet-tooling's build to the installation of ojet-cli
@@ -204,28 +258,72 @@ module.exports = {
     return regex.test(stdout);
   },
 
+  removeAppDir: function _removeAppDir(appName) {
+    const appDir = path.join(td, appName);
+    fs.emptyDirSync(appDir);
+    fs.rmdirSync(appDir);
+  },
+
   runComponentTestInAllTestApps,
 
   runComponentTestInTestApp,
 
-  getOracleJetConfigJson: function _getOracleJetConfigJson({ appName }) {
-    const oraclejetConfigJsonPath = path.join(this.getAppDir(appName), ORACLJET_CONFIG_JSON);
-    const oraclejetConfigJson = fs.readJSONSync(oraclejetConfigJsonPath);
+  getOracleJetConfigPath: function _getOracleJetConfigPath(appName) {
+    return path.join(this.getAppDir(appName), ORACLEJET_CONFIG_JSON);
+  },
+
+  getOracleJetConfigJson: function _getOracleJetConfigJson(appName) {
+    const oraclejetConfigJson = fs.readJSONSync(this.getOracleJetConfigPath(appName));
     return oraclejetConfigJson;
   },
 
-  getAppPathData: function _getAppPathData({ appName }) {
-    const oraclejetConfigJson = this.getOracleJetConfigJson({ appName });
+  writeOracleJetConfigJson: function _writeOracleJetConfigJson(appName, oraclejetConfigJson) {
+    fs.writeJsonSync(this.getOracleJetConfigPath(appName), oraclejetConfigJson);
+  },
+
+  writeCustomHookContents: function _writeCustomHookContents({hookName, filePath}) {
+    const customHookContent = `module.exports = function (configObj) {
+      return new Promise((resolve) => {
+        const componentName = configObj.component;
+        console.log('Running ${hookName}_component_package for component: component being packaged is', componentName);
+        resolve(configObj);
+      });
+    }`
+      fs.writeFileSync(filePath, customHookContent);
+  },
+
+  getHooksPathAndContent: function _getHooksPathAndContent(appName) {
+    const { pathToAppHooks } = this.getAppPathData(appName);
+    const beforePackageHookPath = path.join(pathToAppHooks, `before_component_package.js`);
+    const afterPackageHookPath = path.join(pathToAppHooks, `after_component_package.js`);
+    const defaultBeforeHookContent = fs.readFileSync(beforePackageHookPath);
+    const defaultAfterHookContent = fs.readFileSync(afterPackageHookPath);
+    return {
+      beforePackageHookPath,
+      afterPackageHookPath,
+      defaultBeforeHookContent,
+      defaultAfterHookContent
+    }
+  },
+
+  getAppPathData: function _getAppPathData(appName, scriptsFolder='') {
+    const oraclejetConfigJson = this.getOracleJetConfigJson(appName);
     const componentsFolder = oraclejetConfigJson.paths.source.components || DEFAULT_COMPONENTS_FOLDER;
     const stagingFolder = oraclejetConfigJson.paths.staging.web;
     const javascriptFolder = oraclejetConfigJson.paths.source.javascript;
-    const typescriptFolder = oraclejetConfigJson.paths.source.javascript;
+    const typescriptFolder = oraclejetConfigJson.paths.source.typescript;
     const sourceFolder = oraclejetConfigJson.paths.source.common;
     const pathToApp = this.getAppDir(appName);
     const pathToBuiltComponents = path.join(pathToApp, stagingFolder, javascriptFolder, componentsFolder);
+    const pathToSourceComponents = path.join(pathToApp, sourceFolder, scriptsFolder, componentsFolder);
     const pathToMainJs = path.join(pathToApp, stagingFolder, javascriptFolder, 'main.js');
     const pathToBundleJs = path.join(pathToApp, stagingFolder, javascriptFolder, 'bundle.js');
+    const exchangeComponentsFolder = oraclejetConfigJson.paths.source.exchangeComponents || 'jet_components';
+    const pathToNodeModules = path.join(pathToApp, 'node_modules');
+    const pathToAppHooks = path.join(pathToApp, `scripts/hooks`);
+    const pathToExchangeComponents = path.join(pathToApp, exchangeComponentsFolder);
     const pathToIndexHtml = path.join(pathToApp, stagingFolder, 'index.html');
+    const stylesFolder = oraclejetConfigJson.paths.source.styles;
     return {
       componentsFolder,
       stagingFolder,
@@ -234,9 +332,15 @@ module.exports = {
       typescriptFolder,
       pathToApp,
       pathToBuiltComponents,
+      pathToSourceComponents,
       pathToMainJs,
       pathToBundleJs,
-      pathToIndexHtml
+      exchangeComponentsFolder,
+      pathToNodeModules,
+      pathToExchangeComponents,
+      pathToIndexHtml,
+      pathToAppHooks,
+      stylesFolder
     }
   },
 

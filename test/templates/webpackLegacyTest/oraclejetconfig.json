@@ -1,0 +1,26 @@
+{
+  "paths": {
+    "source": {
+      "common": "src",
+      "web": "src-web",
+      "hybrid": "src-hybrid",
+      "javascript": ".",
+      "typescript": ".",
+      "styles": "styles",
+      "themes": "themes",
+      "components": "components",
+      "exchangeComponents": "exchange_components"
+    },
+    "staging": {
+      "web": "web",
+      "hybrid": "hybrid",
+      "themes": "staged-themes"
+    }
+  },
+  "defaultBrowser": "chrome",
+  "sassVer": "5.0.0",
+  "defaultTheme": "redwood",
+  "architecture": "vdom",
+  "bundler": "webpack",
+  "bundleName": "bundle.js"
+}

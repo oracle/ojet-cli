@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -10,8 +10,8 @@ const Admzip = require('adm-zip');
 const fs = require('fs-extra');
 const path = require('path');
 const graphics = require('../../hybrid/graphics');
-const utils = require('../../lib/utils');
-const CONSTANTS = require('../../lib/utils.constants');
+const utils = require('../../lib/util/utils');
+const constants = require('../../lib/util/constants');
 
 /**
  * Inject template files into scaffolded application depending
@@ -23,7 +23,7 @@ const CONSTANTS = require('../../lib/utils.constants');
 function _injectTemplateFiles({ generator, namespace }) {
   const pathToTemplates = path.resolve(__dirname, `../../generators/${namespace}/templates/common`);
   const pathToApp = path.resolve(generator.appDir);
-  const template = generator.options.template || CONSTANTS.BLANK_TEMPLATE;
+  const template = generator.options.template || constants.BLANK_TEMPLATE;
   function _templateFileFilter(file) {
     const screenPath = path.join(graphics.PATH, 'screen');
     const iconPath = path.join(graphics.PATH, 'icon');
@@ -79,7 +79,7 @@ function _injectTemplateFiles({ generator, namespace }) {
       const {
         ORACLEJET_PACKAGE_JSON_NAME: oraclejet,
         ORACLEJET_TOOLING_PACKAGE_JSON_NAME: oraclejetTooling
-      } = CONSTANTS;
+      } = constants;
       let updatedAppPackageJson = false;
       if (!appDependencies[oraclejet]) {
         // app's package.json does not have an entry for @oracle/oraclejet in depedencies.

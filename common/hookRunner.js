@@ -1,12 +1,12 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
 */
 'use strict';
 
-const CONSTANTS = require('../util/constants');
+const constants = require('../lib/util/constants');
 const fs = require('fs');
 const path = require('path');
 
@@ -56,7 +56,7 @@ module.exports = {
  * @private
  */
 function _getHooksConfigObj() {
-  const configFilePath = path.resolve(CONSTANTS.PATH_TO_HOOKS_CONFIG);
+  const configFilePath = path.resolve(constants.PATH_TO_HOOKS_CONFIG);
   if (fs.existsSync(configFilePath)) {
     const configFileContent = fs.readFileSync(configFilePath, 'utf8');
     let configFileContentAsJson = {};

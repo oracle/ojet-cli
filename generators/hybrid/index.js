@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -7,7 +7,7 @@
 'use strict';
 
 const exec = require('child_process').exec;
-const paths = require('../../util/paths');
+const paths = require('../../lib/util/paths');
 const path = require('path');
 const templateHandler = require('../../common/template/');
 const common = require('../../common');
@@ -17,6 +17,7 @@ const commonMessages = require('../../common/messages');
 const commonRestore = require('../../common/restore');
 const cordovaHelper = require('../../hybrid/cordova');
 const platformsHelper = require('../../hybrid/platforms');
+const utils = require('../../lib/util/utils');
 const fs = require('fs-extra');
 
 /*
@@ -49,11 +50,11 @@ function _invokeCordovaPrepare(generator) {
   });
 }
 
-function _writeTemplate(generator, utils) {
+function _writeTemplate(generator) {
   return new Promise((resolve, reject) => {
     const appDir = generator.appDir;
     const appDirectory = path.resolve(appDir, 'src');
-    templateHandler.handleTemplate(generator, utils, appDirectory)
+    templateHandler.handleTemplate(generator, appDirectory)
       .then(() => {
         resolve();
       })
@@ -69,9 +70,8 @@ function _writeTemplate(generator, utils) {
  * @public
  * @param {Array} parameters
  * @param {Object} options
- * @param {utils} utility module
  */
-module.exports = function (parameters, opt, utils) {
+module.exports = function (parameters, opt) {
   const app = {
     options: Object.assign({ namespace: 'hybrid' }, opt),
     appDir: parameters
@@ -85,7 +85,7 @@ module.exports = function (parameters, opt, utils) {
       commonHybrid.setupHybridEnv(app);
       fs.mkdirSync(path.resolve(app.appDir));
     })
-    .then(() => platformsHelper.getPlatforms(app, utils))
+    .then(() => platformsHelper.getPlatforms(app))
     .then(() => common.switchToAppDirectory(app))
     .then(() => common.writeCommonTemplates(app))
     .then(() => common.writeGitIgnore())
@@ -93,19 +93,19 @@ module.exports = function (parameters, opt, utils) {
     .then(() => commonHybrid.copyResources())
     .then(() => commonHybrid.removeExtraCordovaFiles())
     .then(() => common.switchFromAppDirectory())
-    .then(() => _writeTemplate(app, utils))
+    .then(() => _writeTemplate(app))
     .then(() => common.switchToAppDirectory(app))
     .then(() => common.updatePackageJSON(app))
-    .then(() => platformsHelper.addPlatforms(app, utils))
+    .then(() => platformsHelper.addPlatforms(app))
     .then(() => commonHybrid.updateConfigXml(app))
     .then(() => {
       utils.log(commonMessages.scaffoldComplete());
       if (!app.options.norestore) {
-        return commonRestore.npmInstall(app)
+        return commonRestore.npmInstall(app, opt)
           .then(() => commonHybrid.copyHooks())
-          .then(() => commonRestore.writeOracleJetConfigFile(app, utils))
+          .then(() => commonRestore.writeOracleJetConfigFile())
           .then(() => _invokeCordovaPrepare(app))
-          .then(() => common.addTypescript(app))
+          .then(() => common.addTypescript(app, opt))
           .then(() => commonHookRunner.runAfterAppCreateHook())
           .then(() => utils.log(commonMessages.restoreComplete(
             app.options.invokedByRestore,

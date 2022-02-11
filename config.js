@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -521,6 +521,10 @@ const config = {
             password: {
               aliases: ['p'],
               description: 'The user\'s registered password'
+            },
+            ci: {
+              description: 'Use npm ci instead of npm install',
+              default: 'false'
             }
           },
           examples: [
@@ -705,6 +709,9 @@ const config = {
     help: {
       aliases: ['h'],
       description: 'Print help for the command'
+    },
+    installer: {
+      description: 'Specify an alternate package installer such as yarn'
     },
     verbose: {
       description: 'Print details'

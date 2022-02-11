@@ -3,19 +3,19 @@
 // If you uncomment other imports please set generatedFileType to 'combined' in theme.json.
 // Please see the developer guide link below for more information
 // http://www.oracle.com/pls/topic/lookup?ctx=jetlatest&id=GUID-12A65AC0-4784-46FE-AC8C-09FA509737E4
- 
+
 // import SASS custom variable overrides
 // @import "_<%= themename %>.sass.settings.scss";
- 
+
 // Imports all jet components styles
 // @import "<%= importcomponents %>";
- 
+
 // To optimize performance, consider commenting out the above oj-all-components
 // import and uncomment _<%= themename %>.components.scss below.
 // Then in _<%= themename %>.components.scss uncomment only the component 
 // imports that your application needs.
- 
+
 // @import "_<%= themename %>.optimize-components.scss";
- 
+
 // import CSS Custom properties
 @import "_<%= themename %>.cssvars.settings.scss";

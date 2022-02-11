@@ -1,15 +1,16 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
 */
 'use strict';
 
-const constants = require('../util/constants');
+const constants = require('../lib/util/constants');
 const path = require('path');
-const paths = require('../util/paths');
+const paths = require('../lib/util/paths');
 const commonMessages = require('../common/messages');
+const utils = require('../lib/util/utils');
 const inquirer = require('inquirer');
 const childProcess = require('child_process');
 
@@ -52,14 +53,14 @@ const TEST_COMMAND =
 
 module.exports =
 {
-  getPlatforms: function _getPlatforms(generatorArg, utils) {
+  getPlatforms: function _getPlatforms(generatorArg) {
     const generator = generatorArg;
 
     if (generator.options.platforms || generator.options.platform) {
       // platforms = generator.options.platforms || generator.options.platform;
 
       return new Promise((resolve) => {
-        _validatePlatforms(generator, utils)
+        _validatePlatforms(generator)
           .then((processedPlatforms) => {
             generator._platformsToInstall = processedPlatforms;
             resolve(generator);
@@ -69,7 +70,7 @@ module.exports =
 
     return new Promise((resolve, reject) => {
       // if platforms option is not provided do prompt
-      _testPlatforms(constants.SUPPORTED_HYBRID_PLATFORMS, utils)
+      _testPlatforms(constants.SUPPORTED_HYBRID_PLATFORMS)
         .then((possiblePlatforms) => {
           if (!possiblePlatforms.length) {
             resolve(generator);
@@ -93,7 +94,7 @@ module.exports =
     });
   },
 
-  addPlatforms: function _addPlatforms(generator, utils) {
+  addPlatforms: function _addPlatforms(generator) {
     const platforms = generator._platformsToInstall;
 
     // always add the browser platform
@@ -129,12 +130,12 @@ module.exports =
  * @param {type} generator
  * @return {Promise}
  */
-function _validatePlatforms(generator, utils) {
+function _validatePlatforms(generator) {
   const platformOptions = generator.options.platforms || generator.options.platform;
-  const platforms = _processPlatformOptions(platformOptions, utils);
+  const platforms = _processPlatformOptions(platformOptions);
 
   return new Promise((resolve) => {
-    _testPlatforms(platforms, utils)
+    _testPlatforms(platforms)
       .then((availablePlatforms) => {
         const failedPlatforms = [];
         platforms.forEach((entry) => {
@@ -164,9 +165,9 @@ function _validatePlatforms(generator, utils) {
  * @param {Array} platforms array of requested platforms
  * @return {Promise} a promise object
  */
-function _testPlatforms(platforms, utils) {
+function _testPlatforms(platforms) {
   const filteredTestCommands = _getFilteredTestCommands(platforms);
-  const platformTests = _getPlatformTests(filteredTestCommands, utils);
+  const platformTests = _getPlatformTests(filteredTestCommands);
   // note there exists no reject since want to test all the filteredTestCommands
   // and when there are errors (i.e. test command fails) it will resolve w/o that platform
   return new Promise((resolve) => {
@@ -190,7 +191,7 @@ function _filterPromptingPlatforms(promptPlatforms) {
     promptPlatforms.indexOf(type.value) !== -1);
 }
 
-function _processPlatformOptions(platforms, utils) {
+function _processPlatformOptions(platforms) {
   if (!platforms) {
     return [];
   }
@@ -216,11 +217,11 @@ function _getFilteredTestCommands(platforms) {
   return TEST_COMMAND.filter(type => platforms.indexOf(type.platform) !== -1);
 }
 
-function _getPlatformTests(platforms, utils) {
+function _getPlatformTests(platforms) {
   const platformTests = [];
 
   platforms.forEach((info) => {
-    platformTests.push(_createPlatformTest(info, utils));
+    platformTests.push(_createPlatformTest(info));
   });
 
   return platformTests;

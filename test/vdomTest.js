@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -7,14 +7,38 @@
 const assert = require('assert');
 const fs = require('fs-extra');
 const path = require('path');
-
 const Ojet = require('../ojet');
 const util = require('./util');
 
-const testDir = path.resolve('../test_result');
-const appDir = path.resolve(testDir, util.VDOM_APP_NAME);
+const appDir = util.getAppDir(util.VDOM_APP_NAME);
 
 describe('VDOM Test', () => {
+  before(async () => {
+    if (!util.noScaffold()) {
+      util.removeAppDir(util.VDOM_APP_NAME);
+
+      // Scaffold vdomTest application using API
+      const ojet = new Ojet({ cwd: util.testDir, logs: false });
+      let executeOptions = {};
+      try {
+        executeOptions = {
+          task: 'create',
+          parameters: [util.VDOM_APP_NAME],
+          options: {
+            template: 'basic',
+            vdom: true
+          }
+        };
+        await ojet.execute(executeOptions);
+   
+        assert.ok(true);
+      } catch (e) {
+        console.log(e);
+        assert.ok(false, `Error running ojet.execute with ${executeOptions}`);
+      }
+    }
+  });
+
   describe('Scaffold', () => {
     it('should have path_mapping.json at root of the app with no baseUrl', () => {
       const pathToPathMappingJson = path.resolve(appDir, 'path_mapping.json');
@@ -50,7 +74,7 @@ describe('VDOM Test', () => {
           sourceFolder,
           typescriptFolder,
           componentsFolder
-        } = util.getAppPathData({ appName: util.VDOM_APP_NAME })
+        } = util.getAppPathData(util.VDOM_APP_NAME)
         const componentName = 'vcomp-1';
         const pathToComponentTsx = path.join(
           pathToApp,
@@ -104,70 +128,24 @@ describe('VDOM Test', () => {
     }
   });
 
-  describe('Webpack', () => {
-    describe('Add webpack', () => {
-      if (!util.noScaffold()) {
-        it('should run "ojet add webpack"', async () => {
-          const { pathToApp } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
-          const ojet = new Ojet({ cwd: pathToApp, logs: false });
-          try {
-            await ojet.execute({ 
-              task: 'add', 
-              parameters: ['webpack']
-            });
-            assert.ok(true);
-          } catch {
-            assert.ok(false);
-          }
-        });
-      }
-      it('should check that webpack and its dependencies are listed in package.json', () => {
-        const { pathToApp } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
-        const packageJson = fs.readJsonSync(path.join(pathToApp, 'package.json'));
-        util.WEBPACK_DEPENDENCIES.forEach((dependency) => {
-          assert.ok(packageJson.devDependencies[dependency], `${dependency} not installed`);
-        });
+  describe('Add (pwa)', () => {
+    if (!util.noBuild()) {
+      it('should have appropriate vdom files and folders to cache in sw.js on running ojet add pwa', async () => {
+        await util.execCmd(`${util.OJET_APP_COMMAND} add pwa`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true, true);
+        const {pathToApp, stagingFolder} = util.getAppPathData(util.VDOM_APP_NAME);
+        const pathToSWFile = path.join(pathToApp, stagingFolder, 'sw.js');
+        const swJsContent = fs.readFileSync(pathToSWFile, { encoding: 'utf-8' });
+        const regex = /resourcesToCache=(?<resourcesToCache>.*)\;self/gm;
+        const match = regex.exec(swJsContent);
+        const retrievedResourcesToCache = match.groups.resourcesToCache;
+        const requiredResourcesToCache = ['index.js', 'index.html', 'bundle.js', 'manifest.json', 'components/', 'libs/', 'styles/'];
+        const swJSHasRequiredResourcesTocache =  requiredResourcesToCache.every((resource) => {
+          return retrievedResourcesToCache.includes(resource);
+        })
+        const errorMessage = `sw.js does not contain right files and folders to cache for a vdom app.`;
+        assert.equal(swJSHasRequiredResourcesTocache, true, errorMessage); 
       });
-      it('should check that bundler and bundleName properties were added to oraclejetconfig.json', () => {
-        const oraclejetConfigJson = util.getOracleJetConfigJson({ appName: util.VDOM_APP_NAME });
-        assert.ok(oraclejetConfigJson.bundler === 'webpack', 'bundler not equal to "webpack"');
-        assert.ok(oraclejetConfigJson.bundleName === 'bundle.js', 'bundleName not equal to "bundle.js');
-      });
-    });
-    describe('Build debug', () => {
-      it('should build in debug mode', async () => {
-        const { pathToApp } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
-        const ojet = new Ojet({ cwd: pathToApp, logs: false });
-        try {
-          await ojet.execute({ task: 'build' });
-          assert.ok(true);
-        } catch {
-          assert.ok(false);
-        }
-      });
-    });
-    describe('Build release', () => {
-      it('should build in release mode', async () => {
-        const { pathToApp } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
-        const ojet = new Ojet({ cwd: pathToApp, logs: false });
-        try {
-          await ojet.execute({ task: 'build', options: { release: true }});
-          assert.ok(true);
-        } catch {
-          assert.ok(false);
-        }
-      });
-      it('should have bundle file', () => {
-        const { pathToBundleJs } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
-        const bundleFileExists = fs.existsSync(pathToBundleJs);
-        assert.ok(bundleFileExists, `${pathToBundleJs} does not exist`);
-      });
-      it('should not load require.js in index.html', () => {
-        const { pathToIndexHtml } = util.getAppPathData({ appName: util.VDOM_APP_NAME });
-        const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
-        const loadsRequireJs = /require\/require\.js'><\/script>/.test(indexHtmlContent);
-        assert.ok(!loadsRequireJs, `${pathToIndexHtml} loads require.js`);
-      });
-    });
+    }
   });
 });

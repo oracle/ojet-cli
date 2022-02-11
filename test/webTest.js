@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -9,13 +9,45 @@ const fs = require('fs-extra');
 const path = require('path');
 const _ = require('lodash');
 
+const constants = require('../lib/util/constants');
+const ojetUtil = require('../lib/util/utils');
+const ojetPaths = require('../lib/util/paths');
+
 const util = require('./util');
 
 let filelist;
-const testDir = path.resolve('../test_result');
-const appDir = path.resolve(testDir, util.APP_NAME);
+const appDir = util.getAppDir(util.APP_NAME);
 
 describe('Web Test', () => {
+  before(async () => {
+    if (!util.noScaffold()) {
+      const platform = util.getPlatform(process.env.OS);
+
+      util.removeAppDir(util.APP_NAME);
+      util.removeAppDir(util.TEST_DIR);
+  
+      // Scaffold a basic web app
+      let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.APP_NAME} --norestore=true`, { cwd: util.testDir });
+      console.log(result.stdout);
+      // Check that it output the right text to the command line
+      assert.strictEqual(util.norestoreSuccess(result.stdout), true, result.stderr);
+      // Restore
+      result = await util.execCmd(`${util.OJET_APP_COMMAND} restore`, { cwd: util.getAppDir(util.APP_NAME) });
+      console.log(result.stdout);
+  
+      // Scaffold a basic app without a name
+      result = await util.execCmd(`${util.OJET_COMMAND} create --norestore=true`, { cwd: util.testDir });
+      // Check that it worked
+      assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
+  
+      if (!util.noHybrid()) {
+        // Add hybrid
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} add hybrid --platform=${platform}`, { cwd: util.getAppDir(util.APP_NAME) });
+        console.log(result.stdout);
+      }
+    }  
+  });
+  
   describe('Check essential files', () => {
     it('should have package.json', () => {
       filelist = fs.readdirSync(appDir);
@@ -38,13 +70,13 @@ describe('Web Test', () => {
       });
     }
     it('should not have bundle.js', async () => {
-      const{ pathToBundleJs } = util.getAppPathData({ appName: util.APP_NAME })
+      const{ pathToBundleJs } = util.getAppPathData(util.APP_NAME)
       const hasBundleJs = fs.existsSync(pathToBundleJs);
       assert.ok(!hasBundleJs, pathToBundleJs);
     })
   });
 
-  describe('Build (Release)', () => {
+  describe('Build (Release) without the bundle name attribute', () => {
     if (!util.noBuild()) {
       it('should build release js app', async () => {
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
@@ -52,14 +84,61 @@ describe('Web Test', () => {
       });
     }
     it('should have bundle.js', async () => {
-      const{ pathToBundleJs } = util.getAppPathData({ appName: util.APP_NAME })
+      const{ pathToBundleJs } = util.getAppPathData(util.APP_NAME)
       const hasBundleJs = fs.existsSync(pathToBundleJs);
       assert.ok(hasBundleJs, pathToBundleJs);
     })
     it('should not have main.js', async () => {
-      const{ pathToMainJs } = util.getAppPathData({ appName: util.APP_NAME })
+      const{ pathToMainJs } = util.getAppPathData(util.APP_NAME)
       const hasMainJs = fs.existsSync(pathToMainJs);
       assert.ok(!hasMainJs, pathToMainJs);
+    })
+  });
+
+  describe('Build (Release) with any given bundle name other than main.js', () => {
+    if (!util.noBuild()) {
+      it('should build release js app', async () => {
+        // get the oraclejetconfig.json file and add bundleName attribute value to <appName>.js:
+        const oracleJetConfigJSON = util.getOracleJetConfigJson(util.APP_NAME);
+        oracleJetConfigJSON.bundleName = `${util.API_APP_NAME}.js`;
+        util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+        const result = await (util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) }));
+        // Delete the bundleName attribute. Having it might cause the subsequent case(s) to fail:
+        delete oracleJetConfigJSON.bundleName;
+        util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+      });
+    }
+    it(`should have ${util.API_APP_NAME}.js`, async () => {
+      // retrieve the path for the created js file and check its presence:
+      const{ pathToApp, stagingFolder, javascriptFolder } = util.getAppPathData(util.APP_NAME)
+      const pathToBundleNameJs = path.join(pathToApp, stagingFolder, javascriptFolder, `${util.API_APP_NAME}.js`);
+      const hasBundleNameJs = fs.existsSync(pathToBundleNameJs);
+      assert.ok(hasBundleNameJs, pathToBundleNameJs);
+    })
+    it('should not have main.js', async () => {
+      const{ pathToMainJs } = util.getAppPathData(util.APP_NAME)
+      const hasMainJs = fs.existsSync(pathToMainJs);
+      assert.ok(!hasMainJs, pathToMainJs);
+    })
+  });
+
+  describe('Build (Release) with main.js as the bundleName', () => {
+    if (!util.noBuild()) {
+      it('should build release js app', async () => {
+        const oracleJetConfigJSON = util.getOracleJetConfigJson(util.APP_NAME);
+        oracleJetConfigJSON.bundleName = 'main.js';
+        util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
+        delete oracleJetConfigJSON.bundleName;
+        util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+      });
+    }
+    it('should have main.js', async () => {
+      const{ pathToMainJs } = util.getAppPathData(util.APP_NAME)
+      const hasMainJs = fs.existsSync(pathToMainJs);
+      assert.ok(hasMainJs, pathToMainJs);
     })
   });
 
@@ -103,7 +182,7 @@ describe('Web Test', () => {
       });
       it('release build:  path mapping to minified component', async () => {
         await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
-        const{ pathToBundleJs } = util.getAppPathData({ appName: util.APP_NAME })
+        const{ pathToBundleJs } = util.getAppPathData(util.APP_NAME);
         const bundleContent = fs.readFileSync(pathToBundleJs);
         assert.equal(bundleContent.toString().match(`jet-composites/${testComp}/1.0.0/min`), `jet-composites/${testComp}/1.0.0/min`,
           `bundle.js should contain the minified component ${testComp}`);
@@ -220,7 +299,7 @@ describe('Paths Mapping Test', () => {
 if (!util.noServe()) {
   describe('serve', () => {
     it('should serve with nobuild', async () => {
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 30000, timeout:40000, killSignal:'SIGTERM' }, true);
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
       assert.equal(/Watching files/i.test(result.stdout), true, result.stdout);
       result.process.kill();
     });
@@ -231,9 +310,6 @@ describe('add theming', () => {
   it('should add pcss generator', async () => {
     const result = await util.execCmd(`${util.OJET_APP_COMMAND} add theming`, { cwd: appDir });
     assert.equal(/add pcss complete/.test(result.stdout), true, result.stdout);
-
-    // Recopy oraclejet-tooling
-    util.copyOracleJetTooling(`${util.APP_NAME}`);
   });
 });
 
@@ -294,4 +370,75 @@ describe('Build with cdn', () => {
       assert.ok(!hasLibNotInWhitelist, 'libs should not contain libraries referenced from the cdn');
     });
   });
+
+  describe('Customization Test', () => {
+    it('should load oraclejet build config', () => {
+      const wd = process.cwd();
+      process.chdir(util.getAppDir(util.APP_NAME));
+      const buildOps = ojetUtil.getBuildCustomizedConfig();
+      process.chdir(wd);
+      assert(!_.isEmpty(buildOps));
+    });
+  
+    it('should load oraclejet serve config', () => {
+      const wd = process.cwd();
+      process.chdir(util.getAppDir(util.APP_NAME));
+      const serveOps = ojetUtil.getServeCustomizedConfig();
+      process.chdir(wd);
+      assert(!_.isEmpty(serveOps));
+    });
+  
+    it('should validate serve config', () => {
+      const wd = process.cwd();
+      process.chdir(util.getAppDir(util.APP_NAME));
+      const serveOps = ojetUtil.getServeCustomizedConfig();
+      process.chdir(wd);
+      const validServe = ojetUtil.validateServeOptions(serveOps);
+      assert(_.isEmpty(validServe));
+    });
+  
+  
+    it('should get default paths', () => {
+      const defaultPaths = ojetPaths.getDefaultPaths();
+      assert(!_.isEmpty(defaultPaths));
+    });
+  
+    it('should validate configured paths', () => {
+      const defaultPaths = ojetPaths.getDefaultPaths();
+      assert(defaultPaths.source == 'src');
+      assert(defaultPaths.sourceWeb == 'src-web');
+      assert(defaultPaths.sourceHybrid == 'src-hybrid');
+      assert(defaultPaths.sourceJavascript == 'js');
+      assert(defaultPaths.sourceThemes == 'themes');
+      assert(defaultPaths.stagingHybrid == 'hybrid');
+      assert(defaultPaths.stagingWeb == 'web');
+      assert(defaultPaths.stagingThemes == constants.APP_STAGED_THEMES_DIRECTORY);
+    });
+  
+  
+    it('should get configured paths', () => {
+      const confPaths = ojetPaths.getConfiguredPaths(util.getAppDir(util.APP_NAME));
+      assert(!_.isEmpty(confPaths));
+    });
+  
+    it('should validate configured paths', () => {
+      const defaultPaths = ojetPaths.getDefaultPaths();
+      const confPaths = ojetPaths.getConfiguredPaths(util.getAppDir(util.APP_NAME));
+      assert(_.isEqual(confPaths, defaultPaths));
+    });
+  
+    it('should validate is cwd is JET App', () => {
+      const wd = process.cwd();
+      process.chdir(util.getAppDir(util.APP_NAME));
+      const isJetApp = ojetUtil.ensureJetApp();
+      process.chdir(wd);
+      assert(isJetApp);
+    });
+  
+    it('should validate util ensure parameters', () => {
+      assert.doesNotThrow(() => {
+        ojetUtil.ensureParameters('component');
+      });
+    });
+  });  
 });

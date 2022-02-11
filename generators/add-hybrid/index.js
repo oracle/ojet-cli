@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -10,12 +10,12 @@ const childProcess = require('child_process');
 const fs = require('fs-extra');
 const path = require('path');
 const common = require('../../common');
-const paths = require('../../util/paths');
+const paths = require('../../lib/util/paths');
 const commonMessages = require('../../common/messages');
 const commonHybrid = require('../../hybrid');
 const cordovaHelper = require('../../hybrid/cordova');
 const platformsHelper = require('../../hybrid/platforms');
-const util = require('../../util');
+const utils = require('../../lib/util/utils');
 
 const _configPaths = {};
 
@@ -96,7 +96,7 @@ function _copyCordovaMocks() {
   const dest = path.resolve(`./${srcHybridPath}/${srcJsPath}/`);
 
   return new Promise((resolve, reject) => {
-    if (util.fsExistsSync(source)) {
+    if (utils.fsExistsSync(source)) {
       fs.copy(source, dest, (err) => {
         if (err) {
           reject(err);
@@ -117,9 +117,8 @@ function _copyCordovaMocks() {
  * @public
  * @param {Array} parameters
  * @param {Object} options
- * @param {utils} utility module
  */
-module.exports = function (parameters, opt, utils) {
+module.exports = function (parameters, opt) {
   const addHybrid = {
     arguments: parameters,
     options: Object.assign({ namespace: 'add-hybrid' }, opt)
@@ -134,14 +133,14 @@ module.exports = function (parameters, opt, utils) {
       addHybrid.appDir = path.basename(path.resolve('.'));
       commonHybrid.setupHybridEnv(addHybrid);
     })
-    .then(() => platformsHelper.getPlatforms(addHybrid, utils))
+    .then(() => platformsHelper.getPlatforms(addHybrid))
     .then(() => _createExtraSrcDirs(addHybrid))
     .then(() => cordovaHelper.create(addHybrid))
     .then(() => commonHybrid.copyHooks())
     .then(() => commonHybrid.copyResources())
     .then(_copyCordovaMocks)
     .then(() => commonHybrid.removeExtraCordovaFiles())
-    .then(() => platformsHelper.addPlatforms(addHybrid, utils))
+    .then(() => platformsHelper.addPlatforms(addHybrid))
     .then(() => commonHybrid.updateConfigXml(addHybrid))
     .then(() => {
       utils.log(commonMessages.appendJETPrefix('Add hybrid finished.'));

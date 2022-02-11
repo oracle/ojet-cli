@@ -18,7 +18,6 @@
   "defaultBrowser": "chrome",
   "sassVer": "5.0.0",
   "defaultTheme": "redwood",
-  "generatorVersion": "10.0.0",
   "exchange-url": "https://exchange.oraclecorp.com/api/0.2.0",
   "components": {
     "oj-sample": {

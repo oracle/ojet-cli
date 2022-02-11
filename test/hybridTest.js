@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -14,12 +14,23 @@ const hybridDirectory = 'hybrid';
 
 const platform = util.getPlatform(env.OS);
 
-
 const buildConfig = process.env.HYBRID_TEST_BUILDCONFIG ? `--build-config=${process.env.HYBRID_TEST_BUILDCONFIG}` : '';
 let idName = 'dummy';
 
 if (!util.noHybrid()) {
   describe('Hybrid Test', () => {
+    before(async () => {
+      if (!util.noScaffold()) {
+        util.removeAppDir(util.HYBRID_APP_NAME);
+    
+        // Scaffold hybrid app from scratch
+        result = await util.execCmd(`${util.OJET_COMMAND} create ${util.HYBRID_APP_NAME} --use-global-tooling --template=navbar --appid=com.oraclecorp.dummy.myapp --appName=testcase --hybrid --platform=${platform}`, { cwd: util.testDir });
+        console.log(result.stdout);
+        // Check output
+        assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
+      }
+    });
+    
     describe('Run Tests', () => {
       describe('Invalid arguments & check error messages', () => {
         it('should complain about generating app to non-empty appDir', async () => {
@@ -151,9 +162,6 @@ if (!util.noHybrid()) {
         it('should add sass generator', async () => {
           const result = await util.execCmd(`${util.OJET_APP_COMMAND} add sass`, { cwd: util.getAppDir(util.HYBRID_APP_NAME) });
           assert.equal(/add sass complete/.test(result.stdout), true, result.stdout);
-
-          // Recopy oraclejet-tooling
-          //util.copyOracleJetTooling(`${util.HYBRID_APP_NAME}`);
         });
       });
 

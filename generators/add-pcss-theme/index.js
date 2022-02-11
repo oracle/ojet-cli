@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -8,9 +8,10 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const constants = require('../../util/constants');
+const constants = require('../../lib/util/constants');
 const common = require('../../common');
-const paths = require('../../util/paths');
+const paths = require('../../lib/util/paths');
+const utils = require('../../lib/util/utils');
 const commonMessages = require('../../common/messages');
 
 const DEFAULT_THEME = 'mytheme';
@@ -199,12 +200,13 @@ function _addPcssTheme(addTheme) {
       _loadComponentRefrence(addTheme, themeDestPath);
       resolve(addTheme);
     } catch (err) {
+      utils.log.error(err);
       reject();
     }
   });
 }
 
-function _updateBaseTheme(themeAdded, utils) {
+function _updateBaseTheme(themeAdded) {
   const themeName = themeAdded.themeName;
   const _configpaths = paths.getConfiguredPaths(path.resolve('.'));
   const srcPath = _configpaths.source;
@@ -221,6 +223,7 @@ function _updateBaseTheme(themeAdded, utils) {
       fs.writeFileSync(themeConfigPath, JSON.stringify(themeConfigJson, null, 2));
       resolve(themeAdded);
     } catch (err) {
+      utils.log.error(err);
       reject();
     }
   });
@@ -232,9 +235,8 @@ function _updateBaseTheme(themeAdded, utils) {
  * @public
  * @param {Array} parameters
  * @param {Object} options
- * @param {utils} utility module
  */
-module.exports = function (parameters, opt, utils) {
+module.exports = function (parameters, opt) {
   const pcssTheme = {
     themeOption: Object.prototype.hasOwnProperty.call(opt, constants.PCSS_THEME_FLAG),
     themeOptionValue: opt[constants.PCSS_THEME_FLAG],
@@ -268,7 +270,7 @@ module.exports = function (parameters, opt, utils) {
   return common.validateArgs(pcssTheme)
     .then(common.validateFlags)
     .then(_addPcssTheme(pcssTheme))
-    .then(_updateBaseTheme(pcssTheme, utils))
+    .then(_updateBaseTheme(pcssTheme))
     .then(() => {
       utils.log.success(commonMessages.appendJETPrefix(`${pcssTheme.themeName} theme added, with css variables support.`));
     })

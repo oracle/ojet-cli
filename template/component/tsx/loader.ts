@@ -1,1 +1,1 @@
-export { @camelcase-component-name@ } from "./@component-name@";
+export { @camelcasecomponent-name@ } from "./@component-name@";

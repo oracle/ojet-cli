@@ -15,3 +15,8 @@
 	min-height: 50px;
 	width: 50px;
 }
+
+@full-component-name@[hidden]
+{
+  display: none;
+}

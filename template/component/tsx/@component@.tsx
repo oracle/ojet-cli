@@ -14,12 +14,12 @@ type Props = {
  * @ojmetadata description "A translatable high-level description for the component"
 */
 @customElement("@full-component-name@")
-export class @camelcase-component-name@ extends Component<ExtendGlobalProps<Props>> {
-  static defaultProps: Partial<Props> = {
-    message: "Hello from @full-component-name@!"
-  };
+export class @camelcasecomponent-name@ extends Component < ExtendGlobalProps < Props >> {
+  static defaultProps: Partial < Props > = {
+  message: "Hello from @full-component-name@!"
+};
 
-  render(props: Readonly<Props>): ComponentChild {
-    return <p>{props.message}</p>;
+render(props: Readonly<Props>): ComponentChild {
+  return<p>{ props.message }</p>;
   }
 }

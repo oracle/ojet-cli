@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -8,8 +8,9 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const CONSTANTS = require('../util/constants');
-const paths = require('../util/paths');
+const constants = require('../lib/util/constants');
+const paths = require('../lib/util/paths');
+const utils = require('../lib/util/utils');
 const commonMessages = require('./messages');
 
 module.exports = {
@@ -23,43 +24,51 @@ module.exports = {
    * @param {object} utils object with helper methods
    * @returns {Promise}
    */
-  writeComponentTemplate: function _writeComponentTemplate(generator, utils) {
+  writeComponentTemplate: function _writeComponentTemplate(generator) {
     return new Promise((resolve) => {
       const componentName = _getComponentName(generator);
-      const componentTemplateSrc = _getComponentTemplatePath(generator, utils);
+      const componentTemplateSrc = _getComponentTemplatePath(generator);
       const componentThemeTemplateSrc = _getComponentThemeTemplatePath('theme');
-      const componentDestDirectory = _getComponentDestPath(generator, utils);
+      const componentDestDirectory = _getComponentDestPath(generator);
       const pack = generator.options.pack;
       // avoid overwrite component
       if (fs.existsSync(componentDestDirectory)) {
         utils.log.error(`Component with name '${componentName}' already exists.`);
       }
-      if (_isVComponent(generator, utils) && !utils.isTypescriptApplication()) {
+      if (_isVComponent(generator) && !utils.isTypescriptApplication()) {
         utils.log.error('Cannot create a vcomponent in a Javascript application. Please run \'ojet add typescript\' to add Typescript support to your application.');
       }
       fs.ensureDirSync(componentDestDirectory);
       fs.copySync(componentTemplateSrc, componentDestDirectory);
-      fs.copySync(componentThemeTemplateSrc, componentDestDirectory);
-      // Copy theming template for composit components
-      if (utils.validCustomProperties()) {
-        const componentTemplateScssSrc = _getComponentThemeTemplatePath('pcss');
-        fs.copySync(componentTemplateScssSrc, componentDestDirectory);
+      if (_isResourceComponent(generator)) {
+        const fileContent = constants.RESOURCE_COMPONENT_INDEX_FILE_CONTENT;
+        fs.writeFileSync(path.join(componentDestDirectory, `index.${utils.isTypescriptApplication() ? 'ts' : 'js'}`), fileContent);
       } else {
-        const componentTemplateCssSrc = _getComponentThemeTemplatePath('css');
-        fs.copySync(componentTemplateCssSrc, componentDestDirectory);
+        // Only copy theming files for none-resource components
+        fs.copySync(componentThemeTemplateSrc, componentDestDirectory);
+        // Copy theming template for composit components
+        if (utils.validCustomProperties()) {
+          const componentTemplateScssSrc = _getComponentThemeTemplatePath('pcss');
+          fs.copySync(componentTemplateScssSrc, componentDestDirectory);
+        } else {
+          const componentTemplateCssSrc = _getComponentThemeTemplatePath('css');
+          fs.copySync(componentTemplateCssSrc, componentDestDirectory);
+        }
       }
       // replace tokens in template files and file names
-      _renameComponentTemplatePrefix(generator, utils);
-      _replaceComponentTemplateToken(generator, utils, pack);
+      _renameComponentTemplatePrefix(generator);
+      _replaceComponentTemplateToken(generator, pack);
+      _filterTsxTemplates(generator, componentDestDirectory);
       if (pack) {
         // update pack info
-        _updatePackInfo({ generator, utils, pack });
-      } else if (_isVComponent(generator, utils)) {
+        _updatePackInfo({ generator, pack });
+      } else if (_isVComponent(generator)) {
         // remove pack metadata from vcomponent template
-        _stripPackFromVComponet({ generator, utils, pack });
+        _stripPackFromVComponent({ generator, pack });
       }
+
       // if in a typescript app, create path mapping in tsconfig.json
-      _addComponentToTsconfigPathMapping(generator, utils);
+      _addComponentToTsconfigPathMapping(generator);
       resolve();
     });
   },
@@ -73,12 +82,15 @@ module.exports = {
    * @param {object} generator object with build options
    * @param {object} utils object with helper methods
    */
-  validateComponentName: (generator, utils) => {
+  validateComponentName: (generator) => {
     const componentName = _getComponentName(generator);
     const pack = generator.options.pack;
     let errorMessage;
     if (componentName === undefined || componentName === null) {
       errorMessage = 'Invalid component name: must not be null or undefined.';
+      utils.log.error(errorMessage);
+    } else if (!pack && _isResourceComponent(generator)) {
+      errorMessage = 'Cannot create resource component: please re-run the command with --pack and provide an existing JET pack';
       utils.log.error(errorMessage);
     } else if (!pack && (componentName !== componentName.toLowerCase() || componentName.indexOf('-') < 0 || !/^[a-z]/.test(componentName))) {
       errorMessage = 'Invalid component name: must be all lowercase letters and contain at least one hyphen.';
@@ -86,21 +98,19 @@ module.exports = {
     } else if (pack && (componentName !== componentName.toLowerCase() || !/^[a-z]/.test(componentName))) {
       errorMessage = 'Invalid component name: must be all lowercase letters.';
       utils.log.error(errorMessage);
-    } else if (pack && !fs.existsSync(_getPathToJETPack(generator, utils, pack))) {
+    } else if (pack && !fs.existsSync(_getPathToJETPack(generator, pack))) {
       errorMessage = 'Invalid pack name: please provide an existing JET pack';
       utils.log.error(errorMessage);
     }
   },
-
 
   /**
    * ## checkThatAppExists
    *
    * Make sure command is being run inside of a JET app
    *
-   * @param {object} utils object with helper methods
    */
-  checkThatAppExists: (utils) => {
+  checkThatAppExists: () => {
     const errorMessage = 'Please create an application first, then create the component from within that app.'; // eslint-disable-line max-len
     if (!utils.isCwdJetApp()) {
       utils.log.error(errorMessage);
@@ -113,9 +123,8 @@ module.exports = {
    * Log success message indicating that component has been
    * created
    * @param {object} generator object with build options
-   * @param {object} utils object with helper methods
    */
-  logSuccessMessage: (generator, utils) => {
+  logSuccessMessage: (generator) => {
     utils.log(commonMessages.appendJETPrefix(`Add component '${_getComponentName(generator)}' finished.`));
   },
 
@@ -125,11 +134,10 @@ module.exports = {
    * Return the dest path of the component.
    *
    * @param {object} generator object with build options
-   * @param {object} utils object with helper methods
    */
-  getComponentDestPath: (generator, utils) => (
-    _getComponentDestPath(generator, utils)
-  )
+  getComponentDestPath: (generator) => {
+    _getComponentDestPath(generator);
+  }
 };
 
 /**
@@ -143,20 +151,25 @@ module.exports = {
  * @returns {string} component template path
  */
 
-function _getComponentTemplatePath(generator, utils) {
-  let componentType;
-  if (_isVComponent(generator, utils)) {
-    componentType = 'tsx';
+function _getComponentTemplatePath(generator) {
+  const templateBasePath = path.join(__dirname, '../template');
+  let componentTemplatePath;
+  if (_isResourceComponent(generator)) {
+    componentTemplatePath = path.join(templateBasePath, 'resource-component');
   } else {
-    componentType = utils.isTypescriptApplication() ? 'ts' : 'js';
+    let componentType;
+    if (_isVComponent(generator)) {
+      componentType = 'tsx';
+    } else {
+      componentType = utils.isTypescriptApplication() ? 'ts' : 'js';
+    }
+    componentTemplatePath = path.join(
+      templateBasePath,
+      'component',
+      componentType
+    );
   }
-  const componentTemplatePath = path.join(
-    '..',
-    'template',
-    'component',
-    componentType
-  );
-  return path.resolve(__dirname, componentTemplatePath);
+  return path.resolve(componentTemplatePath);
 }
 
 /**
@@ -176,25 +189,23 @@ function _getComponentThemeTemplatePath(directoryPath) {
  * ## _getPathToJETPack
  *
  * @param {object} generator object with build options
- * @param {object} utils object with helper methods
  * @param {string} pack optional name of JET pack that the component
  * @returns {string}
  */
-function _getPathToJETPack(generator, utils, pack) {
-  return path.join(_getComponentsBasePath(generator, utils), pack);
+function _getPathToJETPack(generator, pack) {
+  return path.join(_getComponentsBasePath(generator), pack);
 }
 
 /**
  * ## _getComponentDestPath
  *
  * @param {object} generator object with build options
- * @param {object} utils object with helper methods
  * @returns {string} component destination path
  */
-function _getComponentDestPath(generator, utils) {
+function _getComponentDestPath(generator) {
   const pack = generator.options.pack;
   const destBase = pack ?
-    _getPathToJETPack(generator, utils, pack) : _getComponentsBasePath(generator, utils);
+    _getPathToJETPack(generator, pack) : _getComponentsBasePath(generator);
   return path.join(destBase, _getComponentName(generator));
 }
 
@@ -204,12 +215,11 @@ function _getComponentDestPath(generator, utils) {
  * Replace tokens (@component-name@ & @full-component-name@) in component templates
  *
  * @param {object} generator object with build options
- * @param {object} utils object with helper methods
  * @param {string} pack name of pack that component will belong to
  */
-function _replaceComponentTemplateToken(generator, utils, pack) {
+function _replaceComponentTemplateToken(generator, pack) {
   const componentName = _getComponentName(generator);
-  const componentBasePath = _getComponentDestPath(generator, utils);
+  const componentBasePath = _getComponentDestPath(generator);
   const folderPaths = [
     componentBasePath,
     path.join(componentBasePath, 'resources/nls'),
@@ -262,11 +272,11 @@ function _replaceComponentTokenInFileList(componentDir, componentName, pack) {
       );
       // replace @component-name@ with component name
       fileContent = fileContent.replace(new RegExp('@component-name@', 'g'), componentName);
-      // Camel Case component name replacements are
+      // Camel Case component name or class name replacements are
       // needed only for vcomponent .tsx files.
       if (file && (fileExt === '.tsx' || fileExt === '.ts')) {
         fileContent = fileContent.replace(
-          new RegExp('@camelcase-component-name@', 'g'),
+          new RegExp('@camelcasecomponent-name@', 'g'),
           _toCamelCase(componentName));
       }
 
@@ -282,7 +292,7 @@ function _replaceComponentTokenInFileList(componentDir, componentName, pack) {
  * @param {object} utils object with helper methods
  * @returns {string} component base path
  */
-function _getComponentsBasePath(generator, utils) {
+function _getComponentsBasePath(generator) {
   const appDir = generator.appDir === undefined
     ? process.cwd() : path.resolve(generator.appDir);
   const _configPaths = generator.appDir === undefined
@@ -310,10 +320,9 @@ function _getComponentName(generator) {
  * Replace token (@component@) in component file names
  *
  * @param {object} generator object with build options
- * @param {object} utils object with helper methods
  */
-function _renameComponentTemplatePrefix(generator, utils) {
-  const componentBasePath = _getComponentDestPath(generator, utils);
+function _renameComponentTemplatePrefix(generator) {
+  const componentBasePath = _getComponentDestPath(generator);
   const componentName = _getComponentName(generator);
   const folderPaths = [
     componentBasePath,
@@ -353,31 +362,29 @@ function _renameComponentTemplatePrefixFile(componentDir, file, componentName) {
  * to the provided pack
  *
  * @param {object} generator object with build options
- * @param {object} utils object with helper methods
  * @param {string} pack name of JET pack that the component belongs to
  */
-function _updatePackInfo({ generator, utils, pack }) {
+function _updatePackInfo({ generator, pack }) {
   // set pack of component
-  if (_isVComponent(generator, utils)) {
-    _setVComponentPack({ generator, utils, pack });
+  if (_isVComponent(generator)) {
+    _setVComponentPack({ generator, pack });
   } else {
-    _setCompositeComponentPack({ generator, utils, pack });
+    _setCompositeComponentPack({ generator, pack });
   }
   // add component to dependencies of pack
-  _addComponentToPackDependencies({ generator, utils, pack });
+  _addComponentToPackDependencies({ generator, pack });
 }
 
 /**
  * ## _updateVComponentPack
  *
  * @param {object} options.generator
- * @param {object} options.utils
  * @param {object} options.pack
  * @param {object} options.strip
  */
-function _updateVComponentPack({ generator, utils, pack, strip }) {
+function _updateVComponentPack({ generator, pack, strip }) {
   const vComponentPath = path.join(
-    _getComponentDestPath(generator, utils),
+    _getComponentDestPath(generator),
     `${_getComponentName(generator)}.tsx`
   );
   let vComponentContent = fs.readFileSync(vComponentPath, 'utf-8');
@@ -394,35 +401,32 @@ function _updateVComponentPack({ generator, utils, pack, strip }) {
  * ## _stripPackFromVComponent
  *
  * @param {object} options.generator
- * @param {object} options.utils
  * @param {object} options.pack
  */
-function _stripPackFromVComponet({ generator, utils, pack }) {
-  _updateVComponentPack({ generator, utils, pack, strip: true });
+function _stripPackFromVComponent({ generator, pack }) {
+  _updateVComponentPack({ generator, pack, strip: true });
 }
 
 /**
  * ## _setVCompponentPack
  *
  * @param {object} options.generator
- * @param {object} options.utils
  * @param {object} options.pack
  */
-function _setVComponentPack({ generator, utils, pack }) {
-  _updateVComponentPack({ generator, utils, pack, strip: false });
+function _setVComponentPack({ generator, pack }) {
+  _updateVComponentPack({ generator, pack, strip: false });
 }
 
 /**
  * ## _setCompositeComponentPack
  *
  * @param {object} options.generator
- * @param {object} options.utils
  * @param {object} options.pack
  */
-function _setCompositeComponentPack({ generator, utils, pack }) {
+function _setCompositeComponentPack({ generator, pack }) {
   const componentJsonPath = path.join(
-    _getComponentDestPath(generator, utils),
-    CONSTANTS.COMPONENT_JSON
+    _getComponentDestPath(generator),
+    constants.COMPONENT_JSON
   );
   const componentJson = fs.readJSONSync(componentJsonPath);
   componentJson.pack = pack;
@@ -433,20 +437,24 @@ function _setCompositeComponentPack({ generator, utils, pack }) {
  * ## _addComponentToPackDependencies
  *
  * @param {object} options.generator
- * @param {object} options.utils
  * @param {object} options.pack
  */
-function _addComponentToPackDependencies({ generator, utils, pack }) {
+function _addComponentToPackDependencies({ generator, pack }) {
   const componentName = _getComponentName(generator);
   const packComponentJsonPath = path.join(
-    _getPathToJETPack(generator, utils, pack),
-    CONSTANTS.COMPONENT_JSON);
+    _getPathToJETPack(generator, pack),
+    constants.COMPONENT_JSON);
   const packComponentJson = fs.readJSONSync(packComponentJsonPath);
-  packComponentJson.dependencies = {
-    ...(packComponentJson.dependencies || {}),
-    [`${pack}-${componentName}`]: '1.0.0'
-  };
-  fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
+  const hasDependenciesToken = utils.loadToolingUtil().hasDependenciesToken(packComponentJson);
+  if (!hasDependenciesToken) {
+    // Only add component to dependnecies if the component.json does not have the dependencies
+    // token. If it does, the build will take care of adding all JET pack dependencies at build time
+    packComponentJson.dependencies = {
+      ...(packComponentJson.dependencies || {}),
+      [`${pack}-${componentName}`]: '1.0.0'
+    };
+    fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
+  }
 }
 
 /**
@@ -456,9 +464,8 @@ function _addComponentToPackDependencies({ generator, utils, pack }) {
  * in the tsconfig.json file
  *
  * @param {object} generator object with build options
- * @param {object} utils object with helper methods
  */
-function _addComponentToTsconfigPathMapping(generator, utils) {
+function _addComponentToTsconfigPathMapping(generator) {
   // dont create path mapping if not in a typescript application
   // or if component will be in a pack. The pack will already have a
   // path mapping that the component can be accessed through i.e
@@ -479,8 +486,40 @@ function _addComponentToTsconfigPathMapping(generator, utils) {
  * @param {object} generator object with build options
  * @returns {boolean}
  */
-function _isVComponent(generator, utils) {
+function _isVComponent(generator) {
   const type = generator.options.type;
   const vcomponent = generator.options.vcomponent;
-  return (type && type === CONSTANTS.VCOMPONENT) || vcomponent || utils.isVDOMApplication();
+  // type can now be vcomponent or resource so need to cover
+  // that case
+  if (type !== undefined) {
+    return type === constants.VCOMPONENT;
+  }
+  return vcomponent || utils.loadToolingUtil().isVDOMApplication();
+}
+
+/**
+ * ## _isResourceComponent
+ *
+ * @param {object} generator object with build options
+ * @returns {boolean}
+ */
+function _isResourceComponent(generator) {
+  return generator.options.type === constants.RESOURCE_COMPONENT;
+}
+
+function _filterTsxTemplates(generator, destPath) {
+  const componentName = _getComponentName(generator);
+  const pathToClassBasedTemplate = path.join(destPath, `${componentName}.tsx`);
+  const pathToFunctionalBasedTemplate = path.join(destPath, `${componentName}-functional-template.tsx`);
+  if (generator.options.vcomponent === 'function') {
+    // <componentName>.tsx now has functional based template after overwriting it
+    // with <componentName-functional>.tsx contents. We need to do this because,
+    // once the chosen template is vcomponent, then we need to use the functional
+    // based template and not the class based one in <componentName>.tsx . However,
+    // the staging folder needs to have only one file: <componentName>.tsx. Hence,
+    // the need to overwrite the file and delete <componentName-functional>.tsx after
+    // overwriting.
+    fs.renameSync(pathToFunctionalBasedTemplate, pathToClassBasedTemplate);
+  }
+  fs.removeSync(pathToFunctionalBasedTemplate);
 }

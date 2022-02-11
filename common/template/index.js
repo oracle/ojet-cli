@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -11,18 +11,18 @@ const commonTemplate = require('./common');
 const npmTemplate = require('./npm');
 const localTemplate = require('./local');
 const path = require('path');
-const util = require('../../util');
-const CONSTANTS = require('../../lib/utils.constants');
+const utils = require('../../lib/util/utils');
+const constants = require('../../lib/util/constants');
 
 const _HYBRID = 'hybrid';
 const _WEB = 'web';
 
-const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~11.1.0';
+const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~12.0.0';
 
 module.exports =
 {
-  handleTemplate: function _handleTemplate(generator, utils, templateDestDirectory) {
-    const template = generator.options.template || CONSTANTS.BLANK_TEMPLATE;
+  handleTemplate: function _handleTemplate(generator, templateDestDirectory) {
+    const template = generator.options.template || constants.BLANK_TEMPLATE;
     utils.log(`Processing template: ${template}`);
     const templateHandler = _getHandler(generator, template, templateDestDirectory);
     return commonTemplate.handle(templateHandler, generator.options.namespace);
@@ -38,7 +38,7 @@ function _getHandler(generator, template, templateDestDirectory) {
   }
 
   // Template is an existing local path, but can not point to application itself
-  if (templateLocalPath && CONSTANTS.NPM_TEMPLATES.indexOf(template) === -1) {
+  if (templateLocalPath && constants.NPM_TEMPLATES.indexOf(template) === -1) {
     return localTemplate.handle(generator, templateLocalPath, templateDestDirectory);
   }
   const templateSpec = _resolveTemplateSpec(generator, template);
@@ -81,9 +81,9 @@ function _resolveTemplateSpec(generator, template) {
 }
 
 function _validateTemplateName(templateName) {
-  if (CONSTANTS.NPM_TEMPLATES.indexOf(templateName) < 0) {
+  if (constants.NPM_TEMPLATES.indexOf(templateName) < 0) {
     let templateList = '';
-    CONSTANTS.NPM_TEMPLATES.forEach((value) => {
+    constants.NPM_TEMPLATES.forEach((value) => {
       templateList += `\n  ${value}`;
     });
     const msg = `\nA URL or one of the following names is expected: ${templateList}`;
@@ -106,5 +106,5 @@ function _getLocalFileAbsolutePath(templatePath) {
     : path.join(process.env.HOME, templatePath.slice(1));
   const absolutePath = path.isAbsolute(tempPath) ? tempPath
     : path.resolve(process.cwd(), tempPath);
-  return util.fsExistsSync(absolutePath) ? absolutePath : null;
+  return utils.fsExistsSync(absolutePath) ? absolutePath : null;
 }
