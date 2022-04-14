@@ -31,12 +31,12 @@
       */
       // injector:mainReleasePaths
       {
-        'ojs': 'libs/oj/v12.0.0/debug',
-        'ojL10n': 'libs/oj/v12.0.0/ojL10n',
-        'ojtranslations': 'libs/oj/v12.0.0/resources',
+        'ojs': 'libs/oj/v12.1.0/debug',
+        'ojL10n': 'libs/oj/v12.1.0/ojL10n',
+        'ojtranslations': 'libs/oj/v12.1.0/resources',
           'knockout': 'libs/knockout/knockout-3.5.1.debug',
   'jquery': 'libs/jquery/jquery-3.6.0',
-  'jqueryui-amd': 'libs/jquery/jqueryui-amd-1.12.1',
+  'jqueryui-amd': 'libs/jquery/jqueryui-amd-1.13.0',
   'text': 'libs/require/text',
   'hammerjs': 'libs/hammer/hammer-2.0.8',
   'signals': 'libs/js-signals/signals',

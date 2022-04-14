@@ -1,5 +1,9 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 12.1.0
+
+* Bug fixes
+
 ### 12.0.0
 
 * Add optional 'stripList' property to oraclejetconfig.json to allow providing the list of files/directories to delete instead of using .gitignore

@@ -99,6 +99,19 @@ describe('Webpack Test', () => {
           assert.ok(false);
         }
       });
+      it('should have oj-redwood-min.css link in index.html file in staging', () => {
+        const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_APP_NAME);
+        const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
+        const hasRedwoodTheme = /<link\s.*redwood-min.css">/.test(indexHtmlContent);
+        assert.ok(hasRedwoodTheme, `${pathToIndexHtml} does not have link to Redwood theme`);
+      });
+      it('should have <!-- css : redwood --> tag in index.html in src folder', () => {
+        const appDir = util.getAppDir(util.WEBPACK_APP_NAME);
+        const pathToSrcIndexHTML = path.join(appDir, 'src', 'index.html');
+        const indexHtmlContent = fs.readFileSync(pathToSrcIndexHTML, { encoding: 'utf-8' });
+        const hasRedwoodThemeTag = /(<!--\s*|@@)(css|js|img):([\w\/]+)(\s*-->)?/.test(indexHtmlContent);
+        assert.ok(hasRedwoodThemeTag, `${pathToSrcIndexHTML} does not have Redwood theme tag in src/index.html`);
+      });
     });
   });
   describe('Webpack (Legacy)', () => {

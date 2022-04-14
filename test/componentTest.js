@@ -21,6 +21,7 @@ const VCOMPONENT_NAME = 'vcomp-1';
 const DEFAULT_COMPONENT_VERSION = '1.0.0';
 const EXCHANGE_COMPONENT_PACK = 'oj-dynamic';
 const EXCHANGE_COMPONENT_PACK_MEMBER = 'form';
+const BUNDLE_TEST_EXCHANGE_COMPONENT = 'oj-sample-metric';
 const EXCHANGE_COMPONENT_NAME = `${EXCHANGE_COMPONENT_PACK}-${EXCHANGE_COMPONENT_PACK_MEMBER}`;
 
 const PACK_NAME = 'pack-1';
@@ -375,6 +376,17 @@ describe('Component & Jet Pack Tests', () => {
                         `bundle.js should not contain the minified component ${component}`);
           });
         }
+      });
+    }
+
+    function buildReleaseExchangeComponentTest({ appName, pack }) {
+      describe('check that build release command on exchange components with bundle definitions runs successfully', () => {
+        it('should successfully build and release an app using exchange component with bundle definitions', async () => {
+          const appDir = util.getAppDir(appName);
+          await util.execCmd(`${util.OJET_APP_COMMAND} add component ${pack}`, { cwd: appDir }, true, true);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true, true);
+          assert.equal(util.buildSuccess(result.stdout), true, result.error);
+        });
       });
     }
 
@@ -760,6 +772,9 @@ describe('Component & Jet Pack Tests', () => {
     });
     describe('ojet build --release', () => {
       util.runComponentTestInAllTestApps({ test: buildComponentAppTest, component: [COMPONENT_NAME, COMPONENT_NAME_COMPOSITE, VCOMPONENT_NAME], release: true });
+    });
+    describe('ojet build --release (bundle)', () => {
+      util.runComponentTestInAllTestApps({ test: buildReleaseExchangeComponentTest, pack: BUNDLE_TEST_EXCHANGE_COMPONENT});
     });
     describe(`ojet build --${util.OMIT_COMPONENT_VERSION_FLAG}`, () => {
       util.runComponentTestInAllTestApps({ test: omitComponentVerstionTest });

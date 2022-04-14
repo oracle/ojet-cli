@@ -2,7 +2,7 @@
     "name": "@component-name@",
     "type": "resource",
     "version": "1.0.0",
-    "jetVersion": "^12.0.0",
+    "jetVersion": "^12.1.0",
     "displayName": "A user friendly, translatable name of the component.",
     "description": "A translatable high-level description for the component.",
     "publicModules": [
