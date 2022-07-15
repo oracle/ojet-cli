@@ -111,6 +111,20 @@ describe('VDOM Test', () => {
           assert.ok(false);
         }
       });
+      it('should have injected preact debug', async () => {
+        const {pathToApp, stagingFolder} = util.getAppPathData(util.VDOM_APP_NAME);
+        const pathToIndexTs = path.join(pathToApp, stagingFolder, 'index.ts');
+        const tsContent = fs.readFileSync(pathToIndexTs, { encoding: 'utf-8' });
+        const regex = /import 'preact\/debug'/gm;
+        assert(regex.exec(tsContent), "import 'preact/debug' not found");          
+      });
+      it('should have injected preact theming', async () => {
+        const {pathToApp, stagingFolder} = util.getAppPathData(util.VDOM_APP_NAME);
+        const pathToIndexHtml = path.join(pathToApp, stagingFolder, 'index.html');
+        const htmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
+        const regex = /styles\/theme-redwood/gm;
+        assert(regex.exec(htmlContent), "styles/theme-redwood not found");
+      });
     }
   });
 

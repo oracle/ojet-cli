@@ -5,10 +5,10 @@
     "target": "es6",
     "module": "amd",
     "moduleResolution": "node",
-    "jsx": "react",
-    "jsxFactory": "h",
-    "lib": [
-      "es2015",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+  "lib": [
+      "es2020",
       "dom",
       "esnext.asynciterable"
     ],

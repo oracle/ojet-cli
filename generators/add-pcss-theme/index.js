@@ -15,7 +15,6 @@ const utils = require('../../lib/util/utils');
 const commonMessages = require('../../common/messages');
 
 const DEFAULT_THEME = 'mytheme';
-const JET_PCSS_SRC_PATH = 'node_modules/@oracle/oraclejet/dist/pcss/oj/';
 const JET_VERSION_TOKEN = '<%= jetversion %>';
 const THEMENAME_TOKEN = '<%= themename %>';
 const COMPONENT_TOKEN = '<%= importcomponents %>';
@@ -41,9 +40,8 @@ function _setSettingsFileByTech(tech) {
 }
 
 function _getJETVersion() {
-  let getPackageJson = path.resolve('./node_modules/@oracle/oraclejet/package.json');
-  getPackageJson = fs.readJsonSync(getPackageJson);
-  return getPackageJson.version;
+  const toolingUtil = utils.loadToolingUtil();
+  return toolingUtil.getJETVersionV(toolingUtil.getJETVersion());
 }
 
 function _getComponentsList(baseName) {
@@ -52,12 +50,14 @@ function _getComponentsList(baseName) {
   const componentAll = ALL_COMP_RW_PATH + baseName + COMPONENT_LIST.all;
   const componentCommon = ALL_COMP_RW_PATH + baseName + COMPONENT_LIST.common;
 
+  const JET_PCSS_SRC_PATH = path.join(utils.loadToolingUtil().getOraclejetPath(), 'dist', 'pcss', 'oj');
+
   const srcAllCompPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, componentAll);
+  path.join(JET_PCSS_SRC_PATH, _getJETVersion(), componentAll);
   const srcCommonCompPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, componentCommon);
+  path.join(JET_PCSS_SRC_PATH, _getJETVersion(), componentCommon);
   const srcNotagAllCompPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, componentNotag);
+  path.join(JET_PCSS_SRC_PATH, _getJETVersion(), componentNotag);
 
   let notagCompContent = fs.readFileSync(srcNotagAllCompPath, 'utf-8');
   notagCompContent = notagCompContent.replace(replaceCopyright, '')
@@ -80,7 +80,7 @@ function _getReplaceValuePairsArray(basetheme, tech) {
     return [
       {
         findstr: new RegExp('@import\ \"\.\.\/utilities', 'g'), //eslint-disable-line
-        replacewith: `@import "../../../../node_modules/@oracle/oraclejet/dist/pcss/oj/v${_getJETVersion()}/utilities`
+        replacewith: `@import "../../../../node_modules/@oracle/oraclejet/dist/pcss/oj/${_getJETVersion()}/utilities`
       },
       {
         findstr: new RegExp('.*\\$themeName.*'),
@@ -112,8 +112,9 @@ function _injectDefaultValues(basetheme, destPath, tech) {
 function _copyCssSettingsFile(addTheme, destPath, setTechnology) {
   const whichTheme = addTheme.themeOptionValue;
   const srcSettings = _getSettingsFileByTech(whichTheme, setTechnology);
+  const JET_PCSS_SRC_PATH = path.join(utils.loadToolingUtil().getOraclejetPath(), 'dist', 'pcss', 'oj');
   const srcPath =
-  path.join(JET_PCSS_SRC_PATH, `v${_getJETVersion()}`, ALL_COMP_RW_PATH, whichTheme, srcSettings);
+  path.join(JET_PCSS_SRC_PATH, _getJETVersion(), ALL_COMP_RW_PATH, whichTheme, srcSettings);
   const destSettingsFileName = _setSettingsFileByTech(setTechnology);
   const destSettingsPath = path.join(destPath, constants.DEFAULT_PCSS_THEME, destSettingsFileName);
   fs.copySync(srcPath, destSettingsPath);

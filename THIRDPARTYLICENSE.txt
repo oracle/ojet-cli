@@ -14,7 +14,7 @@ THIRD-PARTY COMPONENT                                                 LICENSE
 node_modules/minimist/                                                  MIT
 node_modules/adm-zip/                                                   MIT
 node_modules/fs-extra/                                                  MIT
-node_modules/xmldom/                                                    MIT
+node_modules/@xmldom/xmldom/                                            MIT
 node_modules/inquirer                                                   MIT
 
 Copyright (c) 2015, Google

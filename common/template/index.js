@@ -17,8 +17,6 @@ const constants = require('../../lib/util/constants');
 const _HYBRID = 'hybrid';
 const _WEB = 'web';
 
-const _TEMPLATES_NPM_URL = '@oracle/oraclejet-templates@~12.1.0';
-
 module.exports =
 {
   handleTemplate: function _handleTemplate(generator, templateDestDirectory) {
@@ -42,7 +40,7 @@ function _getHandler(generator, template, templateDestDirectory) {
     return localTemplate.handle(generator, templateLocalPath, templateDestDirectory);
   }
   const templateSpec = _resolveTemplateSpec(generator, template);
-  return npmTemplate.handle(generator, _TEMPLATES_NPM_URL, templateDestDirectory, templateSpec);
+  return npmTemplate.handle(generator, templateDestDirectory, templateSpec);
 }
 
 function _isUrl(url) {

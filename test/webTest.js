@@ -24,7 +24,6 @@ describe('Web Test', () => {
       const platform = util.getPlatform(process.env.OS);
 
       util.removeAppDir(util.APP_NAME);
-      util.removeAppDir(util.TEST_DIR);
   
       // Scaffold a basic web app
       let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.APP_NAME} --norestore=true`, { cwd: util.testDir });

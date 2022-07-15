@@ -343,7 +343,7 @@ const config = {
           aliases: ['packs'],
           description: 'Creates a pack with the specified name in an existing app',
           parameters: '<pack-name>',
-          examples: ['ojet create pack component demo-pack']
+          examples: ['ojet create pack demo-pack']
         },
         theme: {
           aliases: ['themes'],

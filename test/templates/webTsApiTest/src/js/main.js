@@ -35,9 +35,9 @@
         'jqueryui-amd': 'libs/jquery/jqueryui-amd-1.13.0',
         'hammerjs': 'libs/hammer/hammer-2.0.8',
         'ojdnd': 'libs/dnd-polyfill/dnd-polyfill-1.0.2',
-        'ojs': 'libs/oj/v10.0.0/debug',
-        'ojL10n': 'libs/oj/v10.0.0/ojL10n',
-        'ojtranslations': 'libs/oj/v10.0.0/resources',
+        'ojs': 'libs/oj/13.0.0/debug',
+        'ojL10n': 'libs/oj/13.0.0/ojL10n',
+        'ojtranslations': 'libs/oj/13.0.0/resources',
         'text': 'libs/require/text',
         'signals': 'libs/js-signals/signals',
         'customElements': 'libs/webcomponents/custom-elements.min',
@@ -45,7 +45,7 @@
         'css': 'libs/require-css/css',
         'touchr': 'libs/touchr/touchr',
         'corejs' : 'libs/corejs/shim',
-        'chai': 'libs/chai/chai-4.2.0',
+        'chai': 'libs/chai/chai-4.3.6',
         'regenerator-runtime' : 'libs/regenerator-runtime/runtime'
       }
       // endinjector

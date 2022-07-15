@@ -2,11 +2,12 @@
   "use": "local",
   "cdns": {
     "jet": {
-      "prefix": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_12.1.0/lastSuccessfulBuild/artifact/cdn/v12.1.0/default/js",
-      "css": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_12.1.0/lastSuccessfulBuild/artifact/cdn/v12.1.0/default/css",
+      "prefix": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_master/lastSuccessfulBuild/artifact/cdn/13.0.0/default/js",
+      "css": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_master/lastSuccessfulBuild/artifact/cdn/13.0.0/default/css",
+      "csspreact": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_master/lastSuccessfulBuild/artifact/cdn/13.0.0/3rdparty/oraclejet-preact/amd",
       "config": "bundles-config.js"
     },
-    "3rdparty": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_12.1.0/lastSuccessfulBuild/artifact/cdn/v12.1.0/3rdparty"
+    "3rdparty": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_master/lastSuccessfulBuild/artifact/cdn/13.0.0/3rdparty"
   },
   "libs": {
     "knockout": {
@@ -49,7 +50,7 @@
           "vendor/jquery-color/jquery.color.js"
         ],
         "path": "libs/jquery/jqueryui-amd-#{version}",
-        "cdnPath": "jquery/jqueryui-amd-1.13.0"
+        "cdnPath": "jquery/jqueryui-amd-1.12.1"
       },
       "release": {
         "src": [
@@ -60,7 +61,7 @@
           "vendor/jquery-color/jquery.color.js"
         ],
         "path": "libs/jquery/jqueryui-amd-#{version}.min",
-        "cdnPath": "jquery/jqueryui-amd-1.13.0.min"
+        "cdnPath": "jquery/jqueryui-amd-1.12.1.min"
       }
     },
     "hammerjs": {
@@ -98,7 +99,7 @@
         "src": [
           "debug*/**"
         ],
-        "path": "libs/oj/v#{version}",
+        "path": "libs/oj/#{version}",
         "pathSuffix": "/debug'",
         "cdnPath": ""
       },
@@ -106,7 +107,7 @@
         "src": [
           "min*/**"
         ],
-        "path": "libs/oj/v#{version}",
+        "path": "libs/oj/#{version}",
         "pathSuffix": "/min'",
         "cdnPath": ""
       }
@@ -116,12 +117,12 @@
       "cwd": "node_modules/@oracle/oraclejet/dist/js/libs/oj",
       "debug": {
         "src": "ojL10n.js",
-        "path": "libs/oj/v#{version}/ojL10n.js",
+        "path": "libs/oj/#{version}/ojL10n.js",
         "cdnPath": "ojL10n"
       },
       "release": {
         "src": "ojL10n.js",
-        "path": "libs/oj/v#{version}/ojL10n.js",
+        "path": "libs/oj/#{version}/ojL10n.js",
         "cdnPath": "ojL10n"
       }
     },
@@ -132,15 +133,29 @@
         "src": [
           "**"
         ],
-        "path": "libs/oj/v#{version}/resources",
+        "path": "libs/oj/#{version}/resources",
         "cdnPath": "resources"
       },
       "release": {
         "src": [
           "**"
         ],
-        "path": "libs/oj/v#{version}/resources",
+        "path": "libs/oj/#{version}/resources",
         "cdnPath": "resources"
+      }
+    },
+    "@oracle/oraclejet-preact": {
+      "cdn": "3rdparty",
+      "cwd": "node_modules/@oracle/oraclejet/dist/js/libs/oraclejet-preact/amd",
+      "debug": {
+        "src":  ["**"],
+        "path": "libs/oraclejet-preact/amd",
+        "cdnPath": "oraclejet-preact/amd"
+      },
+      "release": {
+        "src":  ["**"],
+        "path": "libs/oraclejet-preact/amd",
+        "cdnPath": "oraclejet-preact/amd"
       }
     },
     "persist": {
@@ -342,7 +357,7 @@
         "src": [
           "debug/ojcss.js"
         ],
-        "path": "libs/oj/v#{version}",
+        "path": "libs/oj/#{version}",
         "pathSuffix": "/debug/ojcss'",
         "cdnPath": "ojcss"
       },
@@ -350,7 +365,7 @@
         "src": [
           "min/ojcss.js"
         ],
-        "path": "libs/oj/v#{version}",
+        "path": "libs/oj/#{version}",
         "pathSuffix": "/min/ojcss'",
         "cdnPath": "ojcss"
       }
@@ -362,7 +377,7 @@
         "src": [
           "debug/ojcss.js"
         ],
-        "path": "libs/oj/v#{version}",
+        "path": "libs/oj/#{version}",
         "pathSuffix": "/debug/ojcss'",
         "cdnPath": "ojcss"
       },
@@ -370,7 +385,7 @@
         "src": [
           "min/ojcss.js"
         ],
-        "path": "libs/oj/v#{version}",
+        "path": "libs/oj/#{version}",
         "pathSuffix": "/min/ojcss'",
         "cdnPath": "ojcss"
       }

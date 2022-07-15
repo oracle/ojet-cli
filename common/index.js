@@ -230,16 +230,20 @@ function _customizeVDOMTemplateTsconfigForWebpack() {
   const oraclejetConfigJson = fs.readJSONSync(pathToOraclejetConfigJson);
   const pathToTsconfigJson = path.join(pathToApp, 'tsconfig.json');
   const tsconfigJson = fs.readJSONSync(pathToTsconfigJson);
+  const toolingUtil = utils.loadToolingUtil();
+  const preactPath = toolingUtil.getModulePath('./node_modules/preact', 'preact');
+  const preactCompat = path.join(preactPath, 'compat', 'src', 'index.d.ts');
+
   tsconfigJson.compilerOptions.rootDir = `./${oraclejetConfigJson.paths.source.common}`;
   tsconfigJson.compilerOptions.outDir = `./${oraclejetConfigJson.paths.staging.web}`;
   tsconfigJson.compilerOptions.typeRoots.unshift('./types');
   tsconfigJson.compilerOptions.resolveJsonModule = true;
   tsconfigJson.compilerOptions.esModuleInterop = true;
   tsconfigJson.compilerOptions.paths.react = [
-    './node_modules/preact/compat/src/index.d.ts'
+    preactCompat
   ];
   tsconfigJson.compilerOptions.paths['react-dom'] = [
-    './node_modules/preact/compat/src/index.d.ts'
+    preactCompat
   ];
   fs.writeJSONSync(pathToTsconfigJson, tsconfigJson, { spaces: 2 });
 }

@@ -132,7 +132,7 @@ if (!util.noHybrid()) {
         }
 
         it('should not have \'locale_\' dirs in resources', () => {
-          const resourcePath = path.resolve(hybridTestDir, 'www/js/libs/oj', `v${util.getJetVersion(util.HYBRID_APP_NAME)}`, 'resources/nls');
+          const resourcePath = path.resolve(hybridTestDir, 'www/js/libs/oj', `${util.getJetVersion(util.HYBRID_APP_NAME)}`, 'resources/nls');
           const locList = fs.readdirSync(resourcePath);
           if (locList) {
             locList.forEach((elem) => {
@@ -179,6 +179,20 @@ if (!util.noHybrid()) {
         });
       }); 
     }
+
+    /* describe('add pcss', () => {
+      it('should add pcss generator', async () => {
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} add theming`, { cwd: util.getAppDir(util.HYBRID_APP_NAME) });
+        assert.equal(/add pcss complete/.test(result.stdout), true, result.stdout);
+      });
+    });
+
+    describe('create theme', () => {
+      it('should add green theme', async () => {
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} create theme green --basetheme=redwood`, { cwd: util.getAppDir(util.HYBRID_APP_NAME), maxBuffer: 1024 * 20000 });
+        assert.equal(/green theme added/.test(result.stdout), true, result.error);
+      });
+    }); */
 
     if (!util.noCordova()) {
       describe('Plugin management', async () => {

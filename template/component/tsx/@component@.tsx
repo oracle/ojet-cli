@@ -3,9 +3,9 @@ import { h, Component, ComponentChild } from "preact";
 import componentStrings = require("ojL10n!./resources/nls/@component-name@-strings");
 import "css!./@component-name@-styles.css";
 
-type Props = {
+type Props = Readonly<{
   message?: string;
-}
+}>;
 
 /**
  * @ojmetadata pack "@pack-name@"
@@ -19,7 +19,7 @@ export class @camelcasecomponent-name@ extends Component < ExtendGlobalProps < P
   message: "Hello from @full-component-name@!"
 };
 
-render(props: Readonly<Props>): ComponentChild {
+render(props: Props): ComponentChild {
   return<p>{ props.message }</p>;
   }
 }

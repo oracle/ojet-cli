@@ -1,5 +1,13 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 13.0.0
+
+* Metadata to support API documentation is now emitted for vcomponents during build
+* New webpack applicatons support non-vdom JavaScript and Typescript source code
+* Updated default typescript version to 4.6.4
+* Add synonym for --vcomponent to allow 'functional' in addition to 'function'
+* Enhancements to ease monorepo development
+
 ### 12.1.0
 
 * Bug fixes

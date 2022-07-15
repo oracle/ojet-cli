@@ -8,20 +8,20 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const execSync = require('child_process').execSync;
 const utils = require('../../lib/util/utils');
 const injectorUtils = require('../../lib/util/injectors');
 
-module.exports = {
+const templateRoot = path.dirname(require.resolve('@oracle/oraclejet-templates'));
 
-  handle: function _handle(generator, npmUrl, destination, templateSpec) {
+module.exports = {
+  handle: function _handle(generator, destination, templateSpec) {
     return new Promise((resolve, reject) => {
-      _installNpmTemplate(generator, npmUrl)
-        .then(() => {
-          _copyNpmTemplate(generator, templateSpec, destination);
-          return resolve(generator);
-        })
-        .catch(err => reject(err));
+      try {
+        _copyNpmTemplate(generator, templateSpec, destination);
+        resolve(generator);
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 };
@@ -42,10 +42,8 @@ module.exports = {
  * @param {string} destination  - destination path
  */
 function _copyNpmTemplate(generator, templateSpec, destination) {
-  const templateRoot = path.join(path.resolve(generator.appDir),
-    'node_modules', '@oracle/oraclejet-templates');
-  const src = _getTemplateFromTypeSpecificDirectory(templateRoot, templateSpec) ||
-              _getTemplateFromGenericDirectory(templateRoot, templateSpec);
+  const src = _getTemplateFromTypeSpecificDirectory(templateSpec) ||
+              _getTemplateFromGenericDirectory(templateSpec);
 
   if (!src) {
     const msg = `${templateSpec.name}:${templateSpec.type}`;
@@ -124,7 +122,7 @@ function _copyNpmTemplate(generator, templateSpec, destination) {
   });
 }
 
-function _getTemplateFromTypeSpecificDirectory(templateRoot, templateSpec) {
+function _getTemplateFromTypeSpecificDirectory(templateSpec) {
   const src = path.join(templateRoot, templateSpec.name, templateSpec.type);
   if (!_checkDirExists(src)) {
     return null;
@@ -132,7 +130,7 @@ function _getTemplateFromTypeSpecificDirectory(templateRoot, templateSpec) {
   return src;
 }
 
-function _getTemplateFromGenericDirectory(templateRoot, templateSpec) {
+function _getTemplateFromGenericDirectory(templateSpec) {
   const src = path.join(templateRoot, templateSpec.name);
   if (!_checkDirExists(src)) {
     return null;
@@ -151,18 +149,4 @@ function _checkDirExists(filePath) {
     return false;
   }
   return false;
-}
-
-function _installNpmTemplate(generator, npmUrl) {
-  return new Promise((resolve) => {
-    const cmd = `npm install ${npmUrl}`;
-    try {
-      const appDir = path.resolve(generator.appDir);
-      fs.ensureDirSync(path.join(appDir, 'node_modules'));
-      execSync(cmd, { cwd: appDir, stdio: 'ignore' });
-    } catch (err) {
-      utils.log.error(err);
-    }
-    resolve();
-  });
 }

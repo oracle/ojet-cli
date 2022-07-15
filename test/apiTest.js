@@ -41,7 +41,8 @@ describe('CLI API Tests', () => {
         try {
           await ojet.execute({ task: 'build' });
           assert.ok(true);
-        } catch {
+        } catch (e) {
+          console.log(e);
           assert.ok(false);
         }
       });
@@ -60,7 +61,8 @@ describe('CLI API Tests', () => {
         try {
           await ojet.execute({ task: 'build', options: { release: true } });
           assert.ok(true);
-        } catch {
+        } catch (e) {
+          console.log(e);
           assert.ok(false);
         }
       });
@@ -97,7 +99,8 @@ describe('CLI API Tests', () => {
           );
           const exists = fs.existsSync(pathToZip);
           assert.ok(exists, pathToZip);
-        } catch {
+        } catch (e) {
+          console.log(e);
           assert.ok(false);
         }
       });
@@ -121,7 +124,8 @@ describe('CLI API Tests', () => {
           );
           const exists = fs.existsSync(pathToZip);
           assert.ok(exists, pathToZip);
-        } catch {
+        } catch (e) {
+          console.log(e);
           assert.ok(false);
         }
       });
@@ -143,7 +147,8 @@ describe('CLI API Tests', () => {
           );
           const exists = fs.existsSync(pathToZip);
           assert.ok(exists, pathToZip);
-        } catch {
+        } catch (e) {
+          console.log(e);
           assert.ok(false);
         }
       });
@@ -167,7 +172,8 @@ describe('CLI API Tests', () => {
       try {
         await ojet.execute({ task: 'strip' });
         assert.ok(true);
-      } catch {
+      } catch (e) {
+        console.log(e);
         assert.ok(false);
       }
     });
@@ -202,7 +208,8 @@ describe('CLI API Tests', () => {
       try {
         await ojet.execute({ task: 'restore' });
         assert.ok(true);
-      } catch {
+      } catch (e) {
+        console.log(e);
         assert.ok(false);
       }
     });
@@ -241,7 +248,8 @@ describe('CLI API Tests', () => {
       try {
         await ojet.execute({ task: 'strip' });
         assert.ok(true);
-      } catch {
+      } catch (e) {
+        console.log(e);
         assert.ok(false);
       }
     });

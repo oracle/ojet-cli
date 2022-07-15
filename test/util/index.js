@@ -64,8 +64,7 @@ const WEBPACK_DEPENDENCIES = [
   '@prefresh/babel-plugin',
   'webpack-merge',
   'compression-webpack-plugin',
-  'mini-css-extract-plugin',
-  'zlib'
+  'mini-css-extract-plugin'
 ];
 const COMPONENT_JSON_DEPENDENCIES_TOKEN = '@dependencies@';
 const COMPONENT_JSON = 'component.json';
@@ -78,12 +77,15 @@ module.exports = {
   testDir: td,
   APP_NAME: 'webJsTest',
   HYBRID_APP_NAME: 'hybridJsTest',
+  OJC_APP_NAME: 'ojcTest',
   TS_APP_NAME: 'webTsTest',
   THEME_APP_NAME: 'webJsThemeTest',
   PWA_APP_NAME: 'webJsPwaTest',
   API_APP_NAME: 'webTsApiTest',
   VDOM_APP_NAME: 'vdomTest',
   WEBPACK_APP_NAME: 'webpackTest',
+  WEBPACK_JS_APP_NAME: 'webpackJsTest',
+  WEBPACK_TS_APP_NAME: 'webpackTsTest',
   WEBPACK_LEGACY_APP_NAME: 'webpackLegacyTest',
   COMPONENT_APP_NAME,
   COMPONENT_TS_APP_NAME,
@@ -292,6 +294,19 @@ module.exports = {
       fs.writeFileSync(filePath, customHookContent);
   },
 
+  checkThemingLink: function _checkThemingLink(expression, pathToIndexHtml) {      
+      const indexHtmlContent = fs.readFileSync(pathToIndexHtml);
+      const regex = new RegExp(expression, 'gm');
+      return regex.test(indexHtmlContent);
+  },
+
+  setDefaultTheme: function _setDefaultTheme(theme, appPath) {
+    const pathToConfigJSON = path.join(appPath, this.ORACLEJET_CONFIG_JSON);
+    const configJSON = fs.readJSONSync(pathToConfigJSON);
+    configJSON.defaultTheme = theme;
+    fs.writeJSONSync(pathToConfigJSON, configJSON);
+  },
+  
   getHooksPathAndContent: function _getHooksPathAndContent(appName) {
     const { pathToAppHooks } = this.getAppPathData(appName);
     const beforePackageHookPath = path.join(pathToAppHooks, `before_component_package.js`);

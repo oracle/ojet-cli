@@ -136,7 +136,8 @@ module.exports = {
    * @param {object} generator object with build options
    */
   getComponentDestPath: (generator) => {
-    _getComponentDestPath(generator);
+    const destPath = _getComponentDestPath(generator);
+    return destPath;
   }
 };
 
@@ -511,7 +512,7 @@ function _filterTsxTemplates(generator, destPath) {
   const componentName = _getComponentName(generator);
   const pathToClassBasedTemplate = path.join(destPath, `${componentName}.tsx`);
   const pathToFunctionalBasedTemplate = path.join(destPath, `${componentName}-functional-template.tsx`);
-  if (generator.options.vcomponent === 'function') {
+  if (generator.options.vcomponent === 'function' || generator.options.vcomponent === 'functional') {
     // <componentName>.tsx now has functional based template after overwriting it
     // with <componentName-functional>.tsx contents. We need to do this because,
     // once the chosen template is vcomponent, then we need to use the functional

@@ -15,7 +15,7 @@ const utils = require('../../lib/util/utils');
 const commonMessages = require('../../common/messages');
 
 const DEFAULT_THEME = 'mytheme';
-const JET_SCSS_SRC_PATH = 'node_modules/@oracle/oraclejet/dist/scss';
+
 const PLATFORM_TOKEN = '<%= platform %>';
 const JET_VERSION_TOKEN = '<%= jetversion %>';
 const THEMENAME_TOKEN = '<%= themename %>';
@@ -72,6 +72,7 @@ function _addSassTheme(addTheme) {
       _renameFilesAllPlatforms(themeName, themeDestPath);
       resolve(addTheme);
     } catch (err) {
+      utils.log.error(err);
       reject();
     }
   });
@@ -118,9 +119,8 @@ function _isValidThemeName(string) {
 }
 
 function _getJetVersion() {
-  let packageJSON = path.resolve('./node_modules/@oracle/oraclejet/package.json');
-  packageJSON = fs.readJsonSync(packageJSON);
-  return packageJSON.version;
+  const toolingUtil = utils.loadToolingUtil();
+  return toolingUtil.getJETVersionV(toolingUtil.getJETVersion());
 }
 
 // default marker <%= jetversion %> <%= themename %> <%= platform %>
@@ -140,6 +140,8 @@ function _copySettingsFilesFromJETSrc(themeName, dest) {
   constants.SUPPORTED_PLATFORMS.forEach((platform) => {
     const platformPath = _getPlatformPath(platform);
     const srcSettingFileName = _getSrcSettingFileName(platform);
+    const JET_SCSS_SRC_PATH = path.join(utils.loadToolingUtil().getOraclejetPath(), 'dist', 'scss');
+
     const srcPath = path.join(JET_SCSS_SRC_PATH, platformPath, srcSettingFileName);
 
     const destSettingFileName = _getDestSettingFileName(DEFAULT_THEME, platform);
