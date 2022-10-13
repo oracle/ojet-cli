@@ -223,7 +223,7 @@ function _replaceComponentTemplateToken(generator, pack) {
   const componentBasePath = _getComponentDestPath(generator);
   const folderPaths = [
     componentBasePath,
-    path.join(componentBasePath, 'resources/nls'),
+    path.join(componentBasePath, 'resources/nls/root'),
     path.join(componentBasePath, 'themes/base'),
     path.join(componentBasePath, 'themes/redwood'),
     path.join(componentBasePath, 'themes/stable')
@@ -327,7 +327,7 @@ function _renameComponentTemplatePrefix(generator) {
   const componentName = _getComponentName(generator);
   const folderPaths = [
     componentBasePath,
-    path.join(componentBasePath, 'resources/nls'),
+    path.join(componentBasePath, 'resources/nls/root'),
     path.join(componentBasePath, 'themes/base'),
     path.join(componentBasePath, 'themes/redwood'),
     path.join(componentBasePath, 'themes/stable')

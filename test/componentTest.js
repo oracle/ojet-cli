@@ -55,240 +55,13 @@ const COMPOSITE_COMPONENT_OPTIMIZED_FOLDER = 'min';
 
 const STRIP_TEST_PACK_NAME = 'pack-strip';
 const STRIP_TEST_COMPONENT_NAME = 'comp-strip';
-const STRIP_TEST_COMPONENT_JSON = {
-  "displayName": "A user friendly, translatable name of the component.",
-  "description": "A translatable high-level description for the component.",
-  "properties": {
-    "helpHints": {
-      "displayName": "Help Hints",
-      "description": "Represents hints for oj-form-layout element to render help information on the label of the component",
-      "type": "object",
-      "translatable": true,
-      "properties": {
-        "definition": {
-          "displayName": "Defintion",
-          "description": "Hint for help definition text associated with the label",
-          "type": "string"
-        },
-        "source": {
-          "displayName": "Source",
-          "description": "Hint for help source URL associated with the label.",
-          "type": "string"
-        }
-      }
-    },
-    "readOnly": {
-      "displayName": "Readonly",
-      "description": "Defines if the calendar as a whole can be edited in any way, can be overridden by individual events",
-      "type": "boolean",
-      "propertyGroup": "common",
-      "extension": {
-        "calendarOption": "editable",
-        "transform": "invert"
-      }
-    },
-    "displayOptions": {
-      "displayName": "Display Options",
-      "description": "Advanced options for configuring the calendar UI",
-      "type": "object",
-      "properties": {
-        "now": {
-          "displayName": "Current Date",
-          "description": "Date to use as the current date for the calendar, defaults to current date and time",
-          "type": "string",
-          "format": "date-time",
-          "propertyGroup": "data",
-          "extension": {
-            "catalog": {
-              "description": "I am to go!",
-              "check": {
-                "description": "Mamam"
-              }
-            },
-            "oracle": {
-              "businessApprovals": {
-                "description": "I am a software engineer at Oracle"
-              },
-              "type": "string"
-            },
-            "vbdt": {
-              "description": "I am to go!"
-            },
-            "audit": {
-              "thisData": {
-                "description": "Het",
-                "type": "string"
-              }
-            },
-            "calendarOption": "now"
-          }
-        },
-        "nowIndicator": {
-          "displayName": "Now Indicator",
-          "description": "Show a marker indicating the current date and time",
-          "type": "boolean",
-          "value": false,
-          "extension": {
-            "calendarOption": "nowIndicator"
-          }
-        },
-        "weekends": {
-          "displayName": "Show Weekends",
-          "description": "display weekends on the calendar",
-          "type": "boolean",
-          "value": true,
-          "extension": {
-            "calendarOption": "weekends"
-          }
-        },
-        "allowEventOverlap": {
-          "displayName": "Allow Overlap",
-          "description": "Controls if events are allowed to be edited to overlap in the schedule. Can be overridden on an event by event basis",
-          "type": "boolean",
-          "extension": {
-            "calendarOption": "eventOverlap"
-          }
-        },
-        "height": {
-          "displayName": "Height",
-          "description": "Allows an explicit height to be set for the whole calendar content area, use -1 to auto size the calendar to fill the dimensions of the element",
-          "type": "number",
-          "extension": {
-            "calendarOption": "height"
-          }
-        },
-        "locale": {
-          "displayName": "Locale",
-          "description": "Locale to show the calendar in, defaults to locale of page",
-          "type": "string",
-          "enumValues": ["af", "ar-dz", "ar-kw"],
-          "extension": {
-            "calendarOption": "locale"
-          }
-        }
-      }
-    }
-  },
-  "methods": {
-    "focus": {
-      "internalName": "setFocus",
-      "description": "A function to set focus on the field",
-      "return": "boolean"
-    }
-  },
-  "events": {
-    "onclick": {
-      "bubbles": true,
-      "description": "Demo",
-      "status": [{
-        "type": "deprecated"
-      }],
-      "cancelable": true
-    }
-  },
-  "slots": {
-    "check": {
-      "description": "Demo",
-      "visible": false,
-      "extension": {
-        "vbdt": {
-          "description": "demo"
-        }
-      }
-    }
-  },
-  "extension": {
-    "extension": {
-      "calendarOption": "locale"
-    },
-    "catalog": {
-      "description": "Demo test.",
-      "check": {
-        "description": "Demo test."
-      }
-    },
-    "oracle": {
-      "businessApprovals": {
-        "description": "Demo test."
-      }
-    },
-    "vbdt": {
-      "description": "Demo test."
-    },
-    "audit": {
-      "thisData": {
-        "description": "Demo test."
-      }
-    }
-  }
-};
-const EXPECTED_STRIPPED_JSON = {
-  "name": "comp-strip",
-  "version": "1.0.0",
-  "properties": {
-    "helpHints": {
-      "type": "object",
-      "properties": {
-        "definition": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        }
-      }
-    },
-    "readOnly": {
-      "type": "boolean"
-    },
-    "displayOptions": {
-      "type": "object",
-      "properties": {
-        "now": {
-          "type": "string",
-          "extension": {
-            "oracle": {
-              "type": "string"
-            },
-            "audit": {
-              "thisData": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "nowIndicator": {
-          "type": "boolean",
-          "value": false
-        },
-        "weekends": {
-          "type": "boolean",
-          "value": true
-        },
-        "allowEventOverlap": {
-          "type": "boolean"
-        },
-        "height": {
-          "type": "number"
-        },
-        "locale": {
-          "type": "string",
-          "enumValues": ["af", "ar-dz", "ar-kw"]
-        }
-      }
-    }
-  },
-  "methods": {
-    "focus": {
-      "internalName": "setFocus"
-    }
-  }
-};
+const STRIP_TEST_COMPONENT_JSON = {"displayName":"A user friendly, translatable name of an unfriendly component.","description":"A translatable high-level description for a low-level component.","properties":{"helpHints":{"displayName":"Help Hints","description":"Represents hints for oj-form-layout element to render help information on the label for this helpless component.","type":"object","properties":{"sub-property":{"type":"string","placeholder":"Start at the very beginning...","enumValues":["doe","ray","mee"],"propertyEditorValues":{"doe":{"description":"A deer, a female deer...","displayName":"Doe","icon":{"hoverIconPath":"./path/to/hover","iconPath":"./path/to/icon","selectedIconPath":"./path/to/selection"}},"ray":{"description":"A drop of golden sun...","displayName":"Ray"},"mee":{"description":"Me, a name to call myself...","displayName":"Me"}},"value":"string","writeback":false,"units":"notes","binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"displayName":"Source","description":"Hint for help source URL associated with the label.","type":"string","readOnly":true,"translatable":true,"dynamicSlotDef":"emptyDynamicSlot"},"readOnly":{"displayName":"Readonly","description":"Defines if the calendar as a whole can be edited in any way, can be overridden by individual events","type":"boolean|null","propertyGroup":"common","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>","displayName":"Fishes","description":"Ordered list of fishes managed by this component","extension":{"vbdt":{"itemProperties":{"name":{"type":"string","description":"Name of the fish (e.g., 'Harold')"},"species":{"type":"object","displayName":"Species","description":"The fish's species information","properties":{"latin":{"type":"string","description":"Latin name of the species"},"english":{"type":"string","description":"Informal (english) name of the species"}}}}}}}},"methods":{"focus":{"internalName":"setFocus","description":"A function to set focus on the field","return":"boolean","help":"Go to this link...","visible":false,"params":[{"name":"value","description":"Value to set focus to","type":"string|null","status":[{"description":"Use a string value instead.","since":"1.1.0","target":"parameterType","value":["null"],"type":"deprecated"}]}],"status":[{"description":"Use standard HTML 'focus' method instead.","since":"2.0.0","type":"deprecated"}],"displayName":"setFocus method","extension":{"webelement":{"exceptionStatus":[{"type":"unsupported","since":"3.0.0","description":"Knock it off!"}]}}},"methodWithExtensionMD":{"description":"Dummy method with extension metadata that gets wiped","displayName":"Dummy Method","help":"dummy.html","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"visible":true,"return":"string"},"foo":{}},"events":{"onclick":{"bubbles":true,"description":"Demo event","status":[{"description":"Go listen to something else","since":"3.0.0","type":"deprecated"}],"cancelable":true,"help":"click.html","displayName":"onClick Handler","visible":true,"detail":{"sourceID":{"type":"string|number","eventGroup":"common","description":"Who sent you?","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"status":[{"description":"Expect sourceIDs to only be of type 'number' as of version 4.0.0","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}]}}},"onTestShouldBeEmpty":{"description":"For testing","bubbles":false,"displayName":"empty on stripping","help":"./running_on_empty.html"},"onAnythingJustEmpty":{}},"slots":{"":{"description":"This is the default slot, y'all","displayName":"Default"},"deposits":{"description":"Where money is deposited","visible":true,"extension":{"vbdt":{"description":"demo"}},"displayName":"Deposit Slot","help":"depository.html","status":[{"description":"Does this look like a bank?!??!","since":"3.0.0","type":"deprecated"}],"data":{"bankInfo":{"description":"Bank information","type":"object","properties":{"name":{"type":"string","placeholder":"First National...","description":"Name of the bank","readOnly":true,"writeback":false,"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}},"amount":{"type":"number","description":"Amount"},"routing":{"type":"number|null","displayName":"Routing Number","description":"Bank routing number if a check, or null if cash"}}}},"preferredContent":["MoneyElement","CheckElement"],"maxItems":1000,"minItems":1},"shouldEndUpEmpty":{"visible":false,"displayName":"should be empty","description":"to test the code","maxItems":100,"minItems":0},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"visible":true,"preferredContent":["PreferredContent"],"status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"description":"slot for Dynamic Slot","displayName":"Dynamic Slot","help":"dy/no/mite.html","data":{"data-dynamic":{"description":"This is data for dyanamic slot","status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"type":"string"}}},"emptyDynamicSlot":{}},"help":"comp1.html","since":"0.0.7","license":"MIT","styleVariables":[{"name":"comp-background","description":"Specify the component background","formats":["color"],"help":"stylish.html","displayName":"Variable","status":[{"description":"No background for you!","since":"2.2.0","type":"deprecated"}],"keywords":["auto","transparent"],"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}}],"status":[{"description":"This whole component was a mistake...","since":"3.0.0","type":"deprecated"}],"extension":{"catalog":{"audits":"../audit/rules.zip","category":"Other","tags":["worthless","garbage","trash"],"extraInfo":{}},"oracle":{"businessApprovals":{"vitaMeetaVegamin":"123456"},"uxSpecs":["figma-imagination"]},"themes":{"unsupportedThemes":["Stable"]},"vbdt":{"audits":"../audit/vbcs/rules.zip","defaultColumns":12,"minColumns":6}},"type":"composite"};
+const EXPECTED_STRIPPED_JSON = {"name":"comp-strip","version":"1.0.0","properties":{"helpHints":{"type":"object","properties":{"sub-property":{"type":"string","enumValues":["doe","ray","mee"],"value":"string","writeback":false,"binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"type":"string","readOnly":true},"readOnly":{"type":"boolean|null","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>"}},"methods":{"focus":{"internalName":"setFocus"},"methodWithExtensionMD":{"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"foo":{}},"events":{"onclick":{"detail":{"sourceID":{"type":"string|number","extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}}}},"onTestShouldBeEmpty":{},"onAnythingJustEmpty":{}},"slots":{"":{},"deposits":{"data":{"bankInfo":{"type":"object","properties":{"name":{"type":"string","readOnly":true,"writeback":false,"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"amount":{"type":"number"},"routing":{"type":"number|null"}}}}},"shouldEndUpEmpty":{},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"data":{"data-dynamic":{"type":"string"}}},"emptyDynamicSlot":{}}};
 // Returns the variables to used to run the test checks:
 function getStripTestVariables({
   pathToLocalComponentInWeb,
   pathToLocalComponentInSrc,
-  componentMinLoader,
-  appName
+  componentMinLoader
 }) {
   // Read and later on check that component.json in src and web are the same--meaning that the file is properly 
   // restored in web:
@@ -306,7 +79,6 @@ function getStripTestVariables({
   const regex = /component\.json",\s*\[\],\s*\(function\(\){return'(?<componentJSONInLoader>.*)'}\)\)/gm;
   const match = regex.exec(loaderJsContent);
   const modifiedComponentJSON = JSON.parse(match.groups.componentJSONInLoader.replace(/\\n/g, ''));
-  const modifiedComponentJSONAttributes = Object.getOwnPropertyNames(modifiedComponentJSON);
   let loaderHasStrippedAttributes;
   if (componentJSONInWeb.hasOwnProperty('pack')) {
     loaderHasStrippedAttributes = _.isEqual(modifiedComponentJSON, {
@@ -1089,6 +861,68 @@ describe('Component & Jet Pack Tests', () => {
       });
     }
 
+    function customComponentResourceBundleTest({
+      appName,
+      scriptsFolder,
+      component
+    }) {
+      if (!util.noScaffold()) {
+        beforeComponentTest({
+          task: 'create',
+          app: appName,
+          component
+        });
+      }
+      describe('check created component', () => {
+        it('should have the correct folder names under nls folder', () => {
+          const {
+            pathToSourceComponents,
+            pathToBuiltComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          const pathToNlsFolder = path.join(pathToSourceComponents, component, 'resources', 'nls');
+          const pathToRootFolder = path.join(pathToNlsFolder, 'root');
+          const pathToDeFolder = path.join(pathToNlsFolder, 'de');
+          const pathToFrFolder = path.join(pathToNlsFolder, 'fr');
+          // Copy the root folder's contents to the German and French folder for translation:
+          fs.copySync(pathToRootFolder, pathToDeFolder);
+          fs.copySync(pathToRootFolder, pathToFrFolder);
+          // Check that the path for the de and fr folders exist:
+          const deStringFileExists = fs.existsSync(path.join(pathToDeFolder, `${component}-strings.${scriptsFolder}`));
+          const frStringFileExists = fs.existsSync(path.join(pathToFrFolder, `${component}-strings.${scriptsFolder}`));
+          assert.ok(deStringFileExists, 'de directory not created successfully');
+          assert.ok(frStringFileExists, 'fr directory not created successfully');
+        })
+        it('should build successfully and have appropriate asserts in the resources folder', async() => {
+          const appDir = util.getAppDir(appName);
+          const {
+            pathToSourceComponents,
+            pathToBuiltComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true);
+          assert.equal(util.buildSuccess(result.stdout), true, result.error);
+          // Retrieve the nls, root, and string file paths:
+          const pathToNlsFolder = path.join(pathToBuiltComponents, component, '1.0.0', 'resources', 'nls');
+          const pathToRootFolder = path.join(pathToNlsFolder, 'root');
+          const pathToStringFile = path.join(pathToNlsFolder, `${component}-strings.js`);
+          // Ensure that the needed info exist in the appropriate files:
+          const stringFileContent = fs.readFileSync(pathToStringFile, {encoding: "utf-8"});
+          const hasRootAttribute = stringFileContent.includes(`"root":`);
+          const hasRootFolderinStaging = fs.existsSync(pathToRootFolder);
+          const hasDeAttribute = stringFileContent.includes(`"de": true`);
+          const hasFrAttribute = stringFileContent.includes(`"fr": true`);
+          // Delete the created component:
+          fs.removeSync(path.join(pathToSourceComponents, component));
+          const componentDeleted = !fs.existsSync(path.join(pathToSourceComponents, component));
+          // Check the tests:
+          assert.ok(hasRootAttribute, 'root attribute is not part of the string file');
+          assert.ok(hasDeAttribute, 'de language not referenced in string file');
+          assert.ok(hasFrAttribute, 'fr language not referenced in string file');
+          assert.ok(!hasRootFolderinStaging, 'has root folder in staging');
+          assert.ok(componentDeleted, `${component} is not deleted successfully`)
+        });
+      });
+    }
+
     describe('ojet create component', () => {
       function createComponentFailureTest({
         appName,
@@ -1235,6 +1069,12 @@ describe('Component & Jet Pack Tests', () => {
       util.runComponentTestInAllTestApps({
         test: stripMetadatainMinLoaderComponentTest,
         component: STRIP_TEST_COMPONENT_NAME
+      });
+    });
+    describe('ojet build --release, custom component resource bundle test', () => {
+      util.runComponentTestInAllTestApps({
+        test: customComponentResourceBundleTest,
+        component: 'comp-res-bundle'
       });
     });
 
@@ -1873,7 +1713,6 @@ describe('Component & Jet Pack Tests', () => {
           task: 'create',
           app: appName,
           pack,
-          componentJson: STRIP_TEST_COMPONENT_JSON,
           scriptsFolder
         });
         beforeComponentInPackTest({

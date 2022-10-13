@@ -44,8 +44,10 @@ describe('Webpack Test', () => {
             template: path.join(util.getTemplatesDir(), util.WEBPACK_LEGACY_APP_NAME)
           }
         };
+        console.log(`Start scaffolding ${util.WEBPACK_LEGACY_APP_NAME}`);
         await ojet.execute(executeOptions);
         assert.ok(true);
+        console.log(`Finish scaffolding ${util.WEBPACK_LEGACY_APP_NAME}`);
         // We need the locally built copy of oraclejet-tooling before the merge
         // to pick up the latest changes. Will remove after the merge
         util.copyOracleJetTooling(util.WEBPACK_LEGACY_APP_NAME);
@@ -70,8 +72,10 @@ describe('Webpack Test', () => {
             webpack: true
           }
         };
+        console.log(`Start scaffolding ${util.WEBPACK_APP_NAME}`);
         await ojet.execute(executeOptions);
         assert.ok(true);
+        console.log(`Finish scaffolding ${util.WEBPACK_APP_NAME}`);
       } catch (e) {
         console.log(e);
         assert.ok(false, `Error running ojet.execute with ${executeOptions}`);
@@ -93,7 +97,9 @@ describe('Webpack Test', () => {
             webpack: true
           }
         };
+        console.log(`Start scaffolding ${util.WEBPACK_JS_APP_NAME}`);
         await ojet.execute(executeOptions);
+        console.log(`Finish scaffolding ${util.WEBPACK_JS_APP_NAME}`);
 
         // Change the port in ojet.config.js
         const testDir = util.getAppDir(util.WEBPACK_JS_APP_NAME);
@@ -126,10 +132,12 @@ describe('Webpack Test', () => {
             webpack: true
           }
         };
+        console.log(`Start scaffolding ${util.WEBPACK_TS_APP_NAME}`);
         await ojet.execute(executeOptions);
+        console.log(`Finish scaffolding ${util.WEBPACK_TS_APP_NAME}`);
 
         // Change the port in ojet.config.js
-        const testDir = util.getAppDir(util.WEBPACK_JS_APP_NAME);
+        const testDir = util.getAppDir(util.WEBPACK_TS_APP_NAME);
         const fileName = path.resolve(testDir, 'ojet.config.js');
         let configRead = fs.readFileSync(fileName, 'utf-8');
         configRead = configRead.replace('return config;', 'if (config && config.devServer) config.devServer.port = 8002; return config;');
@@ -250,17 +258,22 @@ describe('Webpack Test', () => {
         const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_JS_APP_NAME);
         const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
         const hasRedwoodTheme = /<link\s.*redwood-min.css">/.test(indexHtmlContent);
+        const hasPreactThemeFile = /<link\s.*\/?\btheme\.css">/.test(indexHtmlContent);
         assert.ok(hasRedwoodTheme, `src/index.html does not have link to Redwood theme`);
+        assert.ok(hasPreactThemeFile, `src/index.html does not have link to Preact theme file`);
       }); 
       it(`${util.WEBPACK_TS_APP_NAME} should have oj-redwood-min.css link in index.html file in source`, () => {
         const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_TS_APP_NAME);
         const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
         const hasRedwoodTheme = /<link\s.*redwood-min.css">/.test(indexHtmlContent);
+        const hasPreactThemeFile = /<link\s.*\/?\btheme\.css">/.test(indexHtmlContent);
         assert.ok(hasRedwoodTheme, `src/index.html does not have link to Redwood theme`);
+        assert.ok(hasPreactThemeFile, `src/index.html does not have link to Preact theme file`);
       });
     });
     describe('Build (Release)', () => {
       const regexRedwood = /<link\s.*redwood-min.css">/;
+      const regexPreact = /<link\s.*\/?\btheme\.css">/;
       const regexInjectorThemeTag = /(<!--\s*|@@)(injector):theme(\s*-->)?/;
       const regexRedwoodTag = /(<!--\s*|@@)(css|js|img):([\w\/]+)(\s*-->)?/;
       it('should build in release mode for a vdom app', async () => {
@@ -293,6 +306,18 @@ describe('Webpack Test', () => {
       });
       it('should have oj-redwood-min.css link in index.html file in staging - ts app', () => {
         const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_TS_APP_NAME, regexRedwood);
+        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
+      });
+      it('should have theme-redwood.css link in index.html file in staging - vdom app', () => {
+        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_APP_NAME, regexPreact);
+        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
+      });
+      it('should have theme-redwood.css link in index.html file in staging - js app', () => {
+        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_JS_APP_NAME, regexPreact);
+        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
+      });
+      it('should have theme-redwood.css link in index.html file in staging - ts app', () => {
+        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_TS_APP_NAME, regexPreact);
         assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
       });
       it('should have <!-- css:redwood --> tag in index.html in vdom app src folder', () => {

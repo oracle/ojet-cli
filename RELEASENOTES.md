@@ -1,5 +1,11 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 13.1.0
+
+* In index.html, the injected <script> type will be changed to 'module' for CDN bundle config loading if 'cdn' and 'bundles-config-esm.js' is selected in path_mapping.json, to support the new self-locating JET CDN bundle configuration file
+* Hybrid build/serve capability based on Cordova is deprecated as of 10.1.0 and is planned for removal in version 15.0.0
+
+
 ### 13.0.0
 
 * Metadata to support API documentation is now emitted for vcomponents during build

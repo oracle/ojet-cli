@@ -1,14 +1,14 @@
 {
   "ios": {
       "debug": {
-        "provisioningProfile": "72a690e6-b96f-4a62-9f10-757cff093cc9",
+        "provisioningProfile": "9ee22e98-ecd9-4d96-a49f-f2f0bb0ca2f0",
         "developmentTeam": "52QHD847TQ",
         "codeSignIdentity": "iPhone Distribution",
         "packageType": "enterprise"
       },
-
+  
       "release": {
-        "provisioningProfile": "72a690e6-b96f-4a62-9f10-757cff093cc9",
+        "provisioningProfile": "9ee22e98-ecd9-4d96-a49f-f2f0bb0ca2f0",
         "developmentTeam": "52QHD847TQ",
         "codeSignIdentity": "iPhone Distribution",
         "packageType": "enterprise"

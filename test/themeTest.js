@@ -88,6 +88,31 @@ describe('PCSS Theme Test', () => {
     assert.ok(hasRedwoodNotagMin, "The index.html file does not have a link to redwood-notag.min.css.");
   });
 
+  describe('svg optimization test', () => {
+    it('should fail to optimize an svg file and then emit its path as part of the error message', async () => {
+      const { pathToApp } = util.getAppPathData(util.THEME_APP_NAME);
+      const pathToRedwoodThemeImageFolder = path.join(pathToApp, 'staged-themes', 'redwood', 'web', 'images');
+      const pathToSvgTestFile = path.join(pathToRedwoodThemeImageFolder, 'test-file.svg');
+      const svgTestFileContent = 'This is not a valid svg content. Should cause optimization to fail.';
+      // Write the file invalid file content into the test-file:
+      fs.writeFileSync(pathToSvgTestFile, svgTestFileContent, {encoding: 'utf-8'});
+      // Run the build command and get the emitted build info:
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, {cwd: appDir});
+      let errorMessageForCorruptedFile;
+      const pathToTestFileCreated = fs.existsSync(pathToSvgTestFile);
+      if (pathToTestFileCreated) {
+        errorMessageForFailingFile = `Error caused by file: ${pathToSvgTestFile}`;
+      }
+      // Delete the corrupted file; otherwise, subsequent tests will fail:
+      fs.removeSync(pathToSvgTestFile);
+      const pathToTestFileDeleted = fs.existsSync(pathToSvgTestFile);
+      const regex = new RegExp(errorMessageForCorruptedFile, 'g');
+      // Check the tests that they pass:
+      assert.ok(regex.test(result.stdout), result.stdout);
+      assert.equal(!pathToTestFileDeleted, true, 'Test file not deleted successfully.');
+    });
+  });
+
   describe ('Preact Theme Test', () => {
     it('Should have preact theme files in staging and the referred links in index.html on build with redwood theme', async () => {
       const { pathToIndexHtml } = util.getAppPathData(util.THEME_APP_NAME);

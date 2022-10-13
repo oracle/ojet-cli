@@ -56,13 +56,15 @@ describe('Build with cdn', () => {
     // Change "use" to "cdn" in path_mapping.json
     const pathmappingJson = fs.readJsonSync(pathToPathMappingJson);
     pathmappingJson.use = 'cdn';
+    pathmappingJson.cdns.jet.config = 'bundles-config-esm-debug.js';
     // write it back out
     fs.writeJsonSync(pathToPathMappingJson, pathmappingJson);
   });
   after(() => {
-    // Revert "use" to "local" in path_mapping.json
+    // Revert "use" to "local" and regular bundles in path_mapping.json
     const pathmappingJson = fs.readJsonSync(pathToPathMappingJson);
     pathmappingJson.use = 'local';
+    pathmappingJson.cdns.jet.config = 'bundles-config.js';
     // write it back out
     fs.writeJsonSync(pathToPathMappingJson, pathmappingJson);
   });
@@ -72,6 +74,12 @@ describe('Build with cdn', () => {
       const mainJs = fs.readFileSync(pathToMainjs, { encoding: 'utf-8' });
       const pathString = '../../packs/oj-c';
       assert.ok(new RegExp(pathString).test(mainJs), 'main.js should contain a reference to packs/oj-c on the cdn ');
+    });
+    it('should build index.html with a module type on the bundles script', () => {
+      const pathToIndexHTML = path.join(appDir, 'web', 'index.html');
+      const indexHTML = fs.readFileSync(pathToIndexHTML, { encoding: 'utf-8' });
+      const scriptString = "type='module'";
+      assert.ok(new RegExp(scriptString).test(indexHTML), `index.html should contain a type='module' reference`);
     });
   }
   describe('debug build', () => {
