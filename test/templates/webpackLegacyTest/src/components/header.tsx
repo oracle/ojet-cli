@@ -5,8 +5,8 @@ import "ojs/ojmenu";
 import "ojs/ojbutton";
 
 type Props = {
-  appName: string,
-  userLogin: string
+  appName: string | undefined,
+  userLogin: string | undefined
 }
 
 type State = {
@@ -19,7 +19,7 @@ export class Header extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    const smallOnlyQuery = ResponsiveUtils.getFrameworkQuery("sm-only");
+    const smallOnlyQuery = ResponsiveUtils.getFrameworkQuery("sm-only") || "";
     this.mediaQuery = window.matchMedia(smallOnlyQuery);
     this._mediaQueryChangeListener = this._mediaQueryChangeListener.bind(this);
     const displayType = this._getDisplayTypeFromMediaQuery(this.mediaQuery);
@@ -73,7 +73,7 @@ export class Header extends Component<Props, State> {
     this.mediaQuery.removeEventListener("change", this._mediaQueryChangeListener);
   }
 
-  _mediaQueryChangeListener(mediaQuery) {
+  _mediaQueryChangeListener(mediaQuery: any) {
     const displayType = this._getDisplayTypeFromMediaQuery(mediaQuery);
     const endIconClass = this._getEndIconClassFromDisplayType(displayType);
     this.setState({
@@ -82,11 +82,11 @@ export class Header extends Component<Props, State> {
     });
   }
 
-  _getDisplayTypeFromMediaQuery(mediaQuery) {
+  _getDisplayTypeFromMediaQuery(mediaQuery : any) {
     return mediaQuery.matches ? "icons" : "all";
   }
 
-  _getEndIconClassFromDisplayType(displayType) {
+  _getEndIconClassFromDisplayType(displayType : any) {
     return displayType === "icons" ?
       "oj-icon demo-appheader-avatar" :
       "oj-component-icon oj-button-menu-dropdown-icon"

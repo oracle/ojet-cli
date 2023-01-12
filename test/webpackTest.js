@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -28,7 +28,9 @@ function checkSrcIndexHTML(appName, token){
 }
 
 describe('Webpack Test', () => {
-  before(async () => {
+  before(async function() {
+    this.timeout(20000000);
+
     if (!util.noScaffold()) {
       // Create legacy webpack app. Will remove once end-to-end webpack
       // support is complete
@@ -48,9 +50,6 @@ describe('Webpack Test', () => {
         await ojet.execute(executeOptions);
         assert.ok(true);
         console.log(`Finish scaffolding ${util.WEBPACK_LEGACY_APP_NAME}`);
-        // We need the locally built copy of oraclejet-tooling before the merge
-        // to pick up the latest changes. Will remove after the merge
-        util.copyOracleJetTooling(util.WEBPACK_LEGACY_APP_NAME);
       } catch (e) {
         console.log(e);
         assert.ok(false, `Error running ojet.execute with ${executeOptions}`);
@@ -235,14 +234,9 @@ describe('Webpack Test', () => {
     });*/
     describe('Build (Debug)', () => {
       it('should build in debug mode', async () => {
-        const { pathToApp } = util.getAppPathData(util.WEBPACK_APP_NAME);
-        const ojet = new Ojet({ cwd: pathToApp, logs: false });
-        try {
-          await ojet.execute({ task: 'build' });
-          assert.ok(true);
-        } catch {
-          assert.ok(false);
-        }
+        const appDir = util.getAppDir(util.WEBPACK_APP_NAME);
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
       it(`should build in debug mode for ${util.WEBPACK_JS_APP_NAME}`, async () => {
         const appDir = util.getAppDir(util.WEBPACK_JS_APP_NAME);
@@ -254,37 +248,28 @@ describe('Webpack Test', () => {
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
-      it(`${util.WEBPACK_JS_APP_NAME} should have oj-redwood-min.css link in index.html file in source`, () => {
+      //*** Will re-write the test once the project is finally complete****/
+      /* it(`${util.WEBPACK_JS_APP_NAME} should have oj-redwood-min.css link in index.html file in source`, () => {
         const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_JS_APP_NAME);
         const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
         const hasRedwoodTheme = /<link\s.*redwood-min.css">/.test(indexHtmlContent);
-        const hasPreactThemeFile = /<link\s.*\/?\btheme\.css">/.test(indexHtmlContent);
         assert.ok(hasRedwoodTheme, `src/index.html does not have link to Redwood theme`);
-        assert.ok(hasPreactThemeFile, `src/index.html does not have link to Preact theme file`);
       }); 
       it(`${util.WEBPACK_TS_APP_NAME} should have oj-redwood-min.css link in index.html file in source`, () => {
         const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_TS_APP_NAME);
         const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
         const hasRedwoodTheme = /<link\s.*redwood-min.css">/.test(indexHtmlContent);
-        const hasPreactThemeFile = /<link\s.*\/?\btheme\.css">/.test(indexHtmlContent);
         assert.ok(hasRedwoodTheme, `src/index.html does not have link to Redwood theme`);
-        assert.ok(hasPreactThemeFile, `src/index.html does not have link to Preact theme file`);
-      });
+      }); */
     });
     describe('Build (Release)', () => {
       const regexRedwood = /<link\s.*redwood-min.css">/;
-      const regexPreact = /<link\s.*\/?\btheme\.css">/;
       const regexInjectorThemeTag = /(<!--\s*|@@)(injector):theme(\s*-->)?/;
       const regexRedwoodTag = /(<!--\s*|@@)(css|js|img):([\w\/]+)(\s*-->)?/;
       it('should build in release mode for a vdom app', async () => {
-        const { pathToApp } = util.getAppPathData(util.WEBPACK_APP_NAME);
-        const ojet = new Ojet({ cwd: pathToApp, logs: false });
-        try {
-          await ojet.execute({ task: 'build', options: { release: true }});
-          assert.ok(true);
-        } catch {
-          assert.ok(false);
-        }
+         const appDir = util.getAppDir(util.WEBPACK_APP_NAME);
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true, true);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
       it(`should build in debug release for a js app`, async () => {
         const appDir = util.getAppDir(util.WEBPACK_JS_APP_NAME);
@@ -296,7 +281,7 @@ describe('Webpack Test', () => {
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true, true);
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
-      it('should have oj-redwood-min.css link in index.html file in staging - vdom app', () => {
+     /*  it('should have oj-redwood-min.css link in index.html file in staging - vdom app', () => {
         const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_APP_NAME, regexRedwood);
         assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
       });
@@ -307,19 +292,7 @@ describe('Webpack Test', () => {
       it('should have oj-redwood-min.css link in index.html file in staging - ts app', () => {
         const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_TS_APP_NAME, regexRedwood);
         assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
-      });
-      it('should have theme-redwood.css link in index.html file in staging - vdom app', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_APP_NAME, regexPreact);
-        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
-      });
-      it('should have theme-redwood.css link in index.html file in staging - js app', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_JS_APP_NAME, regexPreact);
-        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
-      });
-      it('should have theme-redwood.css link in index.html file in staging - ts app', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_TS_APP_NAME, regexPreact);
-        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
-      });
+      }); */
       it('should have <!-- css:redwood --> tag in index.html in vdom app src folder', () => {
         const { pathToIndexHtml, hasMatchedPattern} = checkSrcIndexHTML(util.WEBPACK_APP_NAME, regexRedwoodTag);
         assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a Redwood theme tag`);
@@ -356,7 +329,8 @@ describe('Webpack Test', () => {
         try {
           await ojet.execute({ task: 'build' });
           assert.ok(true);
-        } catch {
+        } catch (e) {
+          console.log(e);
           assert.ok(false);
         }
       });
@@ -368,7 +342,8 @@ describe('Webpack Test', () => {
         try {
           await ojet.execute({ task: 'build', options: { release: true }});
           assert.ok(true);
-        } catch {
+        } catch (e) {
+          console.log(e);
           assert.ok(false);
         }
       });

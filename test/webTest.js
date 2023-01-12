@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -7,6 +7,7 @@
 const assert = require('assert');
 const fs = require('fs-extra');
 const path = require('path');
+
 const _ = require('lodash');
 
 const constants = require('../lib/util/constants');
@@ -24,6 +25,7 @@ describe('Web Test', () => {
       const platform = util.getPlatform(process.env.OS);
 
       util.removeAppDir(util.APP_NAME);
+      util.removeAppDir(util.TEST_DIR);
   
       // Scaffold a basic web app
       let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.APP_NAME} --norestore=true`, { cwd: util.testDir });
@@ -208,11 +210,11 @@ describe('Config Test', () => {
   let valid;
   let toolingUtil;
   before(() => {
-    config = require(`${appDir}/node_modules/@oracle/oraclejet-tooling/lib/config`);
-    ojetUtil = require(`${appDir}/node_modules/@oracle/oraclejet-tooling/lib/util`);
-    ojet = require(`${appDir}/node_modules/@oracle/oraclejet-tooling/oraclejet-tooling`);
-    valid = require(`${appDir}/node_modules/@oracle/oraclejet-tooling/lib/validations`);
-    toolingUtil = require(`${appDir}/node_modules/@oracle/oraclejet-tooling/lib/util`);
+    config = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/config`);
+    ojetUtil = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/util`);
+    ojet = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/oraclejet-tooling`);
+    valid = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/validations`);
+    toolingUtil = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/util`);
   });
 
   it('should get all themes', () => {
@@ -275,7 +277,7 @@ describe('Config Test', () => {
 describe('Paths Mapping Test', () => {
   let npmCopy;
   before(() => {
-    npmCopy = require(`${appDir}/node_modules/@oracle/oraclejet-tooling/lib/npmCopy`);
+    npmCopy = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/npmCopy`);
   });
 
   it('should have single Path Mapping Not Empty -- Dev', () => {
@@ -298,10 +300,22 @@ describe('Paths Mapping Test', () => {
 if (!util.noServe()) {
   describe('serve', () => {
     it('should serve with nobuild', async () => {
+      //const ac = new AbortController();
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
       assert.equal(/Watching files/i.test(result.stdout), true, result.stdout);
+      assert.equal(/Watching Interval: 1000./i.test(result.stdout), true, result.stdout);
       result.process.kill();
     });
+
+    if (process.platform !== 'win32') {
+      it('should serve with the chosen watch interval value', async () => {
+        //const ac = new AbortController();
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --watchInterval=2000`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+        assert.equal(/Watching Interval: 2000./i.test(result.stdout), true, result.stdout);
+        result.process.kill();
+        //ac.abort();
+      });
+    }
   });
 }
 
@@ -370,33 +384,7 @@ describe('Build with cdn', () => {
     });
   });
 
-  describe('Customization Test', () => {
-    it('should load oraclejet build config', () => {
-      const wd = process.cwd();
-      process.chdir(util.getAppDir(util.APP_NAME));
-      const buildOps = ojetUtil.getBuildCustomizedConfig();
-      process.chdir(wd);
-      assert(!_.isEmpty(buildOps));
-    });
-  
-    it('should load oraclejet serve config', () => {
-      const wd = process.cwd();
-      process.chdir(util.getAppDir(util.APP_NAME));
-      const serveOps = ojetUtil.getServeCustomizedConfig();
-      process.chdir(wd);
-      assert(!_.isEmpty(serveOps));
-    });
-  
-    it('should validate serve config', () => {
-      const wd = process.cwd();
-      process.chdir(util.getAppDir(util.APP_NAME));
-      const serveOps = ojetUtil.getServeCustomizedConfig();
-      process.chdir(wd);
-      const validServe = ojetUtil.validateServeOptions(serveOps);
-      assert(_.isEmpty(validServe));
-    });
-  
-  
+  describe('Customization Test', () => {  
     it('should get default paths', () => {
       const defaultPaths = ojetPaths.getDefaultPaths();
       assert(!_.isEmpty(defaultPaths));

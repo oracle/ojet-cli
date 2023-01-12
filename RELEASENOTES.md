@@ -1,10 +1,21 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 14.0.0
+* node-sass updated to 7.0.1
+* strict mode is now enabled by default in generated tsconfig.json files
+* oraclejet-serve.js and oraclejet-build.js are no longer read or processed.  Users should use other options in oraclejetconfig.json or the user hook system to set similar settings to what is found in oraclejet-serve.js and oraclejet-build.js.  The same configuration objects formerly found in oraclejet-serve.js and oraclejet-build.js can be found in the 'opts' section of the context object passed into the before_build and before_serve hooks.
+* Add a "before_injection" hook that runs after all copying but before output files are modified by injectors
+* Hybrid build/serve capability based on Cordova is deprecated as of 10.1.0 and is planned for removal in version 15.0.0
+* Add 'webpackLibraries' and 'typescriptLibraries' propety to oraclejetconfig.json to facilitate maintenance of third-party libraries needed by Webpack and Typescript, respectively
+* Update default typescript version to 4.8.4.  If you see a message warning about the wrong typescript version during build, please check your application's package.json to ensure that it is installing 4.8.4
+* When creating a vcomponent component, the template type now defaults to 'function' instead of 'class' if the value of the --vcomponent flag is not specified.
+* The CLI now installs itself within an application's node_modules for easy use of npx to issue ojet commands
+* A fix was made where the 'strict' typescript setting may not have been passed in to the compiler.  If a project sees new typescript compilation failures, 'strict' mode as set in tsconfig.json may be the issue
+
 ### 13.1.0
 
 * In index.html, the injected <script> type will be changed to 'module' for CDN bundle config loading if 'cdn' and 'bundles-config-esm.js' is selected in path_mapping.json, to support the new self-locating JET CDN bundle configuration file
 * Hybrid build/serve capability based on Cordova is deprecated as of 10.1.0 and is planned for removal in version 15.0.0
-
 
 ### 13.0.0
 

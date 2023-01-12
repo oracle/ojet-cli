@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -35,9 +35,9 @@
         'jqueryui-amd': 'libs/jquery/jqueryui-amd-1.13.0',
         'hammerjs': 'libs/hammer/hammer-2.0.8',
         'ojdnd': 'libs/dnd-polyfill/dnd-polyfill-1.0.2',
-        'ojs': 'libs/oj/13.1.0/debug',
-        'ojL10n': 'libs/oj/13.1.0/ojL10n',
-        'ojtranslations': 'libs/oj/13.1.0/resources',
+        'ojs': 'libs/oj/14.0.0/debug',
+        'ojL10n': 'libs/oj/14.0.0/ojL10n',
+        'ojtranslations': 'libs/oj/14.0.0/resources',
         'text': 'libs/require/text',
         'signals': 'libs/js-signals/signals',
         'customElements': 'libs/webcomponents/custom-elements.min',

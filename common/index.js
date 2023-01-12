@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -33,46 +33,42 @@ module.exports =
   writeCommonTemplates: function _writeCommonTemplates(generator) {
     const templateSrc = path.resolve(__dirname, '../template/common');
     const templateDest = path.resolve('.');
-    return new Promise((resolve, reject) => {
-      function filter(src, dest) {
-        const isOracleJetConfigJson = path.basename(src) === constants.APP_CONFIG_JSON;
-        const isVDOMTemplate = utils.isVDOMTemplate(generator);
-        if (isVDOMTemplate && isOracleJetConfigJson) {
-          // for vdom templates, update the oracljetconfig.json to
-          // support the new architecture
-          const oraclejetConfigJson = fs.readJSONSync(src);
-          oraclejetConfigJson[constants.APPLICATION_ARCHITECTURE] = constants.VDOM_ARCHITECTURE;
-          oraclejetConfigJson.paths.source.javascript = '.';
-          oraclejetConfigJson.paths.source.typescript = '.';
-          oraclejetConfigJson.paths.source.styles = 'styles';
-          oraclejetConfigJson.paths.source.components = 'components';
-          oraclejetConfigJson.paths.source.exchangeComponents = 'exchange_components';
-          fs.writeJSONSync(dest, oraclejetConfigJson, { spaces: 2 });
-          return false;
-        } else if (isOracleJetConfigJson) {
-          // for none-vdom templates, update oraclejetconfig.json
-          // to indicate that architecture is mvvm (model-view-view-model)
-          const oraclejetConfigJson = fs.readJSONSync(src);
-          oraclejetConfigJson[constants.APPLICATION_ARCHITECTURE] = constants.MVVM_ARCHITECTURE;
-          fs.writeJSONSync(dest, oraclejetConfigJson, { spaces: 2 });
-          return false;
-        }
-        return true;
+    function filter(src, dest) {
+      const isOracleJetConfigJson = path.basename(src) === constants.APP_CONFIG_JSON;
+      const isVDOMTemplate = utils.isVDOMTemplate(generator);
+      if (isVDOMTemplate && isOracleJetConfigJson) {
+        // for vdom templates, update the oracljetconfig.json to
+        // support the new architecture
+        const oraclejetConfigJson = fs.readJSONSync(src);
+        oraclejetConfigJson[constants.APPLICATION_ARCHITECTURE] = constants.VDOM_ARCHITECTURE;
+        oraclejetConfigJson.paths.source.javascript = '.';
+        oraclejetConfigJson.paths.source.typescript = '.';
+        oraclejetConfigJson.paths.source.styles = 'styles';
+        oraclejetConfigJson.paths.source.components = 'components';
+        oraclejetConfigJson.paths.source.exchangeComponents = 'exchange_components';
+        fs.writeJSONSync(dest, oraclejetConfigJson, { spaces: 2 });
+        return false;
+      } else if (isOracleJetConfigJson) {
+        // for none-vdom templates, update oraclejetconfig.json
+        // to indicate that architecture is mvvm (model-view-view-model)
+        const oraclejetConfigJson = fs.readJSONSync(src);
+        oraclejetConfigJson[constants.APPLICATION_ARCHITECTURE] = constants.MVVM_ARCHITECTURE;
+        fs.writeJSONSync(dest, oraclejetConfigJson, { spaces: 2 });
+        return false;
       }
-      try {
-        fs.copySync(templateSrc, templateDest, { filter });
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
+      return true;
+    }
+    try {
+      fs.copySync(templateSrc, templateDest, { filter });
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    }
   },
 
   updatePackageJSON: function _updatePacakgeJSON(generator) {
-    return new Promise((resolve) => {
-      _updateJSON(generator, 'package.json');
-      resolve(generator);
-    });
+    _updateJSON(generator, 'package.json');
+    return Promise.resolve(generator);
   },
 
   validateAppDirNotExistsOrIsEmpty: function _validateAppDirNotExistsOrIsEmpty(generator) {
@@ -117,16 +113,13 @@ module.exports =
   },
 
   validateArgs: function _validateArgs(generator) {
-    return new Promise((resolve, reject) => {
-      const args = generator.arguments;
-      const validLength = _getValidArgLength(generator.options.namespace);
+    const args = generator.arguments;
+    const validLength = _getValidArgLength(generator.options.namespace);
 
-      if (args.length > validLength) {
-        reject(commonMessages.error(`Invalid additional arguments: ${args.splice(validLength)}`, 'validateArgs'));
-      } else {
-        resolve(generator);
-      }
-    });
+    if (args.length > validLength) {
+      return Promise.reject(commonMessages.error(`Invalid additional arguments: ${args.splice(validLength)}`, 'validateArgs'));
+    }
+    return Promise.resolve(generator);
   },
 
   validateFlags: function _validateFlags(generator) {
@@ -239,6 +232,8 @@ function _customizeVDOMTemplateTsconfigForWebpack() {
   tsconfigJson.compilerOptions.typeRoots.unshift('./types');
   tsconfigJson.compilerOptions.resolveJsonModule = true;
   tsconfigJson.compilerOptions.esModuleInterop = true;
+  tsconfigJson.compilerOptions.removeComments = true;
+  tsconfigJson.compilerOptions.strict = true;
   tsconfigJson.compilerOptions.paths.react = [
     preactCompat
   ];

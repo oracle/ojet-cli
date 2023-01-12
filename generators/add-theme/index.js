@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -64,18 +64,16 @@ function _addSassTheme(addTheme) {
 
   const source = path.resolve(__dirname, 'templates', DEFAULT_THEME);
 
-  return new Promise((resolve, reject) => {
-    try {
-      // first copy over templates
-      fs.copySync(source, themeDestPath);
-      _copySettingsFilesFromJETSrc(themeName, themeDestPath);
-      _renameFilesAllPlatforms(themeName, themeDestPath);
-      resolve(addTheme);
-    } catch (err) {
-      utils.log.error(err);
-      reject();
-    }
-  });
+  try {
+    // first copy over templates
+    fs.copySync(source, themeDestPath);
+    _copySettingsFilesFromJETSrc(themeName, themeDestPath);
+    _renameFilesAllPlatforms(themeName, themeDestPath);
+    return Promise.resolve(addTheme);
+  } catch (err) {
+    utils.log.error(err);
+    return Promise.reject();
+  }
 }
 
 function _renameFilesAllPlatforms(themeName, dest) {

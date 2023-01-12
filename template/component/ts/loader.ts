@@ -13,7 +13,7 @@ Composite.register("@full-component-name@", {
 declare global {
   namespace preact.JSX {
     interface IntrinsicElements {
-     "@full-component-name@": any;
+      "@full-component-name@": any;
     }
   }
 }

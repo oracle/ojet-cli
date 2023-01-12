@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -15,14 +15,12 @@ const templateRoot = path.dirname(require.resolve('@oracle/oraclejet-templates')
 
 module.exports = {
   handle: function _handle(generator, destination, templateSpec) {
-    return new Promise((resolve, reject) => {
-      try {
-        _copyNpmTemplate(generator, templateSpec, destination);
-        resolve(generator);
-      } catch (err) {
-        reject(err);
-      }
-    });
+    try {
+      _copyNpmTemplate(generator, templateSpec, destination);
+      return Promise.resolve(generator);
+    } catch (err) {
+      return Promise.reject(err);
+    }
   }
 };
 

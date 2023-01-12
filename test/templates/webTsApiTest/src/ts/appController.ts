@@ -20,7 +20,7 @@ interface CoreRouterDetail {
 class RootViewModel {
   manner: ko.Observable<string>;
   message: ko.Observable<string|undefined>;
-  smScreen: ko.Observable<boolean>;
+  smScreen: ko.Observable<boolean> | undefined;
   moduleAdapter: ModuleRouterAdapter<CoreRouterDetail>;
   navDataProvider: ojNavigationList<string, CoreRouter.CoreRouterState<CoreRouterDetail>>["data"];
   appName: ko.Observable<string>;

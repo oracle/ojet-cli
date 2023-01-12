@@ -12,6 +12,7 @@ type Props = Readonly<{
  * @ojmetadata version "1.0.0"
  * @ojmetadata displayName "A user friendly, translatable name of the component"
  * @ojmetadata description "A translatable high-level description for the component"
+ * @ojmetadata main "@pack-name@/@component-name@"
 */
 @customElement("@full-component-name@")
 export class @camelcasecomponent-name@ extends Component < ExtendGlobalProps < Props >> {
@@ -20,6 +21,6 @@ export class @camelcasecomponent-name@ extends Component < ExtendGlobalProps < P
 };
 
 render(props: Props): ComponentChild {
-  return<p>{ props.message }</p>;
-  }
+  return <p>{props.message}</p>;
+}
 }

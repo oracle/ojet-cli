@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -60,15 +60,13 @@ module.exports =
 
   removeExtraCordovaFiles: function _removeExtraCordovaFiles() {
     const cordovaDir = _getHybridPath();
-    return new Promise((resolve, reject) => {
-      try {
-        fs.removeSync(path.resolve(cordovaDir, 'hooks'));
-        fs.removeSync(path.resolve(cordovaDir, 'www/*'));
-        resolve();
-      } catch (err) {
-        reject(commonMessages.error(err, 'removeExtraCordovaFiles'));
-      }
-    });
+    try {
+      fs.removeSync(path.resolve(cordovaDir, 'hooks'));
+      fs.removeSync(path.resolve(cordovaDir, 'www/*'));
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(commonMessages.error(err, 'removeExtraCordovaFiles'));
+    }
   },
 
   copyResources: function _copyResources() {
@@ -90,27 +88,25 @@ module.exports =
     const cordovaDir = _getHybridPath();
     const configXml = path.resolve(`${cordovaDir}/${constants.CORDOVA_CONFIG_XML}`);
 
-    return new Promise((resolve, reject) => {
-      try {
-        const configRead = fs.readFileSync(configXml, 'utf-8');
-        const document = new DOMParser().parseFromString(configRead, 'text/xml');
-        _addCordovaConfigDescription(document);
-        _addCordovaConfigHooks(document);
-        if (generator._platformsToInstall && generator._platformsToInstall.indexOf('ios') !== -1) {
-          _addIosPlugins(document);
-        }
-        _addIosOrientationPreference(document);
-        _addIosOverscrollPreference(document);
-        _addAndroidOverscrollPreference(document);
-        _addWindowsPreferences(document);
-        _addIcons(document);
-        _addSplash(document);
-        fs.writeFileSync(configXml, document.toString());
-        resolve();
-      } catch (err) {
-        reject(commonMessages.error(err, 'updateConfigXml'));
+    try {
+      const configRead = fs.readFileSync(configXml, 'utf-8');
+      const document = new DOMParser().parseFromString(configRead, 'text/xml');
+      _addCordovaConfigDescription(document);
+      _addCordovaConfigHooks(document);
+      if (generator._platformsToInstall && generator._platformsToInstall.indexOf('ios') !== -1) {
+        _addIosPlugins(document);
       }
-    });
+      _addIosOrientationPreference(document);
+      _addIosOverscrollPreference(document);
+      _addAndroidOverscrollPreference(document);
+      _addWindowsPreferences(document);
+      _addIcons(document);
+      _addSplash(document);
+      fs.writeFileSync(configXml, document.toString());
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(commonMessages.error(err, 'updateConfigXml'));
+    }
   },
 
   copyHooks() {
@@ -278,7 +274,7 @@ function _getWindowsPreferencesSection(document) {
   }
   const windowsPlatformElem = document.createElement('platform');
   windowsPlatformElem.setAttribute('name', 'windows');
-  document.insertBefore(windowsPlatformElem, platforms[0]);
+  platforms[0].parentNode.insertBefore(windowsPlatformElem, platforms[0]);
   return windowsPlatformElem;
 }
 

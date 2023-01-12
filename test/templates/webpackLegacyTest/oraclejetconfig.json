@@ -18,7 +18,8 @@
     }
   },
   "defaultBrowser": "chrome",
-  "sassVer": "5.0.0",
+  "sassVer": "7.0.1",
+  "typescriptLibraries": "typescript@4.8.4 yargs-parser@~13.1.2",
   "defaultTheme": "redwood",
   "architecture": "vdom",
   "bundler": "webpack",

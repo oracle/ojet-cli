@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -20,6 +20,15 @@ describe('Typescript Test', () => {
   
       // Scaffold TS app from scratch
       const result = await util.execCmd(`${util.OJET_COMMAND} create ${util.TS_APP_NAME} --use-global-tooling --template=navbar --typescript`, { cwd: util.testDir });
+      console.log(result.stdout);
+      // Check output
+      assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
+    }
+    if (!util.noScaffold()) {
+      util.removeAppDir(util.TS_NAV_DRAWER_APP_NAME);
+  
+      // Scaffold TS app with a navdrawer template from scratch
+      const result = await util.execCmd(`${util.OJET_COMMAND} create ${util.TS_NAV_DRAWER_APP_NAME} --use-global-tooling --template=navdrawer --typescript`, { cwd: util.testDir });
       console.log(result.stdout);
       // Check output
       assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
@@ -126,6 +135,25 @@ describe('Typescript Test', () => {
           .replace('.ts', '.js');
         assert.ok(!fs.existsSync(stagingPath), `${stagingPath} found`);
       });
+    });
+  });
+  describe('Build (an app with navdrawer template)', () => {
+    if (!util.noBuild()) {
+      it('should build the ts app with navdrawer template', async () => {
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(util.TS_NAV_DRAWER_APP_NAME) });
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+      });
+    }
+    it('should have .map files', () => {
+      filelist = fs.readdirSync(path.resolve(util.getAppDir(util.TS_NAV_DRAWER_APP_NAME), 'web', 'js'));
+      // Check for *.map files
+      let hasMap = false;
+      if (filelist) {
+        hasMap = filelist.some((elem) => {
+          return elem.endsWith('.map');
+        });
+      }
+      assert.ok(hasMap, filelist);
     });
   });
 });

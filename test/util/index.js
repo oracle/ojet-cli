@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -40,9 +40,9 @@ function runComponentTestInTestApp(config, options) {
   });
 }
 
-function _replaceOraclejetToolingProp(packageJson) {
-  packageJson.devDependencies['@oracle/oraclejet-tooling'] = `file:${path.join('..', '..',
-  'ojet-cli', 'node_modules', '@oracle', 'oraclejet-tooling')}`;
+function _replaceOjetCLIProp(packageJson) {
+  packageJson.devDependencies['@oracle/ojet-cli'] = `file:${path.join('..', '..',
+  'ojet-cli')}`;
 }
 
 const ORACLEJET_CONFIG_JSON = 'oraclejetconfig.json';
@@ -64,7 +64,9 @@ const WEBPACK_DEPENDENCIES = [
   '@prefresh/babel-plugin',
   'webpack-merge',
   'compression-webpack-plugin',
-  'mini-css-extract-plugin'
+  'mini-css-extract-plugin',
+  'clean-webpack-plugin',
+  'css-fix-url-loader',
 ];
 const COMPONENT_JSON_DEPENDENCIES_TOKEN = '@dependencies@';
 const COMPONENT_JSON = 'component.json';
@@ -79,6 +81,7 @@ module.exports = {
   HYBRID_APP_NAME: 'hybridJsTest',
   OJC_APP_NAME: 'ojcTest',
   TS_APP_NAME: 'webTsTest',
+  TS_NAV_DRAWER_APP_NAME: 'webTsNavDrawerTest',
   THEME_APP_NAME: 'webJsThemeTest',
   PWA_APP_NAME: 'webJsPwaTest',
   API_APP_NAME: 'webTsApiTest',
@@ -124,7 +127,7 @@ module.exports = {
       let src = path.resolve('generators', dir, 'templates', 'common', 'package.json');
       let json = fs.readJSONSync(src);
       // Replace the property
-      _replaceOraclejetToolingProp(json);
+      _replaceOjetCLIProp(json);
       // Write it back out
       fs.writeJsonSync(src, json);  
     }

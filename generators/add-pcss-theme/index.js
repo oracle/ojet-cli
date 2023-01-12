@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -187,24 +187,22 @@ function _addPcssTheme(addTheme) {
   // Create templates and default theme folder from generator template
   fs.ensureDirSync(themeDestPath);
 
-  return new Promise((resolve, reject) => {
-    try {
-      // Copy pcss theme template to project folder under src
-      fs.copySync(source, themeDestPath);
-      // Copy sass settings file
-      _copyCssSettingsFile(addTheme, themeDestPath, 'sass');
-      // Copy css vars settings file
-      _copyCssSettingsFile(addTheme, themeDestPath, 'cssvars');
-      // rename copied template files with created theme name
-      _renameFilesTokens(themeName, themeDestPath, 'sass');
-      // load component refrence data dynamically from source
-      _loadComponentRefrence(addTheme, themeDestPath);
-      resolve(addTheme);
-    } catch (err) {
-      utils.log.error(err);
-      reject();
-    }
-  });
+  try {
+    // Copy pcss theme template to project folder under src
+    fs.copySync(source, themeDestPath);
+    // Copy sass settings file
+    _copyCssSettingsFile(addTheme, themeDestPath, 'sass');
+    // Copy css vars settings file
+    _copyCssSettingsFile(addTheme, themeDestPath, 'cssvars');
+    // rename copied template files with created theme name
+    _renameFilesTokens(themeName, themeDestPath, 'sass');
+    // load component refrence data dynamically from source
+    _loadComponentRefrence(addTheme, themeDestPath);
+    return Promise.resolve(addTheme);
+  } catch (err) {
+    utils.log.error(err);
+    return Promise.reject();
+  }
 }
 
 function _updateBaseTheme(themeAdded) {
@@ -216,18 +214,16 @@ function _updateBaseTheme(themeAdded) {
   const themeDestPath = path.resolve(srcPath, srcThemes, themeName);
   const themeConfigPath = path.join(themeDestPath, 'theme.json');
 
-  return new Promise((resolve, reject) => {
-    try {
-      utils.log(`'Adding basetheme: ${themeAdded.themeOptionValue} to ${themeConfigPath}'.`);
-      const themeConfigJson = utils.readJsonAndReturnObject(themeConfigPath);
-      themeConfigJson.basetheme = themeAdded.themeOptionValue;
-      fs.writeFileSync(themeConfigPath, JSON.stringify(themeConfigJson, null, 2));
-      resolve(themeAdded);
-    } catch (err) {
-      utils.log.error(err);
-      reject();
-    }
-  });
+  try {
+    utils.log(`'Adding basetheme: ${themeAdded.themeOptionValue} to ${themeConfigPath}'.`);
+    const themeConfigJson = utils.readJsonAndReturnObject(themeConfigPath);
+    themeConfigJson.basetheme = themeAdded.themeOptionValue;
+    fs.writeFileSync(themeConfigPath, JSON.stringify(themeConfigJson, null, 2));
+    return Promise.resolve(themeAdded);
+  } catch (err) {
+    utils.log.error(err);
+    return Promise.reject();
+  }
 }
 
 /**

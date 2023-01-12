@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -107,6 +107,10 @@ const config = {
         typescript: {
           description: 'Adds Typescript compilation to the app',
           examples: ['ojet add typescript']
+        },
+        docgen: {
+          description: 'Adds JSDOC compilation to the app to generate API documentation. Works only for VComponents.',
+          examples: ['ojet add docgen']
         },
         pwa: {
           description: 'Adds pwa support to the app',

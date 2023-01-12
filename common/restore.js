@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -18,33 +18,29 @@ module.exports =
   writeOracleJetConfigFile: function _writeOracleJetConfigFile() {
     const destinationRoot = path.resolve('.');
     const configPath = path.resolve(destinationRoot, constants.APP_CONFIG_JSON);
-    return new Promise((resolve) => {
-      let configJson;
-      if (!fs.existsSync(configPath)) {
-        utils.log(`${commonMessages.appendJETPrefix()}No ${constants.APP_CONFIG_JSON}, writing default`);
-        configJson = utils.readJsonAndReturnObject(path.join(
-          __dirname,
-          '../../template/common',
-          constants.APP_CONFIG_JSON
-        ));
-      } else {
-        utils.log(`${commonMessages.appendJETPrefix() + constants.APP_CONFIG_JSON} file exists`);
-        configJson = utils.readJsonAndReturnObject(configPath);
-      }
-      fs.writeFileSync(configPath, JSON.stringify(configJson, null, 2));
-      resolve();
-    });
+    let configJson;
+    if (!fs.existsSync(configPath)) {
+      utils.log(`${commonMessages.appendJETPrefix()}No ${constants.APP_CONFIG_JSON}, writing default`);
+      configJson = utils.readJsonAndReturnObject(path.join(
+        __dirname,
+        '../../template/common',
+        constants.APP_CONFIG_JSON
+      ));
+    } else {
+      utils.log(`${commonMessages.appendJETPrefix() + constants.APP_CONFIG_JSON} file exists`);
+      configJson = utils.readJsonAndReturnObject(configPath);
+    }
+    fs.writeFileSync(configPath, JSON.stringify(configJson, null, 2));
+    return Promise.resolve();
   },
 
   npmInstall: function _npmInstall(app, opt) {
-    return new Promise((resolve) => {
-      const installer = utils.getInstallerCommand(opt);
+    const installer = utils.getInstallerCommand(opt);
 
-      const cmd = `${installer.installer} ${installer.verbs.install}`;
-      fs.ensureDirSync(path.join('node_modules'));
-      execSync(cmd, null);
-      resolve();
-    });
+    const cmd = `${installer.installer} ${installer.verbs.install}`;
+    fs.ensureDirSync(path.join('node_modules'));
+    execSync(cmd, null);
+    return Promise.resolve();
   }
 };
 

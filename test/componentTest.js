@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -7,9 +7,11 @@
 'use strict';
 
 const assert = require('assert');
+const extract = require('extract-zip');
 const fs = require('fs-extra');
 const util = require('./util');
 const path = require('path');
+
 const _ = require('lodash');
 
 const COMPONENT_NAME = 'comp-1';
@@ -26,6 +28,7 @@ const BUNDLE_TEST_EXCHANGE_COMPONENT = 'oj-sample-metric';
 const EXCHANGE_COMPONENT_NAME = `${EXCHANGE_COMPONENT_PACK}-${EXCHANGE_COMPONENT_PACK_MEMBER}`;
 
 const PACK_NAME = 'pack-1';
+const MONO_PACK_NAME = 'mono-pack';
 const DEFAULT_PACK_VERSION = '1.0.0';
 const RESOURCE_COMPONENT_NAME = 'resources';
 const EXCHANGE_PACK = 'oj-gbu-app';
@@ -41,9 +44,11 @@ const BUNDLE_COMPONENT_NAME2 = 'bundlecomp-2';
 const BUNDLE_VCOMPONENT_NAME1 = 'bundlevcomp-1';
 const BUNDLE_VCOMPONENT_NAME2 = 'bundlevcomp-2';
 
+const LOADERLESS_COMPONENT_NAME = 'loaderless-component';
+
 // This value is set initially but later updated
 // the specific (and possibly more accurate) version
-// that was downloaded in add component
+// that was downloaded in add component:
 const EXCHANGE_COMPONENT_VERSION = '9.0.0-alpha10';
 
 // Use SLASH_STAR to avoid code editor malformatting
@@ -103,6 +108,23 @@ function getStripTestVariables({
     loaderHasStrippedAttributes,
     errorMessageForLoader
   };
+}
+
+async function checkRefCompPathInMainJs(pathToSourceComponents, component, appDir, pathToMainJs) {
+  const pathToComponentJSON = path.join(pathToSourceComponents, `${component}`, 'component.json');
+  const componentJson = fs.readJSONSync(pathToComponentJSON);
+  componentJson.type = 'reference';
+  componentJson.paths = {
+    name: 'test-path-name'
+  };
+  fs.writeJSONSync(pathToComponentJSON, componentJson);
+  await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true);
+  const mainJsContent = fs.readFileSync(pathToMainJs, { encoding: 'utf-8' });
+  const mappedPath = `jet-composites/${componentJson.name}/${componentJson.version}`;
+  const mappedPathName = componentJson.paths.name;
+  const hasRefCompPath = mainJsContent.includes(`"${mappedPathName}":"${mappedPath}"`);
+  fs.removeSync(path.join(pathToSourceComponents, `${component}`));
+  return hasRefCompPath;
 }
 
 describe('Component & Jet Pack Tests', () => {
@@ -229,6 +251,32 @@ describe('Component & Jet Pack Tests', () => {
       });
     }
 
+    function createComponentTypeLoaderlessTest({
+      appName,
+      component
+    }) {
+      describe('check loaderless component create failure', () => {
+        it(`should fail to create singleton loaderless vcomponent without a pack`, async () => {
+          const result = await execComponentCommand({
+            task: 'create',
+            app: appName,
+            component,
+            flags: '--vcomponent --withLoader=false'
+          });
+          assert.ok(/Cannot create a loaderless component without a pack./.test(result.stdout), result.stdout);
+        });
+        it(`should fail to create singleton CCA loaderless component with or without a pack`, async () => {
+          const result = await execComponentCommand({
+            task: 'create',
+            app: appName,
+            component,
+            flags: '--withLoader=false'
+          });
+          assert.ok(/Cannot create a loaderless CCA component./.test(result.stdout), result.stdout);
+        });
+      });
+    }
+
     // 
     // Create a component with type:demo.
     // 
@@ -277,25 +325,55 @@ describe('Component & Jet Pack Tests', () => {
         });
       }
       describe('check created vcomponent', () => {
-        const pathToComponent = util.getAppDir(path.join(
-          util.getAppDir(appName),
-          'src',
-          scriptsFolder,
-          'jet-composites',
-          component,
-          `${component}.tsx`
-        ));
         it(`should have ${appName}/src/${scriptsFolder}/${component}/${component}.tsx`, () => {
+          const pathToComponent = util.getAppDir(path.join(
+            util.getAppDir(appName),
+            'src',
+            scriptsFolder,
+            'jet-composites',
+            component,
+            `${component}.tsx`
+          ));
           const exists = fs.pathExistsSync(pathToComponent);
           assert.ok(exists, pathToComponent);
         });
         it('should not have @ojmetadata pack "@pack-name@" jsdoc', () => {
+          const pathToComponent = util.getAppDir(path.join(
+            util.getAppDir(appName),
+            'src',
+            scriptsFolder,
+            'jet-composites',
+            component,
+            `${component}.tsx`
+          ));
           const packRegex = new RegExp('@ojmetadata pack', 'g');
           const componentContent = fs.readFileSync(pathToComponent, {
             encoding: 'utf-8'
           });
           const hasPack = !!packRegex.exec(componentContent);
           assert.ok(!hasPack, 'singleton vcomponent has @ojmetadata pack jsdoc');
+        });
+        it('should have a declared global namespace in loader.ts', () => {
+          const pathToComponent = util.getAppDir(path.join(
+            util.getAppDir(appName),
+            'src',
+            scriptsFolder,
+            'jet-composites',
+            component,
+            'loader.ts'
+          ));
+          const regex = /declare\s*global(?<namespaceContent>.*)/gms;
+          const loaderContent = fs.readFileSync(pathToComponent, {
+            encoding: 'utf-8'
+          });
+          const match = regex.exec(loaderContent);
+          const hasGlobalNameSpace = loaderContent.includes(
+            match
+            .groups
+            .namespaceContent
+            .replace(/\\n/g, '')
+          );
+          assert.ok(hasGlobalNameSpace, 'Does not have a declared global namespace in loader.ts');
         });
       });
     }
@@ -383,24 +461,33 @@ describe('Component & Jet Pack Tests', () => {
         });
       }
       describe('check built component', () => {
-        const appDir = util.getAppDir(appName);
         it(`should be built in ${appName}/web/js/jet-composites/${component}/${DEFAULT_COMPONENT_VERSION}`, () => {
+          const appDir = util.getAppDir(appName);
           const builtComponentPath = path.join(appDir, 'web', 'js', 'jet-composites', component, DEFAULT_COMPONENT_VERSION);
           const exists = fs.pathExistsSync(builtComponentPath);
           assert.ok(exists, builtComponentPath);
         });
         if (component === VCOMPONENT_NAME) {
           it(`should have a types folder in ${appName}/web/js/jet-composites/${component}/${DEFAULT_COMPONENT_VERSION}/types`, () => {
+            const appDir = util.getAppDir(appName);
             const typesDir = path.join(appDir, 'web', 'js', 'jet-composites', component, DEFAULT_COMPONENT_VERSION, 'types');
             const exists = fs.pathExistsSync(typesDir);
             assert.ok(exists, typesDir);
           });
           it(`should have an apidoc json file in ${appName}/web/js/jet-composites/${component}/${DEFAULT_COMPONENT_VERSION}`, () => {
+            const appDir = util.getAppDir(appName);
             const apiDocFile = path.join(appDir, 'web', 'js', 'jet-composites', component, DEFAULT_COMPONENT_VERSION, 'Vcomp1.json');
             const exists = fs.pathExistsSync(apiDocFile);
             assert.ok(exists, apiDocFile);
           });
+          it(`should not have api-doc files generated without running 'ojet add docgen'`, () => {
+            const appDir = util.getAppDir(appName);
+            const pathToComponentDocsInWeb = path.join(appDir, 'web', 'js', 'jet-composites', component, DEFAULT_COMPONENT_VERSION, 'docs');
+            const hasDocFilesGenerated = fs.pathExistsSync(pathToComponentDocsInWeb);
+            assert.ok(!hasDocFilesGenerated, "API-doc files generated without running 'ojet add docgen'.");
+          });
           it(`should have a "properties" entry in ${appName}/web/js/jet-composites/${component}/${DEFAULT_COMPONENT_VERSION} indicating component.json generated by the compiler`, () => {
+            const appDir = util.getAppDir(appName);
             const pathToComponentJSON = path.join(appDir, 'web', 'js', 'jet-composites', component, DEFAULT_COMPONENT_VERSION, 'component.json');
             const componentJson = fs.readJsonSync(pathToComponentJSON);
             assert.ok(componentJson.properties, "Properties not found in component.json");
@@ -421,9 +508,8 @@ describe('Component & Jet Pack Tests', () => {
     }) {
       describe('check type:demo component', () => {
         if (!util.noBuild()) {
-          const appDir = util.getAppDir(appName);
-
           it('should build release js app (type:demo) ', async () => {
+            const appDir = util.getAppDir(appName);
             const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, {
               cwd: appDir
             });
@@ -575,7 +661,9 @@ describe('Component & Jet Pack Tests', () => {
               assert.ok(exists, componentMinLoader);
             })
             it(`component ${individualComponent} should have source field with file path in min/loader.js.map`, () => {
-              const sourceMapFileContent = fs.readFileSync(componentMinLoaderMapFile, {encoding : 'utf-8'});
+              const sourceMapFileContent = fs.readFileSync(componentMinLoaderMapFile, {
+                encoding: 'utf-8'
+              });
               const sourceMapJsonObject = JSON.parse(sourceMapFileContent);
               // If there is no file path, terser emits a string "0" in the array field sources:
               const sourceMapHasSourceField = sourceMapJsonObject.sources[0] !== "0";
@@ -651,10 +739,10 @@ describe('Component & Jet Pack Tests', () => {
       appName
     }) {
       describe('Build (declaration = false)', () => {
-        const appDir = util.getAppDir(appName);
         if (!util.noBuild()) {
           it(`should build typescript component app with declaration = false`, async () => {
             // set tsconfig.compilerOptions.declaration = false
+            const appDir = util.getAppDir(appName);
             const tsconfigJsonPath = path.join(appDir, 'tsconfig.json');
             const tsconfigJson = fs.readJsonSync(tsconfigJsonPath);
             tsconfigJson.compilerOptions.declaration = false;
@@ -674,6 +762,7 @@ describe('Component & Jet Pack Tests', () => {
             assert.equal(util.buildSuccess(result.stdout), true, result.error);
           });
           it(`should not have /types folder in ${appName}/web/js/jet-composites/${VCOMPONENT_NAME}`, () => {
+            const appDir = util.getAppDir(appName);
             const typesDir = path.join(appDir, 'web', 'js', 'jet-composites', VCOMPONENT_NAME, DEFAULT_COMPONENT_VERSION, 'types');
             const exists = fs.pathExistsSync(typesDir);
             assert.ok(!exists, typesDir);
@@ -861,6 +950,34 @@ describe('Component & Jet Pack Tests', () => {
       });
     }
 
+    function manageMappedLocalReferenceComponentPathTest({
+      appName,
+      scriptsFolder,
+      component
+    }) {
+      if (!util.noScaffold()) {
+        beforeComponentTest({
+          task: 'create',
+          app: appName,
+          scriptsFolder,
+          component
+        });
+      }
+      describe('check that a locally created reference component has mapped path in main.js', () => {
+        it('should have mapped path in main.js for local reference component', async () => {
+          const appDir = util.getAppDir(appName);
+          const {
+            pathToSourceComponents,
+            pathToMainJs
+          } = util.getAppPathData(appName, scriptsFolder);
+          const mainJsReferencesComponentMappedPath = await checkRefCompPathInMainJs(pathToSourceComponents, component, appDir, pathToMainJs);
+          assert.ok(!fs.existsSync(path.join(pathToSourceComponents, `${component}`)), `${component} not deleted successfully.`)
+          assert.ok(mainJsReferencesComponentMappedPath, 'Local reference component not mapped in main.js.');
+
+        })
+      });
+    }
+
     function customComponentResourceBundleTest({
       appName,
       scriptsFolder,
@@ -892,20 +1009,24 @@ describe('Component & Jet Pack Tests', () => {
           assert.ok(deStringFileExists, 'de directory not created successfully');
           assert.ok(frStringFileExists, 'fr directory not created successfully');
         })
-        it('should build successfully and have appropriate asserts in the resources folder', async() => {
+        it('should build successfully and have appropriate asserts in the resources folder', async () => {
           const appDir = util.getAppDir(appName);
           const {
             pathToSourceComponents,
             pathToBuiltComponents
           } = util.getAppPathData(appName, scriptsFolder);
-          const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, {
+            cwd: appDir
+          }, true);
           assert.equal(util.buildSuccess(result.stdout), true, result.error);
           // Retrieve the nls, root, and string file paths:
           const pathToNlsFolder = path.join(pathToBuiltComponents, component, '1.0.0', 'resources', 'nls');
           const pathToRootFolder = path.join(pathToNlsFolder, 'root');
           const pathToStringFile = path.join(pathToNlsFolder, `${component}-strings.js`);
           // Ensure that the needed info exist in the appropriate files:
-          const stringFileContent = fs.readFileSync(pathToStringFile, {encoding: "utf-8"});
+          const stringFileContent = fs.readFileSync(pathToStringFile, {
+            encoding: "utf-8"
+          });
           const hasRootAttribute = stringFileContent.includes(`"root":`);
           const hasRootFolderinStaging = fs.existsSync(pathToRootFolder);
           const hasDeAttribute = stringFileContent.includes(`"de": true`);
@@ -921,6 +1042,48 @@ describe('Component & Jet Pack Tests', () => {
           assert.ok(componentDeleted, `${component} is not deleted successfully`)
         });
       });
+    }
+
+    function vcomponentApiDocumentationComponentTest({
+      appName,
+      scriptsFolder,
+      component
+    }) {
+      if (scriptsFolder === 'ts') {
+        if (!util.noScaffold()) {
+          beforeComponentTest({
+            task: 'create',
+            app: appName,
+            scriptsFolder,
+            component,
+            flags: '--vcomponent'
+          });
+        }
+        describe('check that api documentation are generated successfully', () => {
+          const appDir = util.getAppDir(appName);
+          it('should add jsdoc successfully', async () => {
+            const result = await util.execCmd(`${util.OJET_APP_COMMAND} add docgen`, {
+              cwd: appDir
+            }, true);
+            assert.ok(/Success: add jsdoc complete/.test(result.stdout), result.stdout);
+          });
+          it('should have generated api docs in web after building the component', async () => {
+            const {
+              pathToBuiltComponents
+            } = util.getAppPathData(appName, scriptsFolder);
+            await util.execCmd(`${util.OJET_APP_COMMAND} build component ${component}`, {
+              cwd: appDir
+            }, true);
+            const pathToComponentDocsInWeb = path.join(pathToBuiltComponents, component, DEFAULT_COMPONENT_VERSION, 'docs');
+            const hasDocsIndexFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, 'index.html'));
+            const hasComponentHtmlFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, `${component}.html`));
+            const hasDocsJsonFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, 'jsDocMd.json'));
+            assert.ok(hasDocsIndexFile, "Does not have index.html in docs folder.");
+            assert.ok(hasComponentHtmlFile, `Does not have ${component}.html in docs folder.`);
+            assert.ok(hasDocsJsonFile, "Does not have jsDocMd.json in docs folder.");
+          });
+        })
+      }
     }
 
     describe('ojet create component', () => {
@@ -984,6 +1147,12 @@ describe('Component & Jet Pack Tests', () => {
           test: createComponentFailureTest,
           component: 'Comp-1'
         });
+      });
+    });
+    describe('ojet create loaderless component', () => {
+      util.runComponentTestInAllTestApps({
+        test: createComponentTypeLoaderlessTest,
+        component: LOADERLESS_COMPONENT_NAME
       });
     });
     describe('ojet add component', () => {
@@ -1054,6 +1223,12 @@ describe('Component & Jet Pack Tests', () => {
         pack: BUNDLE_TEST_EXCHANGE_COMPONENT
       });
     });
+    describe('ojet build --release, custom component resource bundle test', () => {
+      util.runComponentTestInAllTestApps({
+        test: customComponentResourceBundleTest,
+        component: 'comp-res-bundle'
+      });
+    });
     describe(`ojet build --${util.OMIT_COMPONENT_VERSION_FLAG}`, () => {
       util.runComponentTestInAllTestApps({
         test: omitComponentVerstionTest
@@ -1071,12 +1246,19 @@ describe('Component & Jet Pack Tests', () => {
         component: STRIP_TEST_COMPONENT_NAME
       });
     });
-    describe('ojet build --release, custom component resource bundle test', () => {
+    describe('ojet build --release, stripped metadata in min/loader.js component test', () => {
       util.runComponentTestInAllTestApps({
-        test: customComponentResourceBundleTest,
-        component: 'comp-res-bundle'
+        test: vcomponentApiDocumentationComponentTest,
+        component: 'api-test-vcomp'
       });
     });
+    describe('ojet build, map local reference component in main.js test', () => {
+      util.runComponentTestInAllTestApps({
+        test: manageMappedLocalReferenceComponentPathTest,
+        component: 'local-reference-component'
+      });
+    });
+
 
     // 
     // The remove component test is causing some errors in the pack tests.
@@ -1091,11 +1273,10 @@ describe('Component & Jet Pack Tests', () => {
     // Which is unexpected since the component parameters are comp-1 (and vcomp-1), (so the .zip should not be pack-1.zip).
     // This should be investigated further.
     // 
-    /*
-      describe('ojet remove component', () => {
-        util.runComponentTestInAllTestApps({ test: removeComponentTest, component: EXCHANGE_COMPONENT_NAME });
-      });
-    */
+    /* describe('ojet remove component', () => {
+      util.runComponentTestInAllTestApps({ test: removeComponentTest, component: EXCHANGE_COMPONENT_NAME });
+    }); */
+
   });
 
   describe('JET Pack Tests', () => {
@@ -1103,10 +1284,11 @@ describe('Component & Jet Pack Tests', () => {
       task,
       app,
       pack,
-      version
+      version,
+      flags = ''
     }) {
       return util.execCmd(
-        `${util.OJET_APP_COMMAND} ${task} pack ${pack}${version ? `@${version}` : ''}`, {
+        `${util.OJET_APP_COMMAND} ${task} pack ${pack}${version ? `@${version}` : ''} ${flags}`, {
           cwd: util.getAppDir(app)
         },
         false,
@@ -1134,14 +1316,16 @@ describe('Component & Jet Pack Tests', () => {
       pack,
       version,
       componentJson,
-      scriptsFolder
+      scriptsFolder,
+      flags = ''
     }) {
       before(async () => {
         await execPackCommand({
           task,
           app,
           pack,
-          version
+          version,
+          flags
         });
         if (componentJson) {
           const {
@@ -1262,6 +1446,112 @@ describe('Component & Jet Pack Tests', () => {
       });
     }
 
+    function createMonoPackTest({
+      appName,
+      scriptsFolder,
+      pack,
+      flags
+    }) {
+      describe('check created pack', () => {
+        it(`should create mono-pack in ts or fails in js application`, async() => {
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} create pack ${pack} ${flags}`, {
+            cwd: util.getAppDir(appName)}, true);
+          if (scriptsFolder === 'js') {
+            assert.ok(/Cannot create a mono-pack in a Javascript application/.test(result.stdout), result.stdout);
+          } else {
+            assert.ok(/Success: Pack \'mono-pack\' successfully created./.test(result.stdout), result.stdout);
+          }
+        });
+        if (scriptsFolder === 'ts') {
+          it('should add a top-level content of type module in component.json', () => {
+            const pathToComponentJson = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              'component.json'
+            ));
+            let componentJson = fs.readJSONSync(pathToComponentJson);
+            let hasContentModule = false;
+            componentJson.contents.push({'name': 'common/someFunction', 'type': 'module', 'directImport': true });
+            const errorMessage = 'pack does not have contents attribute with type module in component.json';
+            fs.writeJSONSync(pathToComponentJson, componentJson);
+            fs.readJSONSync(pathToComponentJson).contents.forEach(
+              (content) => {
+                if (content.type && content.type === 'module') {
+                  hasContentModule = true;
+                  return;
+                }
+              });
+            assert.equal(hasContentModule, true, errorMessage);
+          });
+          it(`should have ${appName}/src/${scriptsFolder}/${pack}/component.json`, () => {
+            const pathToComponentJson = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              'component.json'
+            ));
+            const exists = fs.pathExistsSync(pathToComponentJson);
+            assert.ok(exists, pathToComponentJson);
+          });
+          it('should have the correct pack name in component.json', () => {
+            const pathToComponentJson = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              'component.json'
+            ));
+            const componentJson = fs.readJSONSync(pathToComponentJson);
+            const nameMatches = componentJson.name === pack;
+            assert(nameMatches, 'pack name does not match in component.json');
+          });
+          it('should have the correct pack type in component.json', () => {
+            const pathToComponentJson = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              'component.json'
+            ));
+            const componentJson = fs.readJSONSync(pathToComponentJson);
+            const typeMatches = componentJson.type === 'mono-pack';
+            assert(typeMatches, `Incorrect pack type. Expected mono-pack, but got ${componentJson.type}`);
+          });
+          it('should have the top-level contents attribute in component.json', () => {
+            const pathToComponentJson = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              'component.json'
+            ));
+            const componentJson = fs.readJSONSync(pathToComponentJson);
+            const errorMessage = 'pack does not have contents attribute array in component.json';
+            const hasContentsAttributeArray = componentJson.contents !== undefined && Array.isArray(componentJson.contents);
+            assert(hasContentsAttributeArray, errorMessage);
+          });
+          it(`should have ${pack}${SLASH_STAR} in tsconfig.compilerOptions.paths`, () => {
+            const pathToTsconfig = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'tsconfig.json'
+            ));
+            const tsconfigJson = fs.readJsonSync(pathToTsconfig);
+            const tsconfigJsonEntry = `${pack}${SLASH_STAR}`;
+            const hasEntryInTsconfigJson = !!tsconfigJson.compilerOptions.paths[tsconfigJsonEntry];
+            assert.ok(hasEntryInTsconfigJson, `${tsconfigJsonEntry} not found in ${appName}/tsconfig.json`);
+          });
+        }
+      });
+    }
+
     function createComponentInPackTest({
       appName,
       scriptsFolder,
@@ -1317,10 +1607,95 @@ describe('Component & Jet Pack Tests', () => {
           ));
           const componentJson = fs.readJSONSync(pathToPackComponentJson);
           const entryExists = !!componentJson.dependencies[`${pack}-${component}`];
-          assert(entryExists, 'did not add component entry to dependencies in pack component.json');
+          assert(entryExists, 'component entry was added to dependencies in pack component.json');
         });
       });
     }
+
+    function createComponentInMonoPackTest({
+      appName,
+      scriptsFolder,
+      pack,
+      component,
+      componentJson,
+      flags
+    }) {
+      if (scriptsFolder === 'ts') {
+        if (!util.noScaffold()) {
+          beforeComponentInPackTest({
+            task: 'create',
+            app: appName,
+            pack,
+            component,
+            componentJson,
+            scriptsFolder,
+            flags
+          });
+        }
+        describe('check created component in pack', () => {
+          it(`should have ${appName}/src/${scriptsFolder}/${pack}/${component}/component.json`, () => {
+            const pathToComponent = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              component
+            ));
+            const exists = fs.pathExistsSync(pathToComponent);
+            assert.ok(exists, pathToComponent);
+          });
+          it('should have the correct pack in component.json', () => {
+            const pathToComponentJson = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              component,
+              'component.json'
+            ));
+            const componentJson = fs.readJSONSync(pathToComponentJson);
+            const packMatches = componentJson.pack === pack;
+            assert(packMatches, 'component does not have correct pack in component.json');
+          });
+          it('should not add entry to dependencies object in pack', () => {
+            const pathToPackComponentJson = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              'component.json'
+            ));
+            const componentJson = fs.readJSONSync(pathToPackComponentJson);
+            const entryDoesNotExists = Object.keys(componentJson.dependencies).length === 0;
+            assert(entryDoesNotExists, 'added component entry to dependencies in pack component.json');
+          });
+          it('should add entry to contents array object in pack', () => {
+            const pathToPackComponentJson = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              'component.json'
+            ));
+            const packComponentJson = fs.readJSONSync(pathToPackComponentJson);
+            let entryAddedIntoContentArray = false;
+            packComponentJson.contents.forEach(
+              (content) => {
+                if (content.name === component && content.type === 'resource') {
+                  entryAddedIntoContentArray = true;
+                  return;
+                }
+              });
+            assert(entryAddedIntoContentArray , 'component not added into contents array in pack component.json');
+          });
+        });
+      }
+    }
+
 
     // 
     // Create a 'stripped down' vcomponent in a pack.
@@ -1347,20 +1722,29 @@ describe('Component & Jet Pack Tests', () => {
         });
       }
       describe('check created component in pack', () => {
-        const pathToComponent = util.getAppDir(path.join(
-          util.getAppDir(appName),
-          'src',
-          scriptsFolder,
-          'jet-composites',
-          pack,
-          component,
-          `${component}.tsx`
-        ));
         it(`should have ${appName}/src/${scriptsFolder}/${pack}/${component}/${component}.tsx`, () => {
+          const pathToComponent = util.getAppDir(path.join(
+            util.getAppDir(appName),
+            'src',
+            scriptsFolder,
+            'jet-composites',
+            pack,
+            component,
+            `${component}.tsx`
+          ));
           const exists = fs.pathExistsSync(pathToComponent);
           assert.ok(exists, pathToComponent);
         });
         it('should have the correct pack in @ojmetadata pack jsdoc', () => {
+          const pathToComponent = util.getAppDir(path.join(
+            util.getAppDir(appName),
+            'src',
+            scriptsFolder,
+            'jet-composites',
+            pack,
+            component,
+            `${component}.tsx`
+          ));
           const packRegex = new RegExp('@ojmetadata pack "(?<pack>.+)"');
           const componentContent = fs.readFileSync(pathToComponent, {
             encoding: 'utf-8'
@@ -1397,6 +1781,73 @@ describe('Component & Jet Pack Tests', () => {
           assert(entryExists, 'did not add vcomponent entry to dependencies in pack component.json');
         });
       });
+    }
+
+    function _getLoaderLessComponentPath(appName, scriptsFolder, pack, component) {
+      const {
+        pathToSourceComponents
+      } = util.getAppPathData(appName, scriptsFolder);
+      const packComponentPath = path.join(pathToSourceComponents, pack);
+      return path.join(packComponentPath, component);
+    }
+
+    function createLoaderlessComponentInPackTest({
+      appName,
+      pack,
+      scriptsFolder,
+      component,
+      flags
+    }) {
+      if (scriptsFolder === 'ts') {
+        if (!util.noScaffold()) {
+          beforeComponentInPackTest({
+            task: 'create',
+            app: appName,
+            pack,
+            component,
+            flags
+          });
+        }
+        describe('check loaderless component and its resources are successfully created', () => {
+          it(`should create a loaderless component in pack`, async () => {
+            const errorMessage = `Loaderless component ${component} not found in ${pack}`;
+            assert.ok(fs.existsSync(_getLoaderLessComponentPath(appName, scriptsFolder, pack, component)), errorMessage);
+          });
+          it(`should have index.ts file`, async () => {
+            const indexFilePath = path.join(_getLoaderLessComponentPath(appName, scriptsFolder, pack, component), 'index.ts');
+            const errorMessage = `index.ts file in the created loaderless component does not exist.`;
+            assert.ok(fs.existsSync(indexFilePath), errorMessage);
+          });
+          it(`should not have loader.ts file`, async () => {
+            const loaderFilePath = path.join(_getLoaderLessComponentPath(appName, scriptsFolder, pack, component), 'loader.ts');
+            const errorMessage = `loader.ts file in the created loaderless component exists.`;
+            assert.ok(!fs.existsSync(loaderFilePath), errorMessage);
+          });
+          it('should have a declared global namespace in index.ts', () => {
+            const pathToComponent = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'src',
+              scriptsFolder,
+              'jet-composites',
+              pack,
+              component,
+              'index.ts'
+            ));
+            const regex = /declare\s*global(?<namespaceContent>.*)/gms;
+            const loaderContent = fs.readFileSync(pathToComponent, {
+              encoding: 'utf-8'
+            });
+            const match = regex.exec(loaderContent);
+            const hasGlobalNameSpace = loaderContent.includes(
+              match
+              .groups
+              .namespaceContent
+              .replace(/\\n/g, '')
+            );
+            assert.ok(hasGlobalNameSpace, 'Does not have a declared global namespace in index.ts');
+          });
+        });
+      }
     }
 
     function createResourceComponentInPackTest({
@@ -1558,6 +2009,35 @@ describe('Component & Jet Pack Tests', () => {
             const hasEntryInTsconfigJson = !!tsconfigJson.compilerOptions.paths[tsconfigJsonEntry];
             assert.ok(hasEntryInTsconfigJson, `${tsconfigJsonEntry} not found in ${appName}/tsconfig.json`);
           });
+          it(`should have reference components paths in tsconfig.compilerOptions.paths`, () => {
+            const {
+              pathToExchangeComponents
+            } = util.getAppPathData(appName, scriptsFolder);
+            const pathToTsconfig = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'tsconfig.json'
+            ));
+            const tsconfigJson = fs.readJsonSync(pathToTsconfig);
+            const exchangeComponents = fs.readdirSync(pathToExchangeComponents);
+            let refComponentObjectList = [];
+            exchangeComponents.forEach((exchangeComponent) => {
+              const pathToComponentJson = path.join(pathToExchangeComponents, exchangeComponent, 'component.json');
+              const componentJson = fs.existsSync(pathToComponentJson) ? fs.readJSONSync(pathToComponentJson) : {};
+              if (componentJson.type === 'reference') {
+                const pathLink = [`./node_modules/${componentJson.package}${SLASH_STAR}`];
+                const pathName = (componentJson.paths && componentJson.paths.name) ? componentJson.paths.name : componentJson.package;
+                refComponentObjectList.push({
+                  name: `${pathName}${SLASH_STAR}`,
+                  link: pathLink
+                });
+              }
+            });
+            const hasExchangeRefPathInTsconfigJson = refComponentObjectList.every(refComponentObject => {
+              const pathLinkInTsconfig = tsconfigJson.compilerOptions.paths[refComponentObject.name];
+              return _.isEqual(pathLinkInTsconfig, refComponentObject.link);
+            });
+            assert.ok(hasExchangeRefPathInTsconfigJson, `tsconfig.json does not include reference components paths`);
+          });
         }
         it(`should have all the pack members listed in component.json`, () => {
           const pathToPack = util.getAppDir(path.join(
@@ -1593,9 +2073,21 @@ describe('Component & Jet Pack Tests', () => {
       const testName = release ? 'Build (Release)' : 'Build';
       const buildType = release ? 'release' : 'default';
       describe(testName, () => {
-        const appDir = util.getAppDir(appName);
+        it('should create an extension directory in src', () => {
+          const {
+            pathToSourceComponents,
+            pathToBuiltComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          const pathToPackInSrc = path.join(pathToSourceComponents, pack);
+          if (!fs.existsSync(path.join(pathToPackInSrc, 'extension'))) {
+            fs.mkdirSync(path.join(pathToPackInSrc, 'extension'))
+          }
+          fs.writeFileSync(path.join(pathToPackInSrc, 'extension', 'extension.js'), '// Test file.');
+          assert.ok(path.join(pathToPackInSrc, 'extension'));
+        })
         if (!util.noBuild()) {
           it(`should build ${buildType} component app`, async () => {
+            const appDir = util.getAppDir(appName);
             let command = `${util.OJET_APP_COMMAND} build`;
             command = release ? `${command} --release` : command;
             const result = await util.execCmd(command, {
@@ -1604,12 +2096,31 @@ describe('Component & Jet Pack Tests', () => {
             assert.equal(util.buildSuccess(result.stdout), true, result.error);
           });
         }
-        const componentsDir = path.join(appDir, 'web', 'js', 'jet-composites');
+        const componentsDir = path.join(util.getAppDir(appName), 'web', 'js', 'jet-composites');
         const packDir = path.join(componentsDir, pack, DEFAULT_PACK_VERSION);
         const packMinDir = path.join(packDir, 'min');
         // Test for debug pack and pack components which should always be present
         it('should have pack(s) directory', () => {
           assert.ok(fs.existsSync(packDir));
+        })
+        it('should have extension folder in the pack folder in staging', () => {
+          const {
+            pathToSourceComponents,
+            pathToBuiltComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          const pathToPackInWeb = path.join(pathToBuiltComponents, pack, DEFAULT_PACK_VERSION);
+
+          assert.ok(fs.existsSync(path.join(pathToPackInWeb, 'extension')));
+        })
+        it('should delete the extension folder in the pack folder in src', () => {
+          const {
+            pathToSourceComponents,
+            pathToBuiltComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          const pathToPackInSrc = path.join(pathToSourceComponents, pack);
+
+          fs.removeSync(path.join(pathToPackInSrc, 'extension'));
+          assert.ok(!fs.existsSync(path.join(pathToPackInSrc, 'extension')));
         })
         packMemberExistenceTest({
           packDir,
@@ -1626,6 +2137,14 @@ describe('Component & Jet Pack Tests', () => {
             const exists = fs.pathExistsSync(packMinDir);
             assert.ok(exists, packMinDir);
           });
+          it('should have extension folder in the pack folder in staging (--release)', () => {
+            const {
+              pathToSourceComponents,
+              pathToBuiltComponents
+            } = util.getAppPathData(appName, scriptsFolder);
+            const pathToPackInWeb = path.join(pathToBuiltComponents, pack, DEFAULT_PACK_VERSION);
+            assert.ok(fs.existsSync(path.join(pathToPackInWeb, 'extension')));
+          })
           packMemberExistenceTest({
             packDir: packMinDir,
             component,
@@ -1905,6 +2424,177 @@ describe('Component & Jet Pack Tests', () => {
       });
     }
 
+    function packageMonoPackTest({
+      appName,
+      pack,
+      component,
+      scriptsFolder
+    }) {
+      if (scriptsFolder === 'ts') {
+        if (!util.noScaffold()) {
+          beforeComponentInPackTest({
+            task: 'create',
+            app: appName,
+            pack,
+            component,
+            scriptsFolder,
+            flags: '--vcomponent'
+          });
+          beforePackTest({
+            task: 'package',
+            app: appName,
+            pack,
+          });
+        }
+        describe('check packaged pack', () => {
+          it(`should be packaged in ${appName}/dist/${pack}.zip`, () => {
+            const packagedComponentPath = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'dist',
+              `${pack}_1-0-0.zip`,
+            ));
+            const exists = fs.pathExistsSync(packagedComponentPath);
+            assert.ok(exists, packagedComponentPath);
+          });
+          it(`should be not be packaged in ${appName}/dist/${pack}-${component}_1-0-0.zip`, () => {
+            const packagedComponentInPackPath = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'dist',
+              `${pack}-${component}_1-0-0.zip`,
+            ));
+            const exists = fs.pathExistsSync(packagedComponentInPackPath);
+            assert.ok(!exists, packagedComponentInPackPath);
+          });
+          it(`should have docs, min, and types folder in web before packaging the mono-pack`, () => {
+            const { pathToBuiltComponents } = util.getAppPathData(appName, scriptsFolder);
+            const packagedComponentInPackPath = path.join(pathToBuiltComponents, pack, '1.0.0');
+            const filteredDirs = fs.readdirSync(packagedComponentInPackPath).filter((dirItem) => ['min', 'types', 'docs'].includes(dirItem));
+            const hasTheDirs = _.isEqual([ 'docs', 'min', 'types' ], filteredDirs);
+            assert.equal(hasTheDirs, true, 'Does not have  docs, min, and types folder in web before packaging the mono-pack');
+          });
+           it(`should have docs, min, and types folder in the dist folder after packaging the mono-pack`, (done) => {
+            const packagedPackPath = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'dist',
+              `${pack}_1-0-0.zip`,
+            ));
+            const unPackagedPackPath = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'dist',
+              'unzipped'
+            ));
+            if (!fs.existsSync(unPackagedPackPath)) {
+              fs.mkdirSync(unPackagedPackPath);
+            }
+            extract(packagedPackPath, { dir: unPackagedPackPath }, (error) => {
+              if(error) {
+                const errorMessage = 'Did not extract the packaged component successfully.'
+                assert.equal(false, true, `${errorMessage}\n${error}`);
+              } else {
+                const filteredDirs = fs.readdirSync(unPackagedPackPath).filter((dirItem) => ['min', 'types', 'docs'].includes(dirItem));
+                const hasTheDirs = _.isEqual([ 'docs', 'min', 'types' ], filteredDirs);
+                assert.equal(hasTheDirs, true, 'Does not have  docs, min, and types folder in web before packaging the mono-pack');
+              }
+              done();
+            });
+          });
+          it(`should not package intermediate files after packaging the mono-pack`, () => {
+            const unPackagedPackPath = util.getAppDir(path.join(
+              util.getAppDir(appName),
+              'dist',
+              'unzipped'
+            ));
+            const jsDocJsonFile = component.toLowerCase()
+              .split('-')
+              .map(componentName => componentName.charAt(0).toUpperCase() + componentName.slice(1))
+              .join('')
+              .concat('.json');
+            const pathToJsonFiles = path.join(unPackagedPackPath, 'docs', jsDocJsonFile);
+            const hasIntermediateFiles = fs.existsSync(pathToJsonFiles);
+            fs.removeSync(unPackagedPackPath);
+            assert.equal(!hasIntermediateFiles, true, 'Did not filter the intermediate files successfully');
+            assert.equal(!fs.existsSync(unPackagedPackPath), true, 'Did not delete the unzipped folder successfully');
+          });
+        });
+      }
+    }
+
+    function buildMonoPackTest({
+      appName,
+      pack,
+      component,
+      scriptsFolder,
+      release
+    }) {
+      if (scriptsFolder === 'ts') {
+        describe('check built mono-pack', () => {
+          const appDir = util.getAppDir(appName);
+          it ('it should add an extension folder successfully', () => {
+            const { pathToSourceComponents } = util.getAppPathData(appName, scriptsFolder);
+            const pathToPackInSrc = path.join(pathToSourceComponents, pack);
+            if (!fs.existsSync(path.join(pathToPackInSrc, 'extension'))) {
+              fs.mkdirSync(path.join(pathToPackInSrc, 'extension'))
+            }
+            fs.writeFileSync(path.join(pathToPackInSrc, 'extension', 'extension.ts'), '// Test file.');
+            assert.ok(path.join(pathToPackInSrc, 'extension'));
+          });
+          it ('it should modify the version and jetVersion annotation value successfully', () => {
+            const { pathToSourceComponents } = util.getAppPathData(appName, scriptsFolder);
+              // Change the version and jetVersion anotated values, which later on should be corrected as
+            // implemented by JET-48251.
+            let componentTsxFileContent;
+            const pathToComponentTsxFile = path.join(pathToSourceComponents, pack, component, `${component}.tsx`);
+            if (fs.existsSync(pathToComponentTsxFile)) {
+              componentTsxFileContent = fs.readFileSync(pathToComponentTsxFile, { encoding: 'utf-8' });
+              componentTsxFileContent = componentTsxFileContent.replace(
+                `@ojmetadata version "1.0.0"`,
+                `@ojmetadata version "3.0.0"\n * @ojmetadata jetVersion "15.0.0"`
+              )
+              fs.writeFileSync(pathToComponentTsxFile, componentTsxFileContent);
+            }
+            const hasChangedAnnotationValue = componentTsxFileContent.includes(`@ojmetadata version "3.0.0"\n * @ojmetadata jetVersion "15.0.0"`);
+            assert.equal(hasChangedAnnotationValue, true, 'Does not have changed annotated values');
+          });
+          it(`should have correct jetVersion and component version for components in the pack`, async() => {
+            const { pathToBuiltComponents } = util.getAppPathData(appName, scriptsFolder);
+            const pathToComponentInPackJson = path.join(pathToBuiltComponents, pack, '1.0.0', component, 'component.json');
+            const pathToPackJsonInWeb = path.join(pathToBuiltComponents, pack, '1.0.0', 'component.json');
+            let command = `${util.OJET_APP_COMMAND} build pack ${pack}`;
+            command = release ? command + '--release' : command;
+            await util.execCmd(command, { cwd: appDir }, true);
+            const componentJsonInWeb = fs.readJSONSync(pathToComponentInPackJson);
+            const packJsonInWeb = fs.readJSONSync(pathToPackJsonInWeb);
+            assert.equal(componentJsonInWeb.jetVersion, packJsonInWeb.jetVersion, 'Does not have correct jet version');
+            assert.equal(componentJsonInWeb.version, packJsonInWeb.version, 'Does not have correct component version');
+          });
+          it ('it should restore the version and jetVersion annotation value successfully', () => {
+            let componentTsxFileContent;
+            const { pathToSourceComponents } = util.getAppPathData(appName, scriptsFolder);
+            const pathToComponentTsxFile = path.join(pathToSourceComponents, pack, component, `${component}.tsx`);
+            if (fs.existsSync(pathToComponentTsxFile)) {
+              componentTsxFileContent = fs.readFileSync(pathToComponentTsxFile, { encoding: 'utf-8' });
+              componentTsxFileContent = componentTsxFileContent.replace(
+                `@ojmetadata version "3.0.0"\n * @ojmetadata jetVersion "15.0.0"`,
+                `@ojmetadata version "1.0.0"`,
+              )
+              fs.writeFileSync(pathToComponentTsxFile, componentTsxFileContent);
+            }
+            const hasChangedAnnotationValue = componentTsxFileContent.includes(`@ojmetadata version "3.0.0"\n * @ojmetadata jetVersion "15.0.0"`);
+            const hasRestoredAnnotationValue = componentTsxFileContent.includes(`@ojmetadata version "1.0.0"`);
+            assert.equal(!hasChangedAnnotationValue, true, 'Does have changed annotated values');
+            assert.equal(hasRestoredAnnotationValue, true, 'Does not have restored annotated values');
+          });
+          it ('it should not have a d.ts file under types folder', () => {
+            const { pathToBuiltComponents } = util.getAppPathData(appName, scriptsFolder);
+            const pathToExtensionDTsFile = path.join(pathToBuiltComponents, pack, '1.0.0', 'types', 'extension', 'extension.d.ts');
+            const pathToExtensionFile = path.join(pathToBuiltComponents, pack, '1.0.0', 'extension', 'extension.d.ts');
+            const hasDTsFileUnderTypes = !fs.existsSync(pathToExtensionFile) && fs.existsSync(pathToExtensionDTsFile);
+            assert.equal(hasDTsFileUnderTypes, true, 'Does not have the d.ts file under the types folder.');
+          });
+        });
+      }
+    }
+
     function packagePackHookTest({
       appName,
       component,
@@ -1968,25 +2658,30 @@ describe('Component & Jet Pack Tests', () => {
         });
       }
       describe('check built pack', () => {
-        const appDir = util.getAppDir(appName);
-        const packComponentJsonPath = path.join(appDir, 'web', 'js', 'jet-composites', pack, DEFAULT_PACK_VERSION, 'component.json');
-        const componentJsonPath = path.join(appDir, 'web', 'js', 'jet-composites', pack, DEFAULT_PACK_VERSION, vcomponent, 'component.json');
         it(`should have ${appName}/web/js/jet-composites/${pack}/${DEFAULT_PACK_VERSION}/component.json`, () => {
+          const appDir = util.getAppDir(appName);
+          const packComponentJsonPath = path.join(appDir, 'web', 'js', 'jet-composites', pack, DEFAULT_PACK_VERSION, 'component.json');
           const exists = fs.pathExistsSync(packComponentJsonPath);
           assert.ok(exists, packComponentJsonPath);
         });
         if (scriptsFolder === 'ts') {
           it(`should have ${appName}/web/js/jet-composites/${pack}/${DEFAULT_PACK_VERSION}/${vcomponent}/component.json`, () => {
+            const appDir = util.getAppDir(appName);
+            const componentJsonPath = path.join(appDir, 'web', 'js', 'jet-composites', pack, DEFAULT_PACK_VERSION, vcomponent, 'component.json');
             const exists = fs.pathExistsSync(componentJsonPath);
             assert.ok(exists, componentJsonPath);
           });
           it(`should have ${appName}/web/js/jet-composites/${pack}/${DEFAULT_PACK_VERSION}/types/${vcomponent}`, () => {
+            const appDir = util.getAppDir(appName);
             const typesDirPath = path.join(appDir, 'web', 'js', 'jet-composites', pack, DEFAULT_PACK_VERSION, 'types', vcomponent);
             const exists = fs.pathExistsSync(typesDirPath);
             assert.ok(exists, typesDirPath);
           });
           if (pack === PACK_NAME) {
             it('should have matching pack and vComponent versions (in component.json)', () => {
+              const appDir = util.getAppDir(appName);
+              const packComponentJsonPath = path.join(appDir, 'web', 'js', 'jet-composites', pack, DEFAULT_PACK_VERSION, 'component.json');
+              const componentJsonPath = path.join(appDir, 'web', 'js', 'jet-composites', pack, DEFAULT_PACK_VERSION, vcomponent, 'component.json');
               // Verifies the delete "ojmetadata version" from the .tsx file
               // (in createVComponentInPackTest).
               // Ensure that the version of the pack component matches
@@ -2046,10 +2741,173 @@ describe('Component & Jet Pack Tests', () => {
       return bundlesPropObj;
     }
 
+    function vcomponentApiDocumentationPackTest({
+      appName,
+      scriptsFolder,
+      pack,
+      component
+    }) {
+      if (scriptsFolder === 'ts') {
+        if (!util.noScaffold()) {
+          beforePackTest({
+            task: 'create',
+            app: appName,
+            pack,
+            scriptsFolder
+          });
+          beforeComponentInPackTest({
+            task: 'create',
+            app: appName,
+            pack,
+            component,
+            scriptsFolder,
+            flags: '--vcomponent'
+          });
+        }
+        describe('check that api documentation are generated successfully', () => {
+          const appDir = util.getAppDir(appName);
+          it('should have generated api docs in web after building the component', async () => {
+            const {
+              pathToBuiltComponents
+            } = util.getAppPathData(appName, scriptsFolder);
+            await util.execCmd(`${util.OJET_APP_COMMAND} build pack ${pack}`, {
+              cwd: appDir
+            }, true);
+            const pathToComponentDocsInWeb = path.join(pathToBuiltComponents, pack, DEFAULT_COMPONENT_VERSION, 'docs');
+            const hasDocsIndexFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, 'index.html'));
+            const hasComponentHtmlFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, `${component}.html`));
+            const hasDocsJsonFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, 'jsDocMd.json'));
+            assert.ok(hasDocsIndexFile, "Does not have index.html in docs folder.");
+            assert.ok(hasComponentHtmlFile, `Does not have ${component}.html in docs folder.`);
+            assert.ok(hasDocsJsonFile, "Does not have jsDocMd.json in docs folder.");
+          });
+        })
+      }
+    }
+
+/*
+  Re-visit this test case once oj-c mono-pack is published to exchange.
+  Once that is done, then there will be no need to copy the pack
+  from the oraclejet-core-pack module.
+ */
+function doNotOverWriteOjCPathMappingTest({
+      appName,
+      scriptsFolder,
+      buildType
+    }) {
+        describe('check that oj-c path in main.js is not overwritten', () => {
+          it('should not overwrite paths in main.js if component exists both in node_modules and jet_components', async () => {
+            const appDir = util.getAppDir(appName);
+            const {
+              pathToExchangeComponents,
+              pathToNodeModules
+            } = util.getAppPathData(appName, scriptsFolder);
+            const pathToOjCInNodeModules = path.join(pathToNodeModules, '@oracle', 'oraclejet-core-pack', 'oj-c');
+            const pathToOjCInJetComponents = path.join(pathToExchangeComponents, 'oj-c');
+            fs.copySync(pathToOjCInNodeModules, pathToOjCInJetComponents);
+            const result = buildType === 'release' ? await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true) : 
+              await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(appName) }, true);
+            fs.removeSync(pathToOjCInJetComponents);
+            assert.ok(/Either use 'oj-c' from exchange or node_modules/.test(result.stdout), result.stdout);
+            assert.ok(!fs.existsSync(pathToOjCInJetComponents), 'oj-c is not deleted from the jet_components folder.')
+          });
+        });
+      }
+    function manageMappedLocalReferencePackPathTest({
+      appName,
+      scriptsFolder,
+      pack
+    }) {
+      if (!util.noScaffold()) {
+        beforePackTest({
+            task: 'create',
+            app: appName,
+            pack,
+            scriptsFolder
+          });
+      }
+       describe('check that a locally created reference component has mapped path in main.js', () => {
+        it('should have mapped path in main.js for local reference component', async () => {
+          const appDir = util.getAppDir(appName);
+          const {
+            pathToSourceComponents,
+            pathToMainJs
+          } = util.getAppPathData(appName, scriptsFolder);
+          const mainJsReferencesPackMappedPath = await checkRefCompPathInMainJs(pathToSourceComponents, pack, appDir, pathToMainJs);
+          assert.ok(!fs.existsSync(path.join(pathToSourceComponents, pack)), `${pack} not deleted successfully.`)
+          assert.ok(mainJsReferencesPackMappedPath, 'Local reference pack not mapped in main.js.');
+
+        })
+       });
+    }
+/*
+  Re-visit this test case once oj-c mono-pack is published to exchange.
+  Once that is done, then there will be no need to copy the pack
+  from the oraclejet-core-pack module.
+ */
+function doNotOverWriteOjCPathMappingTest({
+      appName,
+      scriptsFolder,
+      buildType
+    }) {
+        describe('check that oj-c path in main.js is not overwritten', () => {
+          it('should not overwrite paths in main.js if component exists both in node_modules and jet_components', async () => {
+            const appDir = util.getAppDir(appName);
+            const {
+              pathToExchangeComponents,
+              pathToNodeModules
+            } = util.getAppPathData(appName, scriptsFolder);
+            const pathToOjCInNodeModules = path.join(pathToNodeModules, '@oracle', 'oraclejet-core-pack', 'oj-c');
+            const pathToOjCInJetComponents = path.join(pathToExchangeComponents, 'oj-c');
+            fs.copySync(pathToOjCInNodeModules, pathToOjCInJetComponents);
+            const result = buildType === 'release' ? await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true) : 
+              await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(appName) }, true);
+            fs.removeSync(pathToOjCInJetComponents);
+            assert.ok(/Either use 'oj-c' from exchange or node_modules/.test(result.stdout), result.stdout);
+            assert.ok(!fs.existsSync(pathToOjCInJetComponents), 'oj-c is not deleted from the jet_components folder.')
+          });
+        });
+      }
+
+    function manageMappedLocalReferencePackPathTest({
+      appName,
+      scriptsFolder,
+      pack
+    }) {
+      if (!util.noScaffold()) {
+        beforePackTest({
+          task: 'create',
+          app: appName,
+          pack,
+          scriptsFolder
+        });
+      }
+      describe('check that a locally created reference component has mapped path in main.js', () => {
+        it('should have mapped path in main.js for local reference component', async () => {
+          const appDir = util.getAppDir(appName);
+          const {
+            pathToSourceComponents,
+            pathToMainJs
+          } = util.getAppPathData(appName, scriptsFolder);
+          const mainJsReferencesPackMappedPath = await checkRefCompPathInMainJs(pathToSourceComponents, pack, appDir, pathToMainJs);
+          assert.ok(!fs.existsSync(path.join(pathToSourceComponents, pack)), `${pack} not deleted successfully.`)
+          assert.ok(mainJsReferencesPackMappedPath, 'Local reference pack not mapped in main.js.');
+
+        })
+      });
+    }
+
     describe('ojet create pack', () => {
       util.runComponentTestInAllTestApps({
         test: createPackTest,
         pack: PACK_NAME
+      });
+    });
+    describe('ojet create pack', () => {
+      util.runComponentTestInAllTestApps({
+        test: createMonoPackTest,
+        pack: MONO_PACK_NAME,
+        flags: '--type=mono-pack'
       });
     });
     describe('ojet create component --pack', () => {
@@ -2059,6 +2917,12 @@ describe('Component & Jet Pack Tests', () => {
           pack: PACK_NAME,
           component: COMPONENT_NAME
         });
+        util.runComponentTestInAllTestApps({
+          test: createComponentInMonoPackTest,
+          pack: MONO_PACK_NAME,
+          component: COMPONENT_NAME,
+          flags: '--type=resource'
+        });
       })
       describe('invalid pack name', () => {
         util.runComponentTestInAllTestApps({
@@ -2067,6 +2931,22 @@ describe('Component & Jet Pack Tests', () => {
           component: COMPONENT_NAME
         });
       })
+    });
+    describe('create loaderless component in pack', () => {
+      util.runComponentTestInAllTestApps({
+        test: createLoaderlessComponentInPackTest,
+        pack: PACK_NAME,
+        component: LOADERLESS_COMPONENT_NAME,
+        flags: '--vcomponent --withLoader=false'
+      });
+    });
+    describe('create loaderless component in a mono-pack without the withLoader flag', () => {
+      util.runComponentTestInAllTestApps({
+        test: createLoaderlessComponentInPackTest,
+        pack: MONO_PACK_NAME,
+        component: LOADERLESS_COMPONENT_NAME,
+        flags: '--vcomponent'
+      });
     });
     //
     // Create  a 'stripped down vcomponent',
@@ -2119,6 +2999,33 @@ describe('Component & Jet Pack Tests', () => {
         test: packagePackHookTest,
         component: 'package-hooks-component',
         pack: 'package-hooks-pack'
+      });
+    });
+
+    describe('ojet build mono-pack', () => {
+      util.runComponentTestInAllTestApps({
+        test: buildMonoPackTest,
+        pack: MONO_PACK_NAME,
+        component: LOADERLESS_COMPONENT_NAME,
+        release: false
+      });
+    });
+
+    describe('ojet build mono-pack (release)', () => {
+      util.runComponentTestInAllTestApps({
+        test: buildMonoPackTest,
+        pack: MONO_PACK_NAME,
+        component: LOADERLESS_COMPONENT_NAME,
+        release: true
+      });
+    });
+
+    describe('ojet package mono-pack', () => {
+      util.runComponentTestInAllTestApps({
+        test: packageMonoPackTest,
+        pack: MONO_PACK_NAME,
+        component: 'package-comp-in-mono-pack',
+        flags: '--type=mono-pack'
       });
     });
 
@@ -2283,6 +3190,54 @@ describe('Component & Jet Pack Tests', () => {
         test: stripMetadatainMinLoaderPackTest,
         pack: STRIP_TEST_PACK_NAME,
         component: STRIP_TEST_COMPONENT_NAME
+      });
+    });
+
+    describe('ojet build component', () => {
+      util.runComponentTestInAllTestApps({
+        test: vcomponentApiDocumentationPackTest,
+        pack: 'vcomp-docs-pack-test',
+        component: 'comp-in-pack-docs-test'
+      });
+    });
+
+    describe('ojet build, do not overwrite path-mapping for oj-c', () => {
+      util.runComponentTestInAllTestApps({
+        test: doNotOverWriteOjCPathMappingTest
+      });
+    }); 
+
+    describe('ojet build --release, do not overwrite path-mapping for oj-c', () => {
+      util.runComponentTestInAllTestApps({
+        test: doNotOverWriteOjCPathMappingTest,
+        buildType: 'release'
+      })
+    })
+
+    describe('ojet build, map local reference pack in main.js test', () => {
+      util.runComponentTestInAllTestApps({
+        test: manageMappedLocalReferencePackPathTest,
+        pack: 'local-reference-pack'
+      });
+    });
+
+    describe('ojet build, do not overwrite path-mapping for oj-c', () => {
+      util.runComponentTestInAllTestApps({
+        test: doNotOverWriteOjCPathMappingTest
+      });
+    }); 
+
+    describe('ojet build --release, do not overwrite path-mapping for oj-c', () => {
+      util.runComponentTestInAllTestApps({
+        test: doNotOverWriteOjCPathMappingTest,
+        buildType: 'release'
+      });
+    });
+    
+    describe('ojet build, map local reference pack in main.js test', () => {
+      util.runComponentTestInAllTestApps({
+        test: manageMappedLocalReferencePackPathTest,
+        pack: 'local-reference-pack'
       });
     });
   });

@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -31,6 +31,7 @@ module.exports = {
       const componentThemeTemplateSrc = _getComponentThemeTemplatePath('theme');
       const componentDestDirectory = _getComponentDestPath(generator);
       const pack = generator.options.pack;
+      // eslint-disable-next-line max-len
       // avoid overwrite component
       if (fs.existsSync(componentDestDirectory)) {
         utils.log.error(`Component with name '${componentName}' already exists.`);
@@ -40,6 +41,28 @@ module.exports = {
       }
       fs.ensureDirSync(componentDestDirectory);
       fs.copySync(componentTemplateSrc, componentDestDirectory);
+      // Rename loader.ts in destination directory to index.ts for loaderless
+      // components--the contents are the same:
+      if (_isVComponent(generator) && !_withLoader({ generator, pack })) {
+        const loaderFilePath = path.join(componentDestDirectory, 'loader.ts');
+        const indexFilePath = path.join(componentDestDirectory, 'index.ts');
+        if (fs.existsSync(loaderFilePath)) {
+          fs.renameSync(loaderFilePath, indexFilePath);
+        }
+      }
+      // Loaderless components should have @ojmetadata main "@pack-name@/@component-name@"
+      // as part of the comment to ensure TSC inputs the main attribute into the component.json
+      // file with appropriate pack and component name. Otherwise, remove it.
+      if (_isVComponent(generator) && _withLoader({ generator, pack })) {
+        const filesToModify = ['@component@-functional-template.tsx', '@component@.tsx'];
+        filesToModify.forEach((file) => {
+          const filePath = path.join(componentDestDirectory, file);
+          const regex = /@ojmetadata\s*main\s*"@pack-name@\/@component-name@"/gm;
+          let fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
+          fileContent = fileContent.replace(regex, '');
+          fs.writeFileSync(filePath, fileContent);
+        });
+      }
       if (_isResourceComponent(generator)) {
         const fileContent = constants.RESOURCE_COMPONENT_INDEX_FILE_CONTENT;
         fs.writeFileSync(path.join(componentDestDirectory, `index.${utils.isTypescriptApplication() ? 'ts' : 'js'}`), fileContent);
@@ -85,6 +108,7 @@ module.exports = {
   validateComponentName: (generator) => {
     const componentName = _getComponentName(generator);
     const pack = generator.options.pack;
+    // eslint-disable-next-line max-len
     let errorMessage;
     if (componentName === undefined || componentName === null) {
       errorMessage = 'Invalid component name: must not be null or undefined.';
@@ -100,6 +124,12 @@ module.exports = {
       utils.log.error(errorMessage);
     } else if (pack && !fs.existsSync(_getPathToJETPack(generator, pack))) {
       errorMessage = 'Invalid pack name: please provide an existing JET pack';
+      utils.log.error(errorMessage);
+    } else if (!pack && !_withLoader({ generator, pack }) && _isVComponent(generator)) {
+      errorMessage = 'Cannot create a loaderless component without a pack.';
+      utils.log.error(errorMessage);
+    } else if (!_withLoader({ generator, pack }) && !_isVComponent(generator)) {
+      errorMessage = 'Cannot create a loaderless CCA component.';
       utils.log.error(errorMessage);
     }
   },
@@ -126,6 +156,10 @@ module.exports = {
    */
   logSuccessMessage: (generator) => {
     utils.log(commonMessages.appendJETPrefix(`Add component '${_getComponentName(generator)}' finished.`));
+    // Log out a message on what do to generate API docs for vcomponents only.
+    if (_isVComponent(generator)) {
+      utils.log(`To generate API docs for '${_getComponentName(generator)}', run 'ojet add docgen' before building it.`);
+    }
   },
 
   /**
@@ -359,8 +393,8 @@ function _renameComponentTemplatePrefixFile(componentDir, file, componentName) {
 /**
  * ## _updatePackInfo
  *
- * Add component to packs dependencies and set pack of component
- * to the provided pack
+ * Add component to packs dependencies (and contents, if monopack)
+ * and set pack of component to the provided pack
  *
  * @param {object} generator object with build options
  * @param {string} pack name of JET pack that the component belongs to
@@ -374,6 +408,10 @@ function _updatePackInfo({ generator, pack }) {
   }
   // add component to dependencies of pack
   _addComponentToPackDependencies({ generator, pack });
+  // add component to contents if pack is mono-pack:
+  if (_isMonoPack({ generator, pack })) {
+    _addComponentToPackContents({ generator, pack });
+  }
 }
 
 /**
@@ -393,7 +431,8 @@ function _updateVComponentPack({ generator, pack, strip }) {
     const packRegex = new RegExp('@ojmetadata pack "@pack-name@"');
     vComponentContent = vComponentContent.replace(packRegex, '');
   } else {
-    vComponentContent = vComponentContent.replace('@pack-name@', pack);
+    const packRegex = new RegExp('@pack-name@', 'g');
+    vComponentContent = vComponentContent.replace(packRegex, pack);
   }
   fs.outputFileSync(vComponentPath, vComponentContent);
 }
@@ -447,8 +486,8 @@ function _addComponentToPackDependencies({ generator, pack }) {
     constants.COMPONENT_JSON);
   const packComponentJson = fs.readJSONSync(packComponentJsonPath);
   const hasDependenciesToken = utils.loadToolingUtil().hasDependenciesToken(packComponentJson);
-  if (!hasDependenciesToken) {
-    // Only add component to dependnecies if the component.json does not have the dependencies
+  if (!hasDependenciesToken && !_isMonoPack({ generator, pack })) {
+    // Only add component to dependencies if the component.json does not have the dependencies
     // token. If it does, the build will take care of adding all JET pack dependencies at build time
     packComponentJson.dependencies = {
       ...(packComponentJson.dependencies || {}),
@@ -456,6 +495,27 @@ function _addComponentToPackDependencies({ generator, pack }) {
     };
     fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
   }
+}
+
+/**
+ * ## _addComponentToPackContents
+ *
+ * @param {object} options.generator
+ * @param {object} options.pack
+ */
+function _addComponentToPackContents({ generator, pack }) {
+  const componentName = _getComponentName(generator);
+  const packComponentJsonPath = path.join(
+    _getPathToJETPack(generator, pack),
+    constants.COMPONENT_JSON);
+  const packComponentJson = fs.readJSONSync(packComponentJsonPath);
+  const contentItem = _isResourceComponent(generator) ? { name: `${componentName}`, type: constants.RESOURCE_COMPONENT } : { name: `${componentName}` };
+  if (packComponentJson.contents && Array.isArray(packComponentJson.contents)) {
+    packComponentJson.contents.push(contentItem);
+  } else {
+    packComponentJson.contents = [contentItem];
+  }
+  fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
 }
 
 /**
@@ -508,11 +568,62 @@ function _isResourceComponent(generator) {
   return generator.options.type === constants.RESOURCE_COMPONENT;
 }
 
+/**
+ * ## _isMonoPack
+ *
+ * @param {object} options.generator
+ * @param {object} options.pack
+ * @returns {boolean}
+ */
+function _isMonoPack({ generator, pack }) {
+  if (pack) {
+    const packComponentJsonPath = path.join(
+      _getPathToJETPack(generator, pack),
+      constants.COMPONENT_JSON
+    );
+    const packComponentJson = fs.readJSONSync(packComponentJsonPath);
+    return packComponentJson.type === constants.MONO_PACK;
+  }
+  return false;
+}
+
+/**
+ * ## _withLoader
+ *
+ * @param {object} options.generator
+ * @param {object} options.pack
+ * @returns {boolean}
+ */
+function _withLoader({ generator, pack }) {
+  if (generator.options.withLoader === false ||
+     (_isMonoPack({ generator, pack }) && _isVComponent(generator))) {
+    // Ensure that the withLoader attribute in options object is false.
+    // This is because it can happen that the user creates the vcomponent
+    // in a mono-pack, which should default to a loaderless component, whether
+    // the withLoader flag is used or otherwise:
+    if (generator.options.withLoader === undefined) {
+      // eslint-disable-next-line no-param-reassign
+      generator.options.withLoader = false;
+    }
+    return generator.options.withLoader;
+  }
+  return true;
+}
+
+/**
+ * ## _filterTsxTemplates
+ *
+ * @param {object} generator object with build options
+ * @param {object} destPath
+ */
 function _filterTsxTemplates(generator, destPath) {
   const componentName = _getComponentName(generator);
   const pathToClassBasedTemplate = path.join(destPath, `${componentName}.tsx`);
   const pathToFunctionalBasedTemplate = path.join(destPath, `${componentName}-functional-template.tsx`);
-  if (generator.options.vcomponent === 'function' || generator.options.vcomponent === 'functional') {
+  if (generator.options.vcomponent === 'class') {
+    // do nothing--file begins as class based with root name
+  } else if (generator.options.vcomponent) {
+    // do function/functional by default
     // <componentName>.tsx now has functional based template after overwriting it
     // with <componentName-functional>.tsx contents. We need to do this because,
     // once the chosen template is vcomponent, then we need to use the functional

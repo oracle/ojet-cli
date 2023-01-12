@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -87,11 +87,9 @@ describe('CLI API Tests', () => {
         const component = 'my-component';
         const ojet = new Ojet({ cwd: util.getAppDir(util.API_APP_NAME), logs: false });
         try {
-          await ojet.execute({
-            task: 'package',
-            scope: 'component',
-            parameters: [component]
-          });
+          await util.execCmd(`${util.OJET_APP_COMMAND} package component ${component}`, {
+              cwd: util.getAppDir(util.API_APP_NAME)
+            });
           const pathToZip = path.join(
             util.getAppDir(util.API_APP_NAME),
             'dist',
@@ -109,14 +107,9 @@ describe('CLI API Tests', () => {
         const pack = 'my-pack';
         const ojet = new Ojet({ cwd: util.getAppDir(util.API_APP_NAME), logs: false });
         try {
-          await ojet.execute({
-            task: 'package',
-            scope: 'component',
-            parameters: [component],
-            options: {
-              pack
-            }
-          });
+          await util.execCmd(`${util.OJET_APP_COMMAND} package component ${component} --pack=${pack}`, {
+              cwd: util.getAppDir(util.API_APP_NAME)
+            });
           const pathToZip = path.join(
             util.getAppDir(util.API_APP_NAME),
             'dist',
@@ -135,11 +128,9 @@ describe('CLI API Tests', () => {
         const pack = 'my-pack';
         const ojet = new Ojet({ cwd: util.getAppDir(util.API_APP_NAME), logs: false });
         try {
-          await ojet.execute({
-            task: 'package',
-            scope: 'pack',
-            parameters: [pack]
-          });
+          await util.execCmd(`${util.OJET_APP_COMMAND} package pack ${pack}`, {
+              cwd: util.getAppDir(util.API_APP_NAME)
+            });
           const pathToZip = path.join(
             util.getAppDir(util.API_APP_NAME),
             'dist',
