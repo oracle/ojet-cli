@@ -59,7 +59,7 @@ module.exports =
       return true;
     }
     try {
-      fs.copySync(templateSrc, templateDest, { filter });
+      fs.copySync(templateSrc, templateDest, { dereference: true, filter });
       return Promise.resolve();
     } catch (error) {
       return Promise.reject(error);
@@ -162,9 +162,7 @@ module.exports =
     if (generator.options.webpack) {
       return app.addwebpack(generator.options)
         .then(() => {
-          if (utils.isVDOMTemplate(generator)) {
-            _customizeVDOMTemplateForWebpack();
-          }
+          _customizeAppTemplateForWebpack(generator);
         });
     }
     return Promise.resolve();
@@ -223,9 +221,7 @@ function _customizeVDOMTemplateTsconfigForWebpack() {
   const oraclejetConfigJson = fs.readJSONSync(pathToOraclejetConfigJson);
   const pathToTsconfigJson = path.join(pathToApp, 'tsconfig.json');
   const tsconfigJson = fs.readJSONSync(pathToTsconfigJson);
-  const toolingUtil = utils.loadToolingUtil();
-  const preactPath = toolingUtil.getModulePath('./node_modules/preact', 'preact');
-  const preactCompat = path.join(preactPath, 'compat', 'src', 'index.d.ts');
+  const preactCompat = path.join('node_modules', 'preact', 'compat', 'src', 'index.d.ts');
 
   tsconfigJson.compilerOptions.rootDir = `./${oraclejetConfigJson.paths.source.common}`;
   tsconfigJson.compilerOptions.outDir = `./${oraclejetConfigJson.paths.staging.web}`;
@@ -235,15 +231,15 @@ function _customizeVDOMTemplateTsconfigForWebpack() {
   tsconfigJson.compilerOptions.removeComments = true;
   tsconfigJson.compilerOptions.strict = true;
   tsconfigJson.compilerOptions.paths.react = [
-    preactCompat
+    `./${preactCompat}`
   ];
   tsconfigJson.compilerOptions.paths['react-dom'] = [
-    preactCompat
+    `./${preactCompat}`
   ];
   fs.writeJSONSync(pathToTsconfigJson, tsconfigJson, { spaces: 2 });
 }
 
-function _customizeVDOMTemplateForWebpack() {
+function _customizeAppTemplateForWebpack(generator) {
   const pathToApp = '.';
   const pathToOraclejetConfigJson = path.join(pathToApp, 'oraclejetconfig.json');
   const oraclejetConfigJson = fs.readJSONSync(pathToOraclejetConfigJson);
@@ -254,8 +250,17 @@ function _customizeVDOMTemplateForWebpack() {
     'index.html'
   );
   let indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' }).toString();
-  indexHtmlContent = indexHtmlContent.replace(/<!-- .* -->/gm, '').replace(/^\s*\n/gm, '');
-  indexHtmlContent = indexHtmlContent.replace(/(<meta name="description".* \/>)/, '$1\n    <!-- css:redwood -->');
+  indexHtmlContent = indexHtmlContent.replace(
+    /<link\s*rel="stylesheet"\s*href="css\/app.css"\s*type="text\/css"\s*\/>/gm,
+    ''
+  );
+  indexHtmlContent = indexHtmlContent.replace(
+    /<link\s*rel="stylesheet"\s*href="styles\/app.css"\s*type="text\/css"\s*\/>/gm,
+    ''
+  );
+  indexHtmlContent = indexHtmlContent.replace(/<!-- .* -->/gm, '');
+  indexHtmlContent = indexHtmlContent.replace(/(<meta name="description".* \/>)/, '$1\n    <!-- css:redwood | stable | custom theme -->');
+  indexHtmlContent = indexHtmlContent.replaceAll(/^\s*\n/gm, '');
   fs.outputFileSync(pathToIndexHtml, indexHtmlContent);
   // Delete ./src/main.js since webpack entry point is index.ts
   const pathToMainJs = path.join(
@@ -271,23 +276,25 @@ function _customizeVDOMTemplateForWebpack() {
   // Delete ./path_mapping.json since not used by webpack build
   const pathToPathMappingJson = path.join(pathToApp, 'path_mapping.json');
   fs.removeSync(pathToPathMappingJson);
-  // Replace ./.gitignore and replace
-  const pathToGitIgnore = path.join(pathToApp, '.gitignore');
-  const gitIgnoreContent =
-  `/node_modules
-/${oraclejetConfigJson.paths.source.exchangeComponents}
-/${oraclejetConfigJson.paths.staging.web}
-.DS_Store`.trim();
-  fs.outputFileSync(pathToGitIgnore, gitIgnoreContent);
-  // Inject ./types/components/index.ts
-  const pathToComponentTypes = path.join(pathToApp, 'types/components/index.d.ts');
-  const componentTypesContent = `
-  // Add custom element entries to preact.JSX.IntrinsicElements for custom elements
-  // used in JSX that do not have the required type definitions
-  declare namespace preact.JSX {
-    interface IntrinsicElements {
+  if (utils.isVDOMTemplate(generator)) {
+    // Replace ./.gitignore and replace
+    const pathToGitIgnore = path.join(pathToApp, '.gitignore');
+    const gitIgnoreContent =
+      `/node_modules
+      /${oraclejetConfigJson.paths.source.exchangeComponents}
+      /${oraclejetConfigJson.paths.staging.web}
+      .DS_Store`.trim();
+    fs.outputFileSync(pathToGitIgnore, gitIgnoreContent);
+    // Inject ./types/components/index.ts
+    const pathToComponentTypes = path.join(pathToApp, 'types/components/index.d.ts');
+    const componentTypesContent = `
+      // Add custom element entries to preact.JSX.IntrinsicElements for custom elements
+      // used in JSX that do not have the required type definitions
+      declare namespace preact.JSX {
+      interface IntrinsicElements {
 
-    }
-  }`;
-  fs.outputFileSync(pathToComponentTypes, componentTypesContent);
+      }
+    }`;
+    fs.outputFileSync(pathToComponentTypes, componentTypesContent);
+  }
 }

@@ -1,6 +1,9 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 14.1.0
+
 ### 14.0.0
+
 * node-sass updated to 7.0.1
 * strict mode is now enabled by default in generated tsconfig.json files
 * oraclejet-serve.js and oraclejet-build.js are no longer read or processed.  Users should use other options in oraclejetconfig.json or the user hook system to set similar settings to what is found in oraclejet-serve.js and oraclejet-build.js.  The same configuration objects formerly found in oraclejet-serve.js and oraclejet-build.js can be found in the 'opts' section of the context object passed into the before_build and before_serve hooks.

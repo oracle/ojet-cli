@@ -40,7 +40,7 @@ module.exports = {
         utils.log.error('Cannot create a vcomponent in a Javascript application. Please run \'ojet add typescript\' to add Typescript support to your application.');
       }
       fs.ensureDirSync(componentDestDirectory);
-      fs.copySync(componentTemplateSrc, componentDestDirectory);
+      fs.copySync(componentTemplateSrc, componentDestDirectory, { dereference: true });
       // Rename loader.ts in destination directory to index.ts for loaderless
       // components--the contents are the same:
       if (_isVComponent(generator) && !_withLoader({ generator, pack })) {
@@ -68,14 +68,14 @@ module.exports = {
         fs.writeFileSync(path.join(componentDestDirectory, `index.${utils.isTypescriptApplication() ? 'ts' : 'js'}`), fileContent);
       } else {
         // Only copy theming files for none-resource components
-        fs.copySync(componentThemeTemplateSrc, componentDestDirectory);
+        fs.copySync(componentThemeTemplateSrc, componentDestDirectory, { dereference: true });
         // Copy theming template for composit components
         if (utils.validCustomProperties()) {
           const componentTemplateScssSrc = _getComponentThemeTemplatePath('pcss');
-          fs.copySync(componentTemplateScssSrc, componentDestDirectory);
+          fs.copySync(componentTemplateScssSrc, componentDestDirectory, { dereference: true });
         } else {
           const componentTemplateCssSrc = _getComponentThemeTemplatePath('css');
-          fs.copySync(componentTemplateCssSrc, componentDestDirectory);
+          fs.copySync(componentTemplateCssSrc, componentDestDirectory, { dereference: true });
         }
       }
       // replace tokens in template files and file names
@@ -400,6 +400,40 @@ function _renameComponentTemplatePrefixFile(componentDir, file, componentName) {
  * @param {string} pack name of JET pack that the component belongs to
  */
 function _updatePackInfo({ generator, pack }) {
+  if (_isMonoPack({ generator, pack })) {
+    /*
+      For mono-pack's components, three attributes ought to be
+      inherited during the build time. This can be done through
+      complete changing of the initial templates or deleting these
+      attributes. In this condition, the latter is used.
+
+      Refer to JET-55654 and JET-55655 for more info.
+    */
+    if (_isVComponent(generator)) {
+      const vComponentPath = path.join(
+        _getComponentDestPath(generator),
+        `${_getComponentName(generator)}.tsx`
+      );
+      let vComponentContent = fs.readFileSync(vComponentPath, 'utf-8');
+      let packRegex = new RegExp('@ojmetadata pack "@pack-name@"');
+      vComponentContent = vComponentContent.replace(packRegex, '');
+
+      packRegex = new RegExp('@ojmetadata version "1.0.0"');
+      vComponentContent = vComponentContent.replace(packRegex, '');
+
+      fs.outputFileSync(vComponentPath, vComponentContent);
+    } else {
+      const componentJsonPath = path.join(
+        _getComponentDestPath(generator),
+        constants.COMPONENT_JSON
+      );
+      const componentJson = fs.readJSONSync(componentJsonPath);
+      delete componentJson.version;
+      delete componentJson.jetVersion;
+      fs.writeJSONSync(componentJsonPath, componentJson, { spaces: 2 });
+    }
+    _addComponentToPackContents({ generator, pack });
+  }
   // set pack of component
   if (_isVComponent(generator)) {
     _setVComponentPack({ generator, pack });
@@ -408,10 +442,6 @@ function _updatePackInfo({ generator, pack }) {
   }
   // add component to dependencies of pack
   _addComponentToPackDependencies({ generator, pack });
-  // add component to contents if pack is mono-pack:
-  if (_isMonoPack({ generator, pack })) {
-    _addComponentToPackContents({ generator, pack });
-  }
 }
 
 /**

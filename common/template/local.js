@@ -29,7 +29,7 @@ function _copyLocalTemplate(templatePath, destination) {
   try {
     if (fs.statSync(templatePath).isDirectory()) {
       const newTemplateFormat = fs.existsSync(path.join(templatePath, 'src'));
-      fs.copySync(templatePath, newTemplateFormat ? path.join(destination, '..') : destination);
+      fs.copySync(templatePath, newTemplateFormat ? path.join(destination, '..') : destination, { dereference: true });
     } else if (path.extname(templatePath) === '.zip') {
       commonTemplateHandler._handleZippedTemplateArchive(templatePath, destination);
     } else {

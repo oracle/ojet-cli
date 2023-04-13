@@ -25,6 +25,7 @@
     "declaration": true,
     "noEmitOnError": true,
     "experimentalDecorators": true,
+    "skipLibCheck": true,
     "removeComments": true
   },
   "include": [

@@ -115,7 +115,7 @@ function _copyNpmTemplate(generator, templateSpec, destination) {
     } else {
       // copy to /src
       filePathDest = path.join(destination, '..', filePathFromTemplateRoot);
-      fs.copySync(filePath, filePathDest);
+      fs.copySync(filePath, filePathDest, { dereference: true });
     }
   });
 }

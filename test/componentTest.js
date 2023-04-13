@@ -60,8 +60,8 @@ const COMPOSITE_COMPONENT_OPTIMIZED_FOLDER = 'min';
 
 const STRIP_TEST_PACK_NAME = 'pack-strip';
 const STRIP_TEST_COMPONENT_NAME = 'comp-strip';
-const STRIP_TEST_COMPONENT_JSON = {"displayName":"A user friendly, translatable name of an unfriendly component.","description":"A translatable high-level description for a low-level component.","properties":{"helpHints":{"displayName":"Help Hints","description":"Represents hints for oj-form-layout element to render help information on the label for this helpless component.","type":"object","properties":{"sub-property":{"type":"string","placeholder":"Start at the very beginning...","enumValues":["doe","ray","mee"],"propertyEditorValues":{"doe":{"description":"A deer, a female deer...","displayName":"Doe","icon":{"hoverIconPath":"./path/to/hover","iconPath":"./path/to/icon","selectedIconPath":"./path/to/selection"}},"ray":{"description":"A drop of golden sun...","displayName":"Ray"},"mee":{"description":"Me, a name to call myself...","displayName":"Me"}},"value":"string","writeback":false,"units":"notes","binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"displayName":"Source","description":"Hint for help source URL associated with the label.","type":"string","readOnly":true,"translatable":true,"dynamicSlotDef":"emptyDynamicSlot"},"readOnly":{"displayName":"Readonly","description":"Defines if the calendar as a whole can be edited in any way, can be overridden by individual events","type":"boolean|null","propertyGroup":"common","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>","displayName":"Fishes","description":"Ordered list of fishes managed by this component","extension":{"vbdt":{"itemProperties":{"name":{"type":"string","description":"Name of the fish (e.g., 'Harold')"},"species":{"type":"object","displayName":"Species","description":"The fish's species information","properties":{"latin":{"type":"string","description":"Latin name of the species"},"english":{"type":"string","description":"Informal (english) name of the species"}}}}}}}},"methods":{"focus":{"internalName":"setFocus","description":"A function to set focus on the field","return":"boolean","help":"Go to this link...","visible":false,"params":[{"name":"value","description":"Value to set focus to","type":"string|null","status":[{"description":"Use a string value instead.","since":"1.1.0","target":"parameterType","value":["null"],"type":"deprecated"}]}],"status":[{"description":"Use standard HTML 'focus' method instead.","since":"2.0.0","type":"deprecated"}],"displayName":"setFocus method","extension":{"webelement":{"exceptionStatus":[{"type":"unsupported","since":"3.0.0","description":"Knock it off!"}]}}},"methodWithExtensionMD":{"description":"Dummy method with extension metadata that gets wiped","displayName":"Dummy Method","help":"dummy.html","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"visible":true,"return":"string"},"foo":{}},"events":{"onclick":{"bubbles":true,"description":"Demo event","status":[{"description":"Go listen to something else","since":"3.0.0","type":"deprecated"}],"cancelable":true,"help":"click.html","displayName":"onClick Handler","visible":true,"detail":{"sourceID":{"type":"string|number","eventGroup":"common","description":"Who sent you?","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"status":[{"description":"Expect sourceIDs to only be of type 'number' as of version 4.0.0","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}]}}},"onTestShouldBeEmpty":{"description":"For testing","bubbles":false,"displayName":"empty on stripping","help":"./running_on_empty.html"},"onAnythingJustEmpty":{}},"slots":{"":{"description":"This is the default slot, y'all","displayName":"Default"},"deposits":{"description":"Where money is deposited","visible":true,"extension":{"vbdt":{"description":"demo"}},"displayName":"Deposit Slot","help":"depository.html","status":[{"description":"Does this look like a bank?!??!","since":"3.0.0","type":"deprecated"}],"data":{"bankInfo":{"description":"Bank information","type":"object","properties":{"name":{"type":"string","placeholder":"First National...","description":"Name of the bank","readOnly":true,"writeback":false,"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}},"amount":{"type":"number","description":"Amount"},"routing":{"type":"number|null","displayName":"Routing Number","description":"Bank routing number if a check, or null if cash"}}}},"preferredContent":["MoneyElement","CheckElement"],"maxItems":1000,"minItems":1},"shouldEndUpEmpty":{"visible":false,"displayName":"should be empty","description":"to test the code","maxItems":100,"minItems":0},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"visible":true,"preferredContent":["PreferredContent"],"status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"description":"slot for Dynamic Slot","displayName":"Dynamic Slot","help":"dy/no/mite.html","data":{"data-dynamic":{"description":"This is data for dyanamic slot","status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"type":"string"}}},"emptyDynamicSlot":{}},"help":"comp1.html","since":"0.0.7","license":"MIT","styleVariables":[{"name":"comp-background","description":"Specify the component background","formats":["color"],"help":"stylish.html","displayName":"Variable","status":[{"description":"No background for you!","since":"2.2.0","type":"deprecated"}],"keywords":["auto","transparent"],"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}}],"status":[{"description":"This whole component was a mistake...","since":"3.0.0","type":"deprecated"}],"extension":{"catalog":{"audits":"../audit/rules.zip","category":"Other","tags":["worthless","garbage","trash"],"extraInfo":{}},"oracle":{"businessApprovals":{"vitaMeetaVegamin":"123456"},"uxSpecs":["figma-imagination"]},"themes":{"unsupportedThemes":["Stable"]},"vbdt":{"audits":"../audit/vbcs/rules.zip","defaultColumns":12,"minColumns":6}},"type":"composite"};
-const EXPECTED_STRIPPED_JSON = {"name":"comp-strip","version":"1.0.0","properties":{"helpHints":{"type":"object","properties":{"sub-property":{"type":"string","enumValues":["doe","ray","mee"],"value":"string","writeback":false,"binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"type":"string","readOnly":true},"readOnly":{"type":"boolean|null","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>"}},"methods":{"focus":{"internalName":"setFocus"},"methodWithExtensionMD":{"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"foo":{}},"events":{"onclick":{"detail":{"sourceID":{"type":"string|number","extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}}}},"onTestShouldBeEmpty":{},"onAnythingJustEmpty":{}},"slots":{"":{},"deposits":{"data":{"bankInfo":{"type":"object","properties":{"name":{"type":"string","readOnly":true,"writeback":false,"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"amount":{"type":"number"},"routing":{"type":"number|null"}}}}},"shouldEndUpEmpty":{},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"data":{"data-dynamic":{"type":"string"}}},"emptyDynamicSlot":{}}};
+const STRIP_TEST_COMPONENT_JSON = {"displayName":"A user friendly, translatable name of an unfriendly component.","description":"A translatable high-level description for a low-level component.","properties":{"helpHints":{"displayName":"Help Hints","description":"Represents hints for oj-form-layout element to render help information on the label for this helpless component.","type":"object","properties":{"sub-property":{"type":"string","placeholder":"Start at the very beginning...","enumValues":["doe","ray","mee"],"propertyEditorValues":{"doe":{"description":"A deer, a female deer...","displayName":"Doe","icon":{"hoverIconPath":"./path/to/hover","iconPath":"./path/to/icon","selectedIconPath":"./path/to/selection"}},"ray":{"description":"A drop of golden sun...","displayName":"Ray"},"mee":{"description":"Me, a name to call myself...","displayName":"Me"}},"value":"string","writeback":false,"units":"notes","binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"displayName":"Source","description":"Hint for help source URL associated with the label.","type":"string","readOnly":true,"translatable":true,"dynamicSlotDef":"emptyDynamicSlot"},"readOnly":{"displayName":"Readonly","description":"Defines if the calendar as a whole can be edited in any way, can be overridden by individual events","type":"boolean|null","propertyGroup":"common","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>","displayName":"Fishes","description":"Ordered list of fishes managed by this component","extension":{"vbdt":{"itemProperties":{"name":{"type":"string","description":"Name of the fish (e.g., 'Harold')"},"species":{"type":"object","displayName":"Species","description":"The fish's species information","properties":{"latin":{"type":"string","description":"Latin name of the species"},"english":{"type":"string","description":"Informal (english) name of the species"}}}}}}}},"methods":{"focus":{"internalName":"setFocus","description":"A function to set focus on the field","return":"boolean","help":"Go to this link...","visible":false,"params":[{"name":"value","description":"Value to set focus to","type":"string|null","status":[{"description":"Use a string value instead.","since":"1.1.0","target":"parameterType","value":["null"],"type":"deprecated"}]}],"status":[{"description":"Use standard HTML 'focus' method instead.","since":"2.0.0","type":"deprecated"}],"displayName":"setFocus method","extension":{"webelement":{"exceptionStatus":[{"type":"unsupported","since":"3.0.0","description":"Knock it off!"}]}}},"methodWithExtensionMD":{"description":"Dummy method with extension metadata that gets wiped","displayName":"Dummy Method","help":"dummy.html","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"visible":true,"return":"string"},"foo":{}},"events":{"onclick":{"bubbles":true,"description":"Demo event","status":[{"description":"Go listen to something else","since":"3.0.0","type":"deprecated"}],"cancelable":true,"help":"click.html","displayName":"onClick Handler","visible":true,"detail":{"sourceID":{"type":"string|number","eventGroup":"common","description":"Who sent you?","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"status":[{"description":"Expect sourceIDs to only be of type 'number' as of version 4.0.0","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}]}}},"onTestShouldBeEmpty":{"description":"For testing","bubbles":false,"displayName":"empty on stripping","help":"./running_on_empty.html"},"onAnythingJustEmpty":{}},"slots":{"":{"description":"This is the default slot, y'all","displayName":"Default", "implicitBusyContext":true},"deposits":{"description":"Where money is deposited","implicitBusyContext": true,"visible":true,"extension":{"vbdt":{"description":"demo"}},"displayName":"Deposit Slot","help":"depository.html","status":[{"description":"Does this look like a bank?!??!","since":"3.0.0","type":"deprecated"}],"data":{"bankInfo":{"description":"Bank information","type":"object","properties":{"name":{"type":"string","placeholder":"First National...","description":"Name of the bank","readOnly":true,"writeback":false,"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}},"amount":{"type":"number","description":"Amount"},"routing":{"type":"number|null","displayName":"Routing Number","description":"Bank routing number if a check, or null if cash"}}}},"preferredContent":["MoneyElement","CheckElement"],"maxItems":1000,"minItems":1},"shouldEndUpEmpty":{"visible":false,"displayName":"should be empty","description":"to test the code","maxItems":100,"minItems":0},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"visible":true,"preferredContent":["PreferredContent"],"status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"description":"slot for Dynamic Slot","displayName":"Dynamic Slot","help":"dy/no/mite.html","data":{"data-dynamic":{"description":"This is data for dyanamic slot","status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"type":"string"}}},"emptyDynamicSlot":{}},"help":"comp1.html","since":"0.0.7","license":"MIT","styleVariables":[{"name":"comp-background","description":"Specify the component background","formats":["color"],"help":"stylish.html","displayName":"Variable","status":[{"description":"No background for you!","since":"2.2.0","type":"deprecated"}],"keywords":["auto","transparent"],"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}}],"status":[{"description":"This whole component was a mistake...","since":"3.0.0","type":"deprecated"}],"extension":{"catalog":{"audits":"../audit/rules.zip","category":"Other","tags":["worthless","garbage","trash"],"extraInfo":{}},"oracle":{"businessApprovals":{"vitaMeetaVegamin":"123456"},"uxSpecs":["figma-imagination"]},"themes":{"unsupportedThemes":["Stable"]},"vbdt":{"audits":"../audit/vbcs/rules.zip","defaultColumns":12,"minColumns":6}},"type":"composite"};
+const EXPECTED_STRIPPED_JSON = {"name":"comp-strip","version":"1.0.0","properties":{"helpHints":{"type":"object","properties":{"sub-property":{"type":"string","enumValues":["doe","ray","mee"],"value":"string","writeback":false,"binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"type":"string","readOnly":true},"readOnly":{"type":"boolean|null","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>"}},"methods":{"focus":{"internalName":"setFocus"},"methodWithExtensionMD":{"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"foo":{}},"events":{"onclick":{"detail":{"sourceID":{"type":"string|number","extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}}}},"onTestShouldBeEmpty":{},"onAnythingJustEmpty":{}},"slots":{"":{"implicitBusyContext":true},"deposits":{"implicitBusyContext": true,"data":{"bankInfo":{"type":"object","properties":{"name":{"type":"string","readOnly":true,"writeback":false,"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"amount":{"type":"number"},"routing":{"type":"number|null"}}}}},"shouldEndUpEmpty":{},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"data":{"data-dynamic":{"type":"string"}}},"emptyDynamicSlot":{}}};
 // Returns the variables to used to run the test checks:
 function getStripTestVariables({
   pathToLocalComponentInWeb,
@@ -2538,24 +2538,32 @@ describe('Component & Jet Pack Tests', () => {
             fs.writeFileSync(path.join(pathToPackInSrc, 'extension', 'extension.ts'), '// Test file.');
             assert.ok(path.join(pathToPackInSrc, 'extension'));
           });
-          it ('it should modify the version and jetVersion annotation value successfully', () => {
+          it ('it should not have the pack, version and jetVersion values in tsx or component.json in src', () => {
             const { pathToSourceComponents } = util.getAppPathData(appName, scriptsFolder);
-              // Change the version and jetVersion anotated values, which later on should be corrected as
-            // implemented by JET-48251.
+            // On creating a component in a mono-pack, the pack (for vcomponents), version, and jetVersion
+            // should be omitted as required by JET-55655 and JET-55654. These values are
+            // later on inherited from the mono-pack metadata as implemented by JET-48251
+            // and tested in the subsequent test.
             let componentTsxFileContent;
             const pathToComponentTsxFile = path.join(pathToSourceComponents, pack, component, `${component}.tsx`);
             if (fs.existsSync(pathToComponentTsxFile)) {
               componentTsxFileContent = fs.readFileSync(pathToComponentTsxFile, { encoding: 'utf-8' });
-              componentTsxFileContent = componentTsxFileContent.replace(
-                `@ojmetadata version "1.0.0"`,
-                `@ojmetadata version "3.0.0"\n * @ojmetadata jetVersion "15.0.0"`
-              )
-              fs.writeFileSync(pathToComponentTsxFile, componentTsxFileContent);
+              const hasVersionAnnotation = componentTsxFileContent.includes(`@ojmetadata version`);
+              const hasPackAnnotation = componentTsxFileContent.includes(`@ojmetadata pack`);
+              const hasJetVersionAnnotation = componentTsxFileContent.includes(`@ojmetadata jetVersion`);
+              assert.equal(!hasVersionAnnotation, true, 'Has version annotated value');
+              assert.equal(!hasPackAnnotation, true, 'Has pack annotated value');
+              assert.equal(!hasJetVersionAnnotation, true, 'Has jet version annotated value');
+            } else {
+              const pathToComponentJson = path.join(pathToSourceComponents, pack, component, 'component.json');
+              const componentComponentJson = fs.readJSONSync(pathToComponentJson);
+              const hasComponentVersion = componentComponentJson.hasOwnProperty('version');
+              const hasJetVersion = componentComponentJson.hasOwnProperty('jetVersion');
+              assert.equal(!hasComponentVersion, true, 'Has version property in component.json');
+              assert.equal(!hasJetVersion, true, 'Has jet version property in component.json');
             }
-            const hasChangedAnnotationValue = componentTsxFileContent.includes(`@ojmetadata version "3.0.0"\n * @ojmetadata jetVersion "15.0.0"`);
-            assert.equal(hasChangedAnnotationValue, true, 'Does not have changed annotated values');
           });
-          it(`should have correct jetVersion and component version for components in the pack`, async() => {
+          it(`should have correct jetVersion and component version for components inherited from the pack`, async() => {
             const { pathToBuiltComponents } = util.getAppPathData(appName, scriptsFolder);
             const pathToComponentInPackJson = path.join(pathToBuiltComponents, pack, '1.0.0', component, 'component.json');
             const pathToPackJsonInWeb = path.join(pathToBuiltComponents, pack, '1.0.0', 'component.json');
@@ -2566,23 +2574,7 @@ describe('Component & Jet Pack Tests', () => {
             const packJsonInWeb = fs.readJSONSync(pathToPackJsonInWeb);
             assert.equal(componentJsonInWeb.jetVersion, packJsonInWeb.jetVersion, 'Does not have correct jet version');
             assert.equal(componentJsonInWeb.version, packJsonInWeb.version, 'Does not have correct component version');
-          });
-          it ('it should restore the version and jetVersion annotation value successfully', () => {
-            let componentTsxFileContent;
-            const { pathToSourceComponents } = util.getAppPathData(appName, scriptsFolder);
-            const pathToComponentTsxFile = path.join(pathToSourceComponents, pack, component, `${component}.tsx`);
-            if (fs.existsSync(pathToComponentTsxFile)) {
-              componentTsxFileContent = fs.readFileSync(pathToComponentTsxFile, { encoding: 'utf-8' });
-              componentTsxFileContent = componentTsxFileContent.replace(
-                `@ojmetadata version "3.0.0"\n * @ojmetadata jetVersion "15.0.0"`,
-                `@ojmetadata version "1.0.0"`,
-              )
-              fs.writeFileSync(pathToComponentTsxFile, componentTsxFileContent);
-            }
-            const hasChangedAnnotationValue = componentTsxFileContent.includes(`@ojmetadata version "3.0.0"\n * @ojmetadata jetVersion "15.0.0"`);
-            const hasRestoredAnnotationValue = componentTsxFileContent.includes(`@ojmetadata version "1.0.0"`);
-            assert.equal(!hasChangedAnnotationValue, true, 'Does have changed annotated values');
-            assert.equal(hasRestoredAnnotationValue, true, 'Does not have restored annotated values');
+            assert.equal(componentJsonInWeb.pack, packJsonInWeb.name, 'Does not have correct pack name');
           });
           it ('it should not have a d.ts file under types folder', () => {
             const { pathToBuiltComponents } = util.getAppPathData(appName, scriptsFolder);
@@ -3002,7 +2994,7 @@ function doNotOverWriteOjCPathMappingTest({
       });
     });
 
-    describe('ojet build mono-pack', () => {
+    describe('ojet build mono-pack, vcomponent test', () => {
       util.runComponentTestInAllTestApps({
         test: buildMonoPackTest,
         pack: MONO_PACK_NAME,
@@ -3011,11 +3003,29 @@ function doNotOverWriteOjCPathMappingTest({
       });
     });
 
-    describe('ojet build mono-pack (release)', () => {
+    describe('ojet build mono-pack (release), vcomponent test', () => {
       util.runComponentTestInAllTestApps({
         test: buildMonoPackTest,
         pack: MONO_PACK_NAME,
         component: LOADERLESS_COMPONENT_NAME,
+        release: true
+      });
+    });
+
+    describe('ojet build mono-pack, cca test', () => {
+      util.runComponentTestInAllTestApps({
+        test: buildMonoPackTest,
+        pack: MONO_PACK_NAME,
+        component: COMPONENT_NAME,
+        release: false
+      });
+    });
+
+    describe('ojet build mono-pack (release), cca test', () => {
+      util.runComponentTestInAllTestApps({
+        test: buildMonoPackTest,
+        pack: MONO_PACK_NAME,
+        component: COMPONENT_NAME,
         release: true
       });
     });

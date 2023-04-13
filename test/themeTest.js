@@ -97,7 +97,7 @@ describe('PCSS Theme Test', () => {
       // Write the file invalid file content into the test-file:
       fs.writeFileSync(pathToSvgTestFile, svgTestFileContent, {encoding: 'utf-8'});
       // Run the build command and get the emitted build info:
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, {cwd: appDir});
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, {cwd: appDir}, true);
       let errorMessageForCorruptedFile;
       const pathToTestFileCreated = fs.existsSync(pathToSvgTestFile);
       if (pathToTestFileCreated) {

@@ -3,7 +3,7 @@ export { @camelcasecomponent-name@ } from "./@component-name@";
 declare global {
 namespace preact.JSX {
       interface IntrinsicElements {
-      ['@camelcasecomponent-name@']: any;
+      '@full-component-name@': any;
       }
     }
   }

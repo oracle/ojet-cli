@@ -66,7 +66,7 @@ function _addSassTheme(addTheme) {
 
   try {
     // first copy over templates
-    fs.copySync(source, themeDestPath);
+    fs.copySync(source, themeDestPath, { dereference: true });
     _copySettingsFilesFromJETSrc(themeName, themeDestPath);
     _renameFilesAllPlatforms(themeName, themeDestPath);
     return Promise.resolve(addTheme);
@@ -145,7 +145,7 @@ function _copySettingsFilesFromJETSrc(themeName, dest) {
     const destSettingFileName = _getDestSettingFileName(DEFAULT_THEME, platform);
     const destPath = path.join(dest, platform, destSettingFileName);
 
-    fs.copySync(srcPath, destPath);
+    fs.copySync(srcPath, destPath, { dereference: true });
     _injectDefaultValues(destPath);
   });
 

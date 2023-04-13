@@ -263,8 +263,6 @@ describe('Webpack Test', () => {
       }); */
     });
     describe('Build (Release)', () => {
-      const regexRedwood = /<link\s.*redwood-min.css">/;
-      const regexInjectorThemeTag = /(<!--\s*|@@)(injector):theme(\s*-->)?/;
       const regexRedwoodTag = /(<!--\s*|@@)(css|js|img):([\w\/]+)(\s*-->)?/;
       it('should build in release mode for a vdom app', async () => {
          const appDir = util.getAppDir(util.WEBPACK_APP_NAME);
@@ -296,14 +294,6 @@ describe('Webpack Test', () => {
       it('should have <!-- css:redwood --> tag in index.html in vdom app src folder', () => {
         const { pathToIndexHtml, hasMatchedPattern} = checkSrcIndexHTML(util.WEBPACK_APP_NAME, regexRedwoodTag);
         assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a Redwood theme tag`);
-      });
-      it('should have <!-- injector:theme --> tag in index.html in js app src folder', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkSrcIndexHTML(util.WEBPACK_JS_APP_NAME, regexInjectorThemeTag);
-        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has an injector theme tag`);
-      });
-      it('should have <!-- injector:theme  --> tag in index.html in ts app src folder', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkSrcIndexHTML(util.WEBPACK_TS_APP_NAME, regexInjectorThemeTag);
-        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has an injector theme tag`);
       });
     });
   });

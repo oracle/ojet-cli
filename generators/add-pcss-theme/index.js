@@ -117,7 +117,7 @@ function _copyCssSettingsFile(addTheme, destPath, setTechnology) {
   path.join(JET_PCSS_SRC_PATH, _getJETVersion(), ALL_COMP_RW_PATH, whichTheme, srcSettings);
   const destSettingsFileName = _setSettingsFileByTech(setTechnology);
   const destSettingsPath = path.join(destPath, constants.DEFAULT_PCSS_THEME, destSettingsFileName);
-  fs.copySync(srcPath, destSettingsPath);
+  fs.copySync(srcPath, destSettingsPath, { dereference: true });
   _injectDefaultValues(whichTheme, destSettingsPath, setTechnology);
 }
 
@@ -189,7 +189,7 @@ function _addPcssTheme(addTheme) {
 
   try {
     // Copy pcss theme template to project folder under src
-    fs.copySync(source, themeDestPath);
+    fs.copySync(source, themeDestPath, { dereference: true });
     // Copy sass settings file
     _copyCssSettingsFile(addTheme, themeDestPath, 'sass');
     // Copy css vars settings file

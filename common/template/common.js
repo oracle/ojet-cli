@@ -38,7 +38,8 @@ function _injectTemplateFiles({ generator, namespace }) {
   function _copyFile(file) {
     fs.copySync(
       file,
-      _getPathToFileDest(file)
+      _getPathToFileDest(file),
+      { dereference: true }
     );
   }
   const filesToCopy = utils

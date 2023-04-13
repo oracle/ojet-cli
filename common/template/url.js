@@ -32,6 +32,6 @@ function _processFetchedTemplateZip(fetchedTemplate, temp, destination) {
 
   commonTemplateHandler._handleZippedTemplateArchive(fetchedTemplate, destination);
 
-  fs.copySync(temp, destination);
+  fs.copySync(temp, destination, { dereference: true });
   fs.removeSync(temp);
 }
