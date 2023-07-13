@@ -9,7 +9,6 @@
 const Admzip = require('adm-zip');
 const fs = require('fs-extra');
 const path = require('path');
-const graphics = require('../../hybrid/graphics');
 const utils = require('../../lib/util/utils');
 const constants = require('../../lib/util/constants');
 
@@ -18,17 +17,12 @@ const constants = require('../../lib/util/constants');
  * on what type of template was used
  *
  * @param {string} options.generator context
- * @param {string} options.namespace app | hybrid
+ * @param {string} options.namespace app
  */
 function _injectTemplateFiles({ generator, namespace }) {
   const pathToTemplates = path.resolve(__dirname, `../../generators/${namespace}/templates/common`);
   const pathToApp = path.resolve(generator.appDir);
   const template = generator.options.template || constants.BLANK_TEMPLATE;
-  function _templateFileFilter(file) {
-    const screenPath = path.join(graphics.PATH, 'screen');
-    const iconPath = path.join(graphics.PATH, 'icon');
-    return !file.includes(screenPath) && !file.includes(iconPath);
-  }
   function _getPathToFileDest(file) {
     return path.join(
       pathToApp,
@@ -43,8 +37,7 @@ function _injectTemplateFiles({ generator, namespace }) {
     );
   }
   const filesToCopy = utils
-    .readdirSync({ dir: pathToTemplates, recursive: true })
-    .filter(_templateFileFilter);
+    .readdirSync({ dir: pathToTemplates, recursive: true });
   if (utils.isNPMTemplate(template)) {
     // is NPM template, filter out /src/* files since NPM templates
     // have all the required files and then inject remaining files from

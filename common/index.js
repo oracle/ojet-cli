@@ -114,7 +114,7 @@ module.exports =
 
   validateArgs: function _validateArgs(generator) {
     const args = generator.arguments;
-    const validLength = _getValidArgLength(generator.options.namespace);
+    const validLength = 1;
 
     if (args.length > validLength) {
       return Promise.reject(commonMessages.error(`Invalid additional arguments: ${args.splice(validLength)}`, 'validateArgs'));
@@ -128,9 +128,6 @@ module.exports =
       const SUPPORTED_FLAGS = constants.SUPPORTED_FLAGS(flags.namespace);
       Object.keys(flags).forEach((key) => {
         if (SUPPORTED_FLAGS.indexOf(key) === -1) {
-          if (['platforms', 'platform', 'appid', 'appname'].indexOf(key) !== -1) {
-            reject(commonMessages.error(`Invalid flag: ${key} without flag --hybrid`, 'validateFlags'));
-          }
           reject(commonMessages.error(`Invalid flag: ${key}`, 'validateFlags'));
         }
       });
@@ -168,12 +165,6 @@ module.exports =
     return Promise.resolve();
   }
 };
-
-function _getValidArgLength(namespace) {
-  // add-hybrid allows no argument
-  // add-theme, app, hybrid, optional to take 1 argument
-  return (/add-hybrid/.test(namespace)) ? 0 : 1;
-}
 
 function _fileNotHidden(filename) {
   return !/^\..*/.test(filename);
@@ -216,10 +207,10 @@ function _removeSpaceInAppName(appName) {
 
 function _customizeVDOMTemplateTsconfigForWebpack() {
   // Add resolveJsonModule and esModuleInterop to app's tsconfig.json
+  const toolingUtil = utils.loadToolingUtil();
   const pathToApp = '.';
-  const pathToOraclejetConfigJson = path.join(pathToApp, 'oraclejetconfig.json');
-  const oraclejetConfigJson = fs.readJSONSync(pathToOraclejetConfigJson);
-  const pathToTsconfigJson = path.join(pathToApp, 'tsconfig.json');
+  const oraclejetConfigJson = toolingUtil.getOraclejetConfigJson(pathToApp);
+  const pathToTsconfigJson = toolingUtil.getPathToTsConfig(pathToApp);
   const tsconfigJson = fs.readJSONSync(pathToTsconfigJson);
   const preactCompat = path.join('node_modules', 'preact', 'compat', 'src', 'index.d.ts');
 
@@ -291,10 +282,9 @@ function _customizeAppTemplateForWebpack(generator) {
       // Add custom element entries to preact.JSX.IntrinsicElements for custom elements
       // used in JSX that do not have the required type definitions
       declare namespace preact.JSX {
-      interface IntrinsicElements {
-
-      }
-    }`;
+        interface IntrinsicElements {
+        }
+      }`;
     fs.outputFileSync(pathToComponentTypes, componentTypesContent);
   }
 }

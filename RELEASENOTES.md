@@ -1,5 +1,16 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 15.0.0
+
+* Hybrid build/serve capability based on Cordova has been removed and is no longer supported
+* Updated the default webpack library to 5.75.0
+* Add a 'tsconfig' option to oraclejetconfig.json paths.source section to optionally allow user to configure the path (relative to the app root path) to their tsconfig.json file
+* node-sass updated to 8.0.0
+* typescript updated to 5.0.4, and updated default typescript target to es2021 from es2020
+* watch-files flag is now added to enable or disable the watch file functionality when serving.
+* no-livereload flag now only disables live reload (it used to disable watching files as well). Files
+will still be watched unless the watch-files is set to false or no-watch-files flag is used.
+
 ### 14.1.0
 
 ### 14.0.0

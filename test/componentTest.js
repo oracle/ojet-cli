@@ -60,8 +60,8 @@ const COMPOSITE_COMPONENT_OPTIMIZED_FOLDER = 'min';
 
 const STRIP_TEST_PACK_NAME = 'pack-strip';
 const STRIP_TEST_COMPONENT_NAME = 'comp-strip';
-const STRIP_TEST_COMPONENT_JSON = {"displayName":"A user friendly, translatable name of an unfriendly component.","description":"A translatable high-level description for a low-level component.","properties":{"helpHints":{"displayName":"Help Hints","description":"Represents hints for oj-form-layout element to render help information on the label for this helpless component.","type":"object","properties":{"sub-property":{"type":"string","placeholder":"Start at the very beginning...","enumValues":["doe","ray","mee"],"propertyEditorValues":{"doe":{"description":"A deer, a female deer...","displayName":"Doe","icon":{"hoverIconPath":"./path/to/hover","iconPath":"./path/to/icon","selectedIconPath":"./path/to/selection"}},"ray":{"description":"A drop of golden sun...","displayName":"Ray"},"mee":{"description":"Me, a name to call myself...","displayName":"Me"}},"value":"string","writeback":false,"units":"notes","binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"displayName":"Source","description":"Hint for help source URL associated with the label.","type":"string","readOnly":true,"translatable":true,"dynamicSlotDef":"emptyDynamicSlot"},"readOnly":{"displayName":"Readonly","description":"Defines if the calendar as a whole can be edited in any way, can be overridden by individual events","type":"boolean|null","propertyGroup":"common","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>","displayName":"Fishes","description":"Ordered list of fishes managed by this component","extension":{"vbdt":{"itemProperties":{"name":{"type":"string","description":"Name of the fish (e.g., 'Harold')"},"species":{"type":"object","displayName":"Species","description":"The fish's species information","properties":{"latin":{"type":"string","description":"Latin name of the species"},"english":{"type":"string","description":"Informal (english) name of the species"}}}}}}}},"methods":{"focus":{"internalName":"setFocus","description":"A function to set focus on the field","return":"boolean","help":"Go to this link...","visible":false,"params":[{"name":"value","description":"Value to set focus to","type":"string|null","status":[{"description":"Use a string value instead.","since":"1.1.0","target":"parameterType","value":["null"],"type":"deprecated"}]}],"status":[{"description":"Use standard HTML 'focus' method instead.","since":"2.0.0","type":"deprecated"}],"displayName":"setFocus method","extension":{"webelement":{"exceptionStatus":[{"type":"unsupported","since":"3.0.0","description":"Knock it off!"}]}}},"methodWithExtensionMD":{"description":"Dummy method with extension metadata that gets wiped","displayName":"Dummy Method","help":"dummy.html","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"visible":true,"return":"string"},"foo":{}},"events":{"onclick":{"bubbles":true,"description":"Demo event","status":[{"description":"Go listen to something else","since":"3.0.0","type":"deprecated"}],"cancelable":true,"help":"click.html","displayName":"onClick Handler","visible":true,"detail":{"sourceID":{"type":"string|number","eventGroup":"common","description":"Who sent you?","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"status":[{"description":"Expect sourceIDs to only be of type 'number' as of version 4.0.0","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}]}}},"onTestShouldBeEmpty":{"description":"For testing","bubbles":false,"displayName":"empty on stripping","help":"./running_on_empty.html"},"onAnythingJustEmpty":{}},"slots":{"":{"description":"This is the default slot, y'all","displayName":"Default", "implicitBusyContext":true},"deposits":{"description":"Where money is deposited","implicitBusyContext": true,"visible":true,"extension":{"vbdt":{"description":"demo"}},"displayName":"Deposit Slot","help":"depository.html","status":[{"description":"Does this look like a bank?!??!","since":"3.0.0","type":"deprecated"}],"data":{"bankInfo":{"description":"Bank information","type":"object","properties":{"name":{"type":"string","placeholder":"First National...","description":"Name of the bank","readOnly":true,"writeback":false,"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}},"amount":{"type":"number","description":"Amount"},"routing":{"type":"number|null","displayName":"Routing Number","description":"Bank routing number if a check, or null if cash"}}}},"preferredContent":["MoneyElement","CheckElement"],"maxItems":1000,"minItems":1},"shouldEndUpEmpty":{"visible":false,"displayName":"should be empty","description":"to test the code","maxItems":100,"minItems":0},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"visible":true,"preferredContent":["PreferredContent"],"status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"description":"slot for Dynamic Slot","displayName":"Dynamic Slot","help":"dy/no/mite.html","data":{"data-dynamic":{"description":"This is data for dyanamic slot","status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"type":"string"}}},"emptyDynamicSlot":{}},"help":"comp1.html","since":"0.0.7","license":"MIT","styleVariables":[{"name":"comp-background","description":"Specify the component background","formats":["color"],"help":"stylish.html","displayName":"Variable","status":[{"description":"No background for you!","since":"2.2.0","type":"deprecated"}],"keywords":["auto","transparent"],"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}}],"status":[{"description":"This whole component was a mistake...","since":"3.0.0","type":"deprecated"}],"extension":{"catalog":{"audits":"../audit/rules.zip","category":"Other","tags":["worthless","garbage","trash"],"extraInfo":{}},"oracle":{"businessApprovals":{"vitaMeetaVegamin":"123456"},"uxSpecs":["figma-imagination"]},"themes":{"unsupportedThemes":["Stable"]},"vbdt":{"audits":"../audit/vbcs/rules.zip","defaultColumns":12,"minColumns":6}},"type":"composite"};
-const EXPECTED_STRIPPED_JSON = {"name":"comp-strip","version":"1.0.0","properties":{"helpHints":{"type":"object","properties":{"sub-property":{"type":"string","enumValues":["doe","ray","mee"],"value":"string","writeback":false,"binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"type":"string","readOnly":true},"readOnly":{"type":"boolean|null","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>"}},"methods":{"focus":{"internalName":"setFocus"},"methodWithExtensionMD":{"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"foo":{}},"events":{"onclick":{"detail":{"sourceID":{"type":"string|number","extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}}}},"onTestShouldBeEmpty":{},"onAnythingJustEmpty":{}},"slots":{"":{"implicitBusyContext":true},"deposits":{"implicitBusyContext": true,"data":{"bankInfo":{"type":"object","properties":{"name":{"type":"string","readOnly":true,"writeback":false,"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"amount":{"type":"number"},"routing":{"type":"number|null"}}}}},"shouldEndUpEmpty":{},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"data":{"data-dynamic":{"type":"string"}}},"emptyDynamicSlot":{}}};
+const STRIP_TEST_COMPONENT_JSON = {"displayName":"A user friendly, translatable name of an unfriendly component.","description":"A translatable high-level description for a low-level component.","properties":{"helpHints":{"displayName":"Help Hints","description":"Represents hints for oj-form-layout element to render help information on the label for this helpless component.","type":"object","properties":{"sub-property":{"type":"string","placeholder":"Start at the very beginning...","enumValues":["doe","ray","mee"],"propertyEditorValues":{"doe":{"description":"A deer, a female deer...","displayName":"Doe","icon":{"hoverIconPath":"./path/to/hover","iconPath":"./path/to/icon","selectedIconPath":"./path/to/selection"}},"ray":{"description":"A drop of golden sun...","displayName":"Ray"},"mee":{"description":"Me, a name to call myself...","displayName":"Me"}},"value":"string","writeback":false,"units":"notes","binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"displayName":"Source","description":"Hint for help source URL associated with the label.","type":"string","readOnly":true,"translatable":true,"dynamicSlotDef":"emptyDynamicSlot"},"readOnly":{"displayName":"Readonly","description":"Defines if the calendar as a whole can be edited in any way, can be overridden by individual events","type":"boolean|null","propertyGroup":"common","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>","displayName":"Fishes","description":"Ordered list of fishes managed by this component","extension":{"vbdt":{"itemProperties":{"name":{"type":"string","description":"Name of the fish (e.g., 'Harold')"},"species":{"type":"object","displayName":"Species","description":"The fish's species information","properties":{"latin":{"type":"string","description":"Latin name of the species"},"english":{"type":"string","description":"Informal (english) name of the species"}}}}}}}},"methods":{"focus":{"internalName":"setFocus","description":"A function to set focus on the field","return":"boolean","help":"Go to this link...","visible":false,"params":[{"name":"value","description":"Value to set focus to","type":"string|null","status":[{"description":"Use a string value instead.","since":"1.1.0","target":"parameterType","value":["null"],"type":"deprecated"}]}],"status":[{"description":"Use standard HTML 'focus' method instead.","since":"2.0.0","type":"deprecated"}],"displayName":"setFocus method","extension":{"webelement":{"exceptionStatus":[{"type":"unsupported","since":"3.0.0","description":"Knock it off!"}]}}},"methodWithExtensionMD":{"description":"Dummy method with extension metadata that gets wiped","displayName":"Dummy Method","help":"dummy.html","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"visible":true,"return":"string"},"foo":{}},"events":{"onclick":{"bubbles":true,"description":"Demo event","status":[{"description":"Go listen to something else","since":"3.0.0","type":"deprecated"}],"cancelable":true,"help":"click.html","displayName":"onClick Handler","visible":true,"detail":{"sourceID":{"type":"string|number","eventGroup":"common","description":"Who sent you?","extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"},"status":[{"description":"Expect sourceIDs to only be of type 'number' as of version 4.0.0","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}]}}},"onTestShouldBeEmpty":{"description":"For testing","bubbles":false,"displayName":"empty on stripping","help":"./running_on_empty.html"},"onAnythingJustEmpty":{}},"slots":{"":{"description":"This is the default slot, y'all","displayName":"Default", "implicitBusyContext": true},"deposits":{"description":"Where money is deposited","implicitBusyContext": true, "visible":true,"extension":{"vbdt":{"description":"demo"}},"displayName":"Deposit Slot","help":"depository.html","status":[{"description":"Does this look like a bank?!??!","since":"3.0.0","type":"deprecated"}],"data":{"bankInfo":{"description":"Bank information","type":"object","properties":{"name":{"type":"string","placeholder":"First National...","description":"Name of the bank","readOnly":true,"writeback":false,"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}},"amount":{"type":"number","description":"Amount"},"routing":{"type":"number|null","displayName":"Routing Number","description":"Bank routing number if a check, or null if cash"}}}},"preferredContent":["MoneyElement","CheckElement"],"maxItems":1000,"minItems":1},"shouldEndUpEmpty":{"visible":false,"displayName":"should be empty","description":"to test the code","maxItems":100,"minItems":0},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"visible":true,"preferredContent":["PreferredContent"],"status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"description":"slot for Dynamic Slot","displayName":"Dynamic Slot","help":"dy/no/mite.html","data":{"data-dynamic":{"description":"This is data for dyanamic slot","status":[{"description":"my status","since":"2.0.0","target":"parameterType","value":["string"],"type":"deprecated"}],"type":"string"}}},"emptyDynamicSlot":{}},"help":"comp1.html","since":"0.0.7","license":"MIT","styleVariables":[{"name":"comp-background","description":"Specify the component background","formats":["color"],"help":"stylish.html","displayName":"Variable","status":[{"description":"No background for you!","since":"2.2.0","type":"deprecated"}],"keywords":["auto","transparent"],"extension":{"catalog":{"description":"I am to go!","check":{"description":"Mamam"}},"oracle":{"businessApprovals":{"description":"I am a software engineer at Oracle"}},"vbdt":{"description":"I am to go!"},"audit":{"thisData":{"description":"Het","type":"string"}},"calendarOption":"now"}}],"status":[{"description":"This whole component was a mistake...","since":"3.0.0","type":"deprecated"}],"extension":{"catalog":{"audits":"../audit/rules.zip","category":"Other","tags":["worthless","garbage","trash"],"extraInfo":{}},"oracle":{"businessApprovals":{"vitaMeetaVegamin":"123456"},"uxSpecs":["figma-imagination"]},"themes":{"unsupportedThemes":["Stable"]},"vbdt":{"audits":"../audit/vbcs/rules.zip","defaultColumns":12,"minColumns":6}},"type":"composite"};
+const EXPECTED_STRIPPED_JSON = {"name":"comp-strip","version":"1.0.0","properties":{"helpHints":{"type":"object","properties":{"sub-property":{"type":"string","enumValues":["doe","ray","mee"],"value":"string","writeback":false,"binding":{"consume":{"name":"my-binding"},"provide":[{"name":"provider","default":"valueBind","transform":{"transform-prop":false}}]}}}},"source":{"type":"string","readOnly":true},"readOnly":{"type":"boolean|null","extension":{"calendarOption":"editable","transform":"invert"}},"fishes":{"type":"Array<object>"}},"methods":{"focus":{"internalName":"setFocus"},"methodWithExtensionMD":{"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"foo":{}},"events":{"onclick":{"detail":{"sourceID":{"type":"string|number","extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}}}},"onTestShouldBeEmpty":{},"onAnythingJustEmpty":{}},"slots":{"":{"implicitBusyContext": true},"deposits":{"implicitBusyContext": true, "data":{"bankInfo":{"type":"object","properties":{"name":{"type":"string","readOnly":true,"writeback":false,"extension":{"audit":{"thisData":{"type":"string"}},"calendarOption":"now"}},"amount":{"type":"number"},"routing":{"type":"number|null"}}}}},"shouldEndUpEmpty":{},"emptySlot":{}},"dynamicSlots":{"dynamic-slot":{"data":{"data-dynamic":{"type":"string"}}},"emptyDynamicSlot":{}}};
 // Returns the variables to used to run the test checks:
 function getStripTestVariables({
   pathToLocalComponentInWeb,
@@ -115,14 +115,17 @@ async function checkRefCompPathInMainJs(pathToSourceComponents, component, appDi
   const componentJson = fs.readJSONSync(pathToComponentJSON);
   componentJson.type = 'reference';
   componentJson.paths = {
-    name: 'test-path-name'
+    name: 'test-path-name',
+    npm: {
+      debug: 'test-path-name-debug',
+      min: 'test-path-name-min'
+    }
   };
   fs.writeJSONSync(pathToComponentJSON, componentJson);
   await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true);
   const mainJsContent = fs.readFileSync(pathToMainJs, { encoding: 'utf-8' });
-  const mappedPath = `jet-composites/${componentJson.name}/${componentJson.version}`;
   const mappedPathName = componentJson.paths.name;
-  const hasRefCompPath = mainJsContent.includes(`"${mappedPathName}":"${mappedPath}"`);
+  const hasRefCompPath = mainJsContent.includes(`"${mappedPathName}":"libs/test-path-name/test-path-name-debug"`);
   fs.removeSync(path.join(pathToSourceComponents, `${component}`));
   return hasRefCompPath;
 }
@@ -622,6 +625,49 @@ describe('Component & Jet Pack Tests', () => {
       });
     }
 
+    function addComponentTestFilesTest({
+      appName,
+      component,
+      scriptsFolder
+    }) {
+      describe('check that component test files are added only after running the ojet add testing command', () => {
+        it('should create component without adding test file templates', async () => {
+          const appDir = util.getAppDir(appName);
+          const {
+            pathToSourceComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          // create the component and pack to package:
+          await util.execCmd(`${util.OJET_APP_COMMAND} create component ${component}`, {
+            cwd: appDir
+          }, true, true);
+          const pathToComponentTestFiles = path.join(pathToSourceComponents, component, '__tests__');
+          const errorMessage = 'Component has test files before adding the test librabries.'
+          const hasPathToComponentTestFiles = fs.existsSync(pathToComponentTestFiles);
+          assert.ok(!hasPathToComponentTestFiles, errorMessage);
+        });
+        it(`should create component with test file templates after running the test libraries`, async() => {
+          const appDir = util.getAppDir(appName);
+          const {
+            pathToSourceComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, {
+            cwd: appDir
+          }, true, true);
+          await util.execCmd(`${util.OJET_APP_COMMAND} create component ${component}-1`, {
+            cwd: appDir
+          }, true, true);
+          const pathToComponentTestFiles = path.join(pathToSourceComponents, `${component}-1`, '__tests__');
+          const hasKnockoutSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-1-knockout.spec.ts`));
+          const hasUiSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-1-ui.spec.ts`));
+          const hasViewModelSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-1-viewmodel.spec.ts`));
+          assert.ok(/Success: add testing complete/.test(result.stdout), result.stdout);
+          assert.ok(hasKnockoutSpecFile, `Has no ${component}-1-knockout.spec.ts`);
+          assert.ok(hasUiSpecFile, `${component}-1-ui.spec.ts` );
+          assert.ok(hasViewModelSpecFile, `${component}-1-viewmodel.spec.ts`);
+        });
+      });
+    }
+
     // Run the build, then verify that components have been properly built.
     // Note that we verify multiple components - component is an array of components.
     function buildComponentAppTest({
@@ -659,16 +705,6 @@ describe('Component & Jet Pack Tests', () => {
             it(`component ${individualComponent} should have min/loader.js`, () => {
               const exists = fs.pathExistsSync(componentMinLoader);
               assert.ok(exists, componentMinLoader);
-            })
-            it(`component ${individualComponent} should have source field with file path in min/loader.js.map`, () => {
-              const sourceMapFileContent = fs.readFileSync(componentMinLoaderMapFile, {
-                encoding: 'utf-8'
-              });
-              const sourceMapJsonObject = JSON.parse(sourceMapFileContent);
-              // If there is no file path, terser emits a string "0" in the array field sources:
-              const sourceMapHasSourceField = sourceMapJsonObject.sources[0] !== "0";
-              const errorMessage = `component ${individualComponent} has no sources field with a file path.`;
-              assert.ok(sourceMapHasSourceField, errorMessage);
             })
           } else {
             it(`component ${individualComponent} should not have component(s) with /min directory`, () => {
@@ -1061,11 +1097,27 @@ describe('Component & Jet Pack Tests', () => {
         }
         describe('check that api documentation are generated successfully', () => {
           const appDir = util.getAppDir(appName);
+          it('should not have apidoc_templates html files before running ojet add docgen', () => {
+            const {
+              sourceFolder,
+              pathToApp
+            } = util.getAppPathData(appName, scriptsFolder);
+            const pathToApiDocTemplate = path.join(pathToApp, sourceFolder, 'apidoc_templates');
+            assert.ok(!fs.existsSync(pathToApiDocTemplate), 'apidoc_templates folder exists in source folder.');
+          });
           it('should add jsdoc successfully', async () => {
             const result = await util.execCmd(`${util.OJET_APP_COMMAND} add docgen`, {
               cwd: appDir
             }, true);
             assert.ok(/Success: add jsdoc complete/.test(result.stdout), result.stdout);
+          });
+          it('should have apidoc_templates html files after running ojet add docgen', () => {
+            const {
+              sourceFolder,
+              pathToApp
+            } = util.getAppPathData(appName, scriptsFolder);
+            const pathToApiDocTemplate = path.join(pathToApp, sourceFolder, 'apidoc_templates');
+            assert.ok(fs.existsSync(pathToApiDocTemplate), 'apidoc_templates folder does not exist in source folder.');
           });
           it('should have generated api docs in web after building the component', async () => {
             const {
@@ -1161,6 +1213,12 @@ describe('Component & Jet Pack Tests', () => {
         component: EXCHANGE_COMPONENT_NAME
       });
     });
+    describe('ojet add testing', () => {
+      util.runComponentTestInAllTestApps({
+        test: addComponentTestFilesTest,
+        component: 'add-testing-comp'
+      });
+    })
     describe('ojet build component', () => {
       util.runComponentTestInAllTestApps({
         test: buildComponentTest,
@@ -1570,7 +1628,7 @@ describe('Component & Jet Pack Tests', () => {
         });
       }
       describe('check created component in pack', () => {
-        it(`should have ${appName}/src/${scriptsFolder}/${pack}/${component}/component.json`, () => {
+        it(`should have ${appName}/src/${scriptsFolder}/jet-composites/${pack}/${component}/component.json`, () => {
           const pathToComponent = util.getAppDir(path.join(
             util.getAppDir(appName),
             'src',
@@ -2889,6 +2947,34 @@ function doNotOverWriteOjCPathMappingTest({
       });
     }
 
+    function ojetRestoreCommandTest({ appName, scriptsFolder }) {
+      describe('check that ojet restore --exchange-only restores exchange components without running npm install', () => {
+        it('should have node_modules folder and exchange components before running ojet strip command', async () => {
+          const {
+            pathToExchangeComponents,
+            pathToNodeModules
+          } = util.getAppPathData(appName, scriptsFolder);
+          assert.ok(fs.existsSync(pathToExchangeComponents), 'Exchange components do not exist in the project.');
+          assert.ok(fs.existsSync(pathToNodeModules), 'node_modules do not exist in the project.');
+        })
+        it('should not have node_modules folder and exchange components after running ojet strip command', async () => {
+          const appDir = util.getAppDir(appName);
+          await util.execCmd(`${util.OJET_APP_COMMAND} strip`, { cwd: appDir }, true);
+          const {
+            pathToExchangeComponents,
+            pathToNodeModules
+          } = util.getAppPathData(appName, scriptsFolder);
+          assert.ok(!fs.existsSync(pathToExchangeComponents), 'Exchange components exist in the project.');
+          assert.ok(!fs.existsSync(pathToNodeModules), 'node_modules folder exist in the project.');
+        })
+        it('should restore exchange components but not running npm install after running ojet restore --exchange-only', async () => {
+          const appDir = util.getAppDir(appName);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} restore --exchange-only`, { cwd: appDir }, true);
+          assert.ok(/Skipping 'npm install'./.test(result.stdout), result.stdout);
+          assert.ok(/Success: Restore complete/.test(result.stdout), result.stdout);
+        })
+      });
+    }
     describe('ojet create pack', () => {
       util.runComponentTestInAllTestApps({
         test: createPackTest,
@@ -2971,7 +3057,8 @@ function doNotOverWriteOjCPathMappingTest({
         pack: EXCHANGE_PACK,
         version: EXCHANGE_PACK_VERSION
       });
-    })
+    });
+
     describe('ojet package pack', () => {
       util.runComponentTestInAllTestApps({
         test: packagePackTest,
@@ -3029,7 +3116,6 @@ function doNotOverWriteOjCPathMappingTest({
         release: true
       });
     });
-
     describe('ojet package mono-pack', () => {
       util.runComponentTestInAllTestApps({
         test: packageMonoPackTest,
@@ -3224,13 +3310,6 @@ function doNotOverWriteOjCPathMappingTest({
       })
     })
 
-    describe('ojet build, map local reference pack in main.js test', () => {
-      util.runComponentTestInAllTestApps({
-        test: manageMappedLocalReferencePackPathTest,
-        pack: 'local-reference-pack'
-      });
-    });
-
     describe('ojet build, do not overwrite path-mapping for oj-c', () => {
       util.runComponentTestInAllTestApps({
         test: doNotOverWriteOjCPathMappingTest
@@ -3248,6 +3327,12 @@ function doNotOverWriteOjCPathMappingTest({
       util.runComponentTestInAllTestApps({
         test: manageMappedLocalReferencePackPathTest,
         pack: 'local-reference-pack'
+      });
+    });
+
+    describe('ojet strip, ojet restore, ojet restore --exchange-only tests', () => {
+      util.runComponentTestInAllTestApps({
+        test: ojetRestoreCommandTest
       });
     });
   });

@@ -16,5 +16,5 @@ before(async () => {
   util.makePackageSymlink();
 
   // Initial copy of current oraclejet-tooling build over "global" ojet-cli install
-  util.copyOracleJetTooling();
+  //util.copyOracleJetTooling();
 });

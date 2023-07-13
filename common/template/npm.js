@@ -31,9 +31,9 @@ module.exports = {
  * The templates are found in the installed oraclejet-templates module.
  * The source template directory is determined as follows:
  * 1. check if the templateName/type directory exists in oraclejet-templates
- *    e.g. 'navbar/hybrid'.
+ *    e.g. 'navbar/web'.
  * 2. if not, use the content of the templateName directory (only common content
- *    exists for both 'web' and 'hybrid' templates).
+ *    exists for both 'web' templates).
  *
  * @param {Object} generator  - parent generator
  * @param {Object} templateSpec - template specification

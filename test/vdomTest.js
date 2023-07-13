@@ -68,7 +68,7 @@ describe('VDOM Test', () => {
 
   describe('Component', () => {
     if (!util.noScaffold()) {
-      it('should create vcomponent when "ojet create component" is run', async () => {
+      it('should create vcomponent of type funcational when "ojet create component" is ran', async () => {
         const {
           pathToApp,
           sourceFolder,
@@ -93,6 +93,11 @@ describe('VDOM Test', () => {
           });
           const isVComponent = fs.pathExistsSync(pathToComponentTsx);
           assert.ok(isVComponent, pathToComponentTsx);
+          if (isVComponent) {
+            const vcompContents = fs.readFileSync(pathToComponentTsx);
+            const isFunctionalTemplate = !vcompContents.includes(`@customElement("${componentName}")`);
+            assert.ok(isFunctionalTemplate, 'Created component is class-based.')
+          }
         } catch {
           assert.ok(false, 'Error creating component');
         }
@@ -142,7 +147,7 @@ describe('VDOM Test', () => {
     }
   });
 
-  describe('Add (pwa)', () => {
+  describe('Add', () => {
     if (!util.noBuild()) {
       it('should have appropriate vdom files and folders to cache in sw.js on running ojet add pwa', async () => {
         await util.execCmd(`${util.OJET_APP_COMMAND} add pwa`, { cwd: appDir }, true, true);
@@ -159,6 +164,22 @@ describe('VDOM Test', () => {
         })
         const errorMessage = `sw.js does not contain right files and folders to cache for a vdom app.`;
         assert.equal(swJSHasRequiredResourcesTocache, true, errorMessage); 
+      });
+
+      it('should have appropriate testing files on running add testing', async () => {
+        await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create pack pack-1`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-1`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-1 --pack=pack-1`, { cwd: appDir }, true, true);
+
+        const { pathToApp, pathToSourceComponents } = util.getAppPathData(util.VDOM_APP_NAME);
+        const hasTestConfigFile = fs.existsSync(path.join(pathToApp, 'test-config', 'jest.config.js'));
+        const hasComponentTestFile = fs.existsSync(path.join(pathToSourceComponents, 'comp-1', '__tests__', 'comp-1.spec.tsx'));
+        const hasComponentInPackTestFile = fs.existsSync(path.join(pathToSourceComponents, 'pack-1', 'comp-1', '__tests__', 'comp-1.spec.tsx'));
+
+        assert.equal(hasTestConfigFile, true, 'Has no jest.config.js file.');
+        assert.equal(hasComponentTestFile, true, 'Has no component test file.');
+        assert.equal(hasComponentInPackTestFile, true, 'Has no component in pack test file.'); 
       });
     }
   });

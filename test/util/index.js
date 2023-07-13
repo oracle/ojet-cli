@@ -45,6 +45,11 @@ function _replaceOjetCLIProp(packageJson) {
   'ojet-cli')}`;
 }
 
+function _replaceOraclejetToolingProp(packageJson) {
+  packageJson.dependencies['@oracle/oraclejet-tooling'] = `file:${path.join('..', '..', '..', 'oraclejet-tooling',
+  'dist', 'oraclejet-tooling')}`;
+}
+
 const ORACLEJET_CONFIG_JSON = 'oraclejetconfig.json';
 const DEFAULT_COMPONENTS_FOLDER = 'jet-composites';
 const OMIT_COMPONENT_VERSION_FLAG = 'omit-component-version';
@@ -78,7 +83,6 @@ module.exports = {
   OJET_APP_COMMAND: 'node ../../ojet-cli/bin/ojet',
   testDir: td,
   APP_NAME: 'webJsTest',
-  HYBRID_APP_NAME: 'hybridJsTest',
   OJC_APP_NAME: 'ojcTest',
   TS_APP_NAME: 'webTsTest',
   TS_NAV_DRAWER_APP_NAME: 'webTsNavDrawerTest',
@@ -123,7 +127,7 @@ module.exports = {
   },
 
   makePackageSymlink: function _makePackageSymlink() {
-    function _updatePackageFile(dir) {
+    function _updateTemplatePackageFile(dir) {
       let src = path.resolve('generators', dir, 'templates', 'common', 'package.json');
       let json = fs.readJSONSync(src);
       // Replace the property
@@ -132,11 +136,20 @@ module.exports = {
       fs.writeJsonSync(src, json);  
     }
 
-    // Update the two package.json files in our built ojet-cli common templates
-    _updatePackageFile('app');
+    function _updatePackageFile() {
+      let src = path.resolve('package.json');
+      let json = fs.readJSONSync(src);
+      // Replace the property
+      _replaceOraclejetToolingProp(json);
+      // Write it back out
+      fs.writeJsonSync(src, json);  
+    }
 
-    // do hybrid
-    _updatePackageFile('hybrid');
+    // Update the package.json template file in our built ojet-cli common templates
+    _updateTemplatePackageFile('app');
+
+    // Update the built ojet-cli's package.json to a symlink for oraclejet-tooling
+    _updatePackageFile();
   },
 
   // Copy over oraclejet-tooling's build to the installation of ojet-cli
@@ -197,10 +210,6 @@ module.exports = {
 
   succeeded: function _succeeded(std) {
     return /succeeded/.test(std);
-  },
-
-  noHybrid: function _noHybrid() {
-    return process.argv.indexOf('--nohybrid') > -1 || _isQuick();
   },
 
   noScaffold: function _noScaffold() {
@@ -307,6 +316,13 @@ module.exports = {
     const pathToConfigJSON = path.join(appPath, this.ORACLEJET_CONFIG_JSON);
     const configJSON = fs.readJSONSync(pathToConfigJSON);
     configJSON.defaultTheme = theme;
+    fs.writeJSONSync(pathToConfigJSON, configJSON);
+  },
+
+  setTsConfigPath: function _setTsConfigPath(appPath, tsConfigPath) {
+    const pathToConfigJSON = path.join(appPath, this.ORACLEJET_CONFIG_JSON);
+    const configJSON = fs.readJSONSync(pathToConfigJSON);
+    configJSON.paths.source.tsconfig = tsConfigPath;
     fs.writeJSONSync(pathToConfigJSON, configJSON);
   },
   
