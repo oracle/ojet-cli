@@ -10,14 +10,6 @@ const path = require('path');
 const Ojet = require('../ojet');
 const util = require('./util');
 
-function checkWebIndexHTML(appName, token) {
-  const regex = new RegExp(token);
-  const { pathToIndexHtml } = util.getAppPathData(appName);
-  const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
-  const hasMatchedPattern = regex.test(indexHtmlContent);
-  return {pathToIndexHtml, hasMatchedPattern};
-}
-
 function checkSrcIndexHTML(appName, token){
   const regex = new RegExp(token);
   const appDir = util.getAppDir(appName);
@@ -190,48 +182,6 @@ describe('Webpack Test', () => {
         assert.ok(fs.existsSync(pathToOjetConfigJs), `${util.OJET_CONFIG_JS} not in application`);
       });
     });
-/*    describe('Serve', () => {
-    if (!util.noServe()) {
-      describe('serve a vdom app with webpack', () => {
-        it('should serve with nobuild', async () => {
-          let result;
-          try {
-            result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.WEBPACK_APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-            assert.equal(/webpack \d+.\d+.\d+ compiled/i.test(result.stdout), true, result.stdout);
-          } finally {
-            if (result) {
-              result.process.kill();
-            }
-          }
-        });
-      });
-      describe('serve a js app with webpack', () => {
-        it('should serve with nobuild', async () => {
-          let result;
-          try {
-            result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.WEBPACK_JS_APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-            assert.equal(/webpack \d+.\d+.\d+ compiled/i.test(result.stdout), true, result.stdout);
-          } finally {
-            if (result) {
-              result.process.kill();
-            }
-          }
-        });
-      });
-      describe('serve a ts app with webpack', () => {
-        it('should serve with nobuild', async () => {
-          try {
-            result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.WEBPACK_TS_APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-            assert.equal(/webpack \d+.\d+.\d+ compiled/i.test(result.stdout), true, result.stdout);
-          } finally {
-            if (result) {
-              result.process.kill();
-            }
-          }
-        });
-      });
-    }
-    });*/
     describe('Build (Debug)', () => {
       it('should build in debug mode', async () => {
         const appDir = util.getAppDir(util.WEBPACK_APP_NAME);
@@ -248,22 +198,9 @@ describe('Webpack Test', () => {
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
-      //*** Will re-write the test once the project is finally complete****/
-      /* it(`${util.WEBPACK_JS_APP_NAME} should have oj-redwood-min.css link in index.html file in source`, () => {
-        const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_JS_APP_NAME);
-        const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
-        const hasRedwoodTheme = /<link\s.*redwood-min.css">/.test(indexHtmlContent);
-        assert.ok(hasRedwoodTheme, `src/index.html does not have link to Redwood theme`);
-      }); 
-      it(`${util.WEBPACK_TS_APP_NAME} should have oj-redwood-min.css link in index.html file in source`, () => {
-        const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_TS_APP_NAME);
-        const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
-        const hasRedwoodTheme = /<link\s.*redwood-min.css">/.test(indexHtmlContent);
-        assert.ok(hasRedwoodTheme, `src/index.html does not have link to Redwood theme`);
-      }); */
     });
     describe('Build (Release)', () => {
-      const regexRedwoodTag = /(<!--\s*|@@)(css|js|img):([\w\/]+)(\s*-->)?/;
+      const styleFlagTag = /<!-- Link-tag flag that webpack replaces with theme style links during build time -->/;
       it('should build in release mode for a vdom app', async () => {
          const appDir = util.getAppDir(util.WEBPACK_APP_NAME);
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true, true);
@@ -279,20 +216,8 @@ describe('Webpack Test', () => {
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true, true);
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
-     /*  it('should have oj-redwood-min.css link in index.html file in staging - vdom app', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_APP_NAME, regexRedwood);
-        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
-      });
-      it('should have oj-redwood-min.css link in index.html file in staging - js app', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_JS_APP_NAME, regexRedwood);
-        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
-      });
-      it('should have oj-redwood-min.css link in index.html file in staging - ts app', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkWebIndexHTML(util.WEBPACK_TS_APP_NAME, regexRedwood);
-        assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a link to Redwood theme`);
-      }); */
-      it('should have <!-- css:redwood --> tag in index.html in vdom app src folder', () => {
-        const { pathToIndexHtml, hasMatchedPattern} = checkSrcIndexHTML(util.WEBPACK_APP_NAME, regexRedwoodTag);
+      it('should have style flag tag in index.html in app src folder', () => {
+        const { pathToIndexHtml, hasMatchedPattern} = checkSrcIndexHTML(util.WEBPACK_APP_NAME, styleFlagTag);
         assert.ok(hasMatchedPattern, `${pathToIndexHtml} has a Redwood theme tag`);
       });
     });

@@ -39,13 +39,7 @@ describe('Web Test', () => {
       // Scaffold a basic app without a name
       result = await util.execCmd(`${util.OJET_COMMAND} create --norestore=true`, { cwd: util.testDir });
       // Check that it worked
-      assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
-  
-      if (!util.noHybrid()) {
-        // Add hybrid
-        let result = await util.execCmd(`${util.OJET_APP_COMMAND} add hybrid --platform=${platform}`, { cwd: util.getAppDir(util.APP_NAME) });
-        console.log(result.stdout);
-      }
+      assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);  
     }  
   });
   
@@ -191,16 +185,6 @@ describe('Web Test', () => {
       });
     }
   });
-
-  if (!util.noHybrid()) {
-    describe('Extend to hybrid', () => {
-      it('should add hybrid', async () => {
-        filelist = fs.readdirSync(appDir);
-        const inlist = filelist.indexOf('hybrid') > -1;
-        assert.equal(inlist, true, `${appDir}/hybrid missing`);
-      });
-    });
-  }
 });
 
 describe('Config Test', () => {
@@ -210,8 +194,8 @@ describe('Config Test', () => {
   let valid;
   let toolingUtil;
   before(() => {
-    config = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/config`);
     ojetUtil = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/util`);
+    config = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/config`);
     ojet = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/oraclejet-tooling`);
     valid = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/validations`);
     toolingUtil = require(`${appDir}/node_modules/@oracle/ojet-cli/node_modules/@oracle/oraclejet-tooling/lib/util`);
@@ -238,22 +222,6 @@ describe('Config Test', () => {
     assert(Object.prototype.hasOwnProperty.call(map, 'libs'));
     assert(map.use === 'local');
   });
-
-  if (!util.noHybrid()) {
-    it('should validatePlatform - android', () => {
-      const wd = process.cwd();
-      process.chdir(util.getAppDir(util.APP_NAME));
-      assert.doesNotThrow(() => {
-        ojet.config.loadOraclejetConfig('android');
-        valid.platform('android');
-        ojet.config.loadOraclejetConfig('ios');
-        valid.platform('ios');
-        ojet.config.loadOraclejetConfig('web');
-        valid.platform('web');
-      });
-      process.chdir(wd);
-    });
-  }
 
   it('should validateBuildType and types', () => {
     const wd = process.cwd();
@@ -297,6 +265,17 @@ describe('Paths Mapping Test', () => {
   });
 });
 
+function killServeWin() {
+  if (process.platform === 'win32') {
+    try {
+      const execSync = require('child_process').execSync;
+      execSync(`wmic process where "CommandLine like '%%ojet serve%%'" call terminate`);
+    } catch (e) {
+      console.log('trapped');
+    }
+  }  
+}
+
 if (!util.noServe()) {
   describe('serve', () => {
     it('should serve with nobuild', async () => {
@@ -305,17 +284,25 @@ if (!util.noServe()) {
       assert.equal(/Watching files/i.test(result.stdout), true, result.stdout);
       assert.equal(/Watching Interval: 1000./i.test(result.stdout), true, result.stdout);
       result.process.kill();
+      killServeWin();
     });
 
-    if (process.platform !== 'win32') {
-      it('should serve with the chosen watch interval value', async () => {
-        //const ac = new AbortController();
-        const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --watchInterval=2000`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-        assert.equal(/Watching Interval: 2000./i.test(result.stdout), true, result.stdout);
-        result.process.kill();
-        //ac.abort();
-      });
-    }
+    it('should serve with the chosen watch interval value', async () => {
+      //const ac = new AbortController();
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --watchInterval=2000`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      assert.equal(/Watching Interval: 2000./i.test(result.stdout), true, result.stdout);
+      result.process.kill();
+      killServeWin();
+      //ac.abort();
+    });
+
+    it('should set destination to server-only when serving with the --server-only flag', async () => {
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve --server-only`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      assert.equal(/Destination: server-only/i.test(result.stdout), true, result.stdout);
+      assert.equal(/Success: Server ready:/i.test(result.stdout), true, result.stdout);
+      result.process.kill();
+      killServeWin();
+    });
   });
 }
 
@@ -323,6 +310,21 @@ describe('add theming', () => {
   it('should add pcss generator', async () => {
     const result = await util.execCmd(`${util.OJET_APP_COMMAND} add theming`, { cwd: appDir });
     assert.equal(/add pcss complete/.test(result.stdout), true, result.stdout);
+  });
+});
+
+describe('add testing', () => {
+  it('should add testing config files', async () => {
+    await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, false, true);
+    const { pathToApp } = util.getAppPathData(util.APP_NAME);
+    const hasTestConfigFile = fs.existsSync(path.join(pathToApp, 'test-config', 'karma.conf.js'));
+    const hasTestMainFile = fs.existsSync(path.join(pathToApp, 'test-config', 'test-main.js'));
+    const hasTsConfigJson = fs.existsSync(path.join(pathToApp, 'test-config', 'tsconfig.json'));
+
+    assert.equal(hasTestConfigFile, true, 'Has no karma.conf.js file.');
+    assert.equal(hasTestMainFile, true, 'Has no test-main.js file.');
+    assert.equal(hasTsConfigJson, true, 'Has no tsconfig.json file.');
+    
   });
 });
 
@@ -394,10 +396,8 @@ describe('Build with cdn', () => {
       const defaultPaths = ojetPaths.getDefaultPaths();
       assert(defaultPaths.source == 'src');
       assert(defaultPaths.sourceWeb == 'src-web');
-      assert(defaultPaths.sourceHybrid == 'src-hybrid');
       assert(defaultPaths.sourceJavascript == 'js');
       assert(defaultPaths.sourceThemes == 'themes');
-      assert(defaultPaths.stagingHybrid == 'hybrid');
       assert(defaultPaths.stagingWeb == 'web');
       assert(defaultPaths.stagingThemes == constants.APP_STAGED_THEMES_DIRECTORY);
     });

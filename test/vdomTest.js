@@ -68,7 +68,7 @@ describe('VDOM Test', () => {
 
   describe('Component', () => {
     if (!util.noScaffold()) {
-      it('should create vcomponent when "ojet create component" is run', async () => {
+      it('should create vcomponent of type funcational when "ojet create component" is ran', async () => {
         const {
           pathToApp,
           sourceFolder,
@@ -93,6 +93,11 @@ describe('VDOM Test', () => {
           });
           const isVComponent = fs.pathExistsSync(pathToComponentTsx);
           assert.ok(isVComponent, pathToComponentTsx);
+          if (isVComponent) {
+            const vcompContents = fs.readFileSync(pathToComponentTsx);
+            const isFunctionalTemplate = !vcompContents.includes(`@customElement("${componentName}")`);
+            assert.ok(isFunctionalTemplate, 'Created component is class-based.')
+          }
         } catch {
           assert.ok(false, 'Error creating component');
         }
@@ -142,7 +147,7 @@ describe('VDOM Test', () => {
     }
   });
 
-  describe('Add (pwa)', () => {
+  describe('Add', () => {
     if (!util.noBuild()) {
       it('should have appropriate vdom files and folders to cache in sw.js on running ojet add pwa', async () => {
         await util.execCmd(`${util.OJET_APP_COMMAND} add pwa`, { cwd: appDir }, true, true);
@@ -159,6 +164,68 @@ describe('VDOM Test', () => {
         })
         const errorMessage = `sw.js does not contain right files and folders to cache for a vdom app.`;
         assert.equal(swJSHasRequiredResourcesTocache, true, errorMessage); 
+      });
+
+      it('should have appropriate testing files on running add testing', async () => {
+        await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create pack pack-1`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-1`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-1 --pack=pack-1`, { cwd: appDir }, true, true);
+
+        const { pathToApp, pathToSourceComponents } = util.getAppPathData(util.VDOM_APP_NAME);
+        const hasTestConfigFile = fs.existsSync(path.join(pathToApp, 'test-config', 'jest.config.js'));
+        const hasComponentTestFile = fs.existsSync(path.join(pathToSourceComponents, 'comp-1', '__tests__', 'comp-1.spec.tsx'));
+        const hasComponentInPackTestFile = fs.existsSync(path.join(pathToSourceComponents, 'pack-1', 'comp-1', '__tests__', 'comp-1.spec.tsx'));
+
+        assert.equal(hasTestConfigFile, true, 'Has no jest.config.js file.');
+        assert.equal(hasComponentTestFile, true, 'Has no component test file.');
+        assert.equal(hasComponentInPackTestFile, true, 'Has no component in pack test file.'); 
+      });
+
+      it('should add test and debug subproperties if absent in the scripts property in package.json of the project on running add testing', async () => {
+        const jestCommand = 'jest -c test-config/jest.config.js';
+        const { pathToApp } = util.getAppPathData(util.VDOM_APP_NAME);
+        const pathToPackageJson = path.join(pathToApp, 'package.json');
+        const debugCommand = 'node --inspect-brk node_modules/.bin/jest --runInBand';
+
+        await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+        
+        // Retrieve the json file and check for the added test scripts:
+        const packageJsonObj = fs.readJSONSync(pathToPackageJson);
+        const hasTestProperty = packageJsonObj.scripts && packageJsonObj.scripts.test === jestCommand;
+        const hasDebugProperty = packageJsonObj.scripts && packageJsonObj.scripts['test:debug'] === debugCommand;
+        assert.equal(hasTestProperty, true, 'Has no test sub-property in package.json scripts property.');
+        assert.equal(hasDebugProperty, true, 'Has no test:debug sub-property in package.json scripts property.');
+      });
+
+      it('should add test-jest-ojet and test-debug if test and test:debug subproperties are in the scripts property in package.json of the project on running add testing', async () => {
+        const jestCommand = 'jest -c test-config/jest.config.js';
+        const { pathToApp } = util.getAppPathData(util.VDOM_APP_NAME);
+        const pathToPackageJson = path.join(pathToApp, 'package.json');
+        const debugCommand = 'node --inspect-brk node_modules/.bin/jest --runInBand';
+
+        // Modify the test and test:debug subproperties:
+        let packageJsonObj = fs.readJSONSync(pathToPackageJson);
+        packageJsonObj.scripts = {
+          test: 'not-the-above-defined-jest-command',
+          'test:debug': 'not-the-above-debug-command'
+        }
+        fs.writeJSONSync(pathToPackageJson, packageJsonObj, { encoding: 'utf-8', spaces: 2 });
+
+        // Run the ojet add testing
+        await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+        
+        // Retrieve the json file and check for the added test scripts:
+        packageJsonObj = fs.readJSONSync(pathToPackageJson);
+        const hasTestProperty = packageJsonObj.scripts && packageJsonObj.scripts['test-jest-ojet']=== jestCommand;
+        const hasDebugProperty = packageJsonObj.scripts && packageJsonObj.scripts['test-debug-ojet'] === debugCommand;
+
+        // Restore the initial package json content--the one without scripts subproperties:
+        packageJsonObj.scripts = {};
+        fs.writeJSONSync(pathToPackageJson, packageJsonObj, { encoding: 'utf-8', spaces: 2 });
+
+        assert.equal(hasTestProperty, true, 'Has no test-jest-ojet sub-property in package.json scripts property.');
+        assert.equal(hasDebugProperty, true, 'Has no test-debug-ojet sub-property in package.json scripts property.');
       });
     }
   });

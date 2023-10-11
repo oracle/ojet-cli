@@ -26,11 +26,14 @@ module.exports = {
    */
   writeComponentTemplate: function _writeComponentTemplate(generator) {
     return new Promise((resolve) => {
+      const options = generator.options;
+      const pack = generator.options.pack;
+      const testType = utils.loadToolingUtil().isVDOMApplication({ options }) ? 'test-jest' : 'test-karma';
       const componentName = _getComponentName(generator);
       const componentTemplateSrc = _getComponentTemplatePath(generator);
+      const componentTestTemplate = _getComponentTestTemplatePath(testType);
       const componentThemeTemplateSrc = _getComponentThemeTemplatePath('theme');
       const componentDestDirectory = _getComponentDestPath(generator);
-      const pack = generator.options.pack;
       // eslint-disable-next-line max-len
       // avoid overwrite component
       if (fs.existsSync(componentDestDirectory)) {
@@ -40,7 +43,11 @@ module.exports = {
         utils.log.error('Cannot create a vcomponent in a Javascript application. Please run \'ojet add typescript\' to add Typescript support to your application.');
       }
       fs.ensureDirSync(componentDestDirectory);
-      fs.copySync(componentTemplateSrc, componentDestDirectory, { dereference: true });
+      fs.copySync(componentTemplateSrc, componentDestDirectory);
+      if (_addTestFiles({ options })) {
+        fs.copySync(componentTestTemplate, path.join(componentDestDirectory, '__tests__'));
+      }
+
       // Rename loader.ts in destination directory to index.ts for loaderless
       // components--the contents are the same:
       if (_isVComponent(generator) && !_withLoader({ generator, pack })) {
@@ -156,10 +163,6 @@ module.exports = {
    */
   logSuccessMessage: (generator) => {
     utils.log(commonMessages.appendJETPrefix(`Add component '${_getComponentName(generator)}' finished.`));
-    // Log out a message on what do to generate API docs for vcomponents only.
-    if (_isVComponent(generator)) {
-      utils.log(`To generate API docs for '${_getComponentName(generator)}', run 'ojet add docgen' before building it.`);
-    }
   },
 
   /**
@@ -205,6 +208,90 @@ function _getComponentTemplatePath(generator) {
     );
   }
   return path.resolve(componentTemplatePath);
+}
+
+/**
+ * ## _getComponentTemplatePath
+ *
+ * Get path to component template. Either ../template/component/js
+ * or ../template/component/ts depending on whether application is
+ * Typescript or Javascript based
+ *
+ * @param {object} utils object with helper methods
+ * @returns {string} component template path
+ */
+
+function _getComponentTestTemplatePath(testType) {
+  const templateBasePath = path.join(__dirname, '../template');
+
+  return path.join(templateBasePath, 'component', testType);
+}
+
+/**
+ * ## _addTestFiles
+ *
+ * It checks whether the testing libraries are installed before
+ * the test files into the component folder.
+ *
+ * @returns {boolean}
+ */
+function _addTestFiles({ options }) {
+  let testLibraries = [];
+  const oracleJetConfig = utils.readJsonAndReturnObject(utils.getOracleJetConfigPath());
+  // Retrieve the string with the stored test libraries:
+  const testLibrariesString = utils.loadToolingUtil().isVDOMApplication({ options }) ?
+    oracleJetConfig.jestTestingLibraries : oracleJetConfig.mochaTestingLibraries;
+  if (testLibrariesString && testLibrariesString.length !== 0) {
+    // Traverse the libraries in the retrieved string to extract the library names.
+    // We are doing so because the retrieved string has subtrings like @types/mocha@10.0.1
+    // or karma-typescript@5.5.4. From such, we need only library names: @types/mocha or
+    // karma-typescript:
+    let atSignWithVersionNumber;
+    testLibraries = testLibrariesString.split(' ');
+    testLibraries.forEach((library, index) => {
+      if (library.includes('@')) {
+        if (library.startsWith('@')) {
+          // Remove the first @ and check if there is a remaining one. If so, then
+          // extract the substring from the index where the remaining @ is. This
+          // substring is to be replaced with an empty string to ensure that we
+          // remain with the library name as needed.
+          const substringWithoutStartingAtSign = library.substring(library.indexOf('@') + 1);
+          if (substringWithoutStartingAtSign.indexOf('@') !== -1) {
+            atSignWithVersionNumber = substringWithoutStartingAtSign.substring(
+              substringWithoutStartingAtSign.indexOf('@'));
+            testLibraries[index] = library.replace(atSignWithVersionNumber, '');
+          }
+        } else {
+          atSignWithVersionNumber = library.substring(library.indexOf('@'));
+          testLibraries[index] = library.replace(atSignWithVersionNumber, '');
+        }
+      }
+      // Here, in the unreleased version, we have a link to the oraclejet-jest-preset
+      // where we install the library from. If the link is not mentioned, check if the
+      // library name is before updating the array.
+      if (library.includes('@oracle/oraclejet-jest-preset') || library.startsWith('http')) {
+        testLibraries[index] = '@oracle/oraclejet-jest-preset';
+      }
+    });
+  }
+  let hasTestingLibraries = false;
+  if (testLibraries.length > 0) {
+    hasTestingLibraries = testLibraries.every((module) => {
+      const modulePath = utils.loadToolingUtil().getModulePath(
+        path.join(
+          'node_modules',
+          `${module}`,
+          'package.json'
+        ),
+        module
+      );
+      if (modulePath && fs.existsSync(modulePath)) {
+        return true;
+      }
+      return false;
+    });
+  }
+  return hasTestingLibraries;
 }
 
 /**
@@ -260,7 +347,8 @@ function _replaceComponentTemplateToken(generator, pack) {
     path.join(componentBasePath, 'resources/nls/root'),
     path.join(componentBasePath, 'themes/base'),
     path.join(componentBasePath, 'themes/redwood'),
-    path.join(componentBasePath, 'themes/stable')
+    path.join(componentBasePath, 'themes/stable'),
+    path.join(componentBasePath, '__tests__')
   ];
   folderPaths.forEach((templatepath) => {
     if (fs.existsSync(templatepath)) {
@@ -307,6 +395,13 @@ function _replaceComponentTokenInFileList(componentDir, componentName, pack) {
       );
       // replace @component-name@ with component name
       fileContent = fileContent.replace(new RegExp('@component-name@', 'g'), componentName);
+      // If pack, modify the css! import as described in JET-59094.
+      if (pack) {
+        fileContent = fileContent.replace(
+          `css!./${componentName}-styles.css`,
+          `css!${pack}/${componentName}/${componentName}-styles.css`
+        );
+      }
       // Camel Case component name or class name replacements are
       // needed only for vcomponent .tsx files.
       if (file && (fileExt === '.tsx' || fileExt === '.ts')) {
@@ -359,12 +454,14 @@ function _getComponentName(generator) {
 function _renameComponentTemplatePrefix(generator) {
   const componentBasePath = _getComponentDestPath(generator);
   const componentName = _getComponentName(generator);
+
   const folderPaths = [
     componentBasePath,
     path.join(componentBasePath, 'resources/nls/root'),
     path.join(componentBasePath, 'themes/base'),
     path.join(componentBasePath, 'themes/redwood'),
-    path.join(componentBasePath, 'themes/stable')
+    path.join(componentBasePath, 'themes/stable'),
+    path.join(componentBasePath, '__tests__')
   ];
   folderPaths.forEach((templatepath) => {
     if (fs.existsSync(templatepath)) {
@@ -442,6 +539,7 @@ function _updatePackInfo({ generator, pack }) {
   }
   // add component to dependencies of pack
   _addComponentToPackDependencies({ generator, pack });
+  // add component to contents if pack is mono-pack:
 }
 
 /**
@@ -539,13 +637,16 @@ function _addComponentToPackContents({ generator, pack }) {
     _getPathToJETPack(generator, pack),
     constants.COMPONENT_JSON);
   const packComponentJson = fs.readJSONSync(packComponentJsonPath);
-  const contentItem = _isResourceComponent(generator) ? { name: `${componentName}`, type: constants.RESOURCE_COMPONENT } : { name: `${componentName}` };
-  if (packComponentJson.contents && Array.isArray(packComponentJson.contents)) {
-    packComponentJson.contents.push(contentItem);
-  } else {
-    packComponentJson.contents = [contentItem];
+  const hasContentsToken = utils.loadToolingUtil().hasContentsToken(packComponentJson);
+  if (!hasContentsToken) {
+    const contentItem = _isResourceComponent(generator) ? { name: `${componentName}`, type: constants.RESOURCE_COMPONENT } : { name: `${componentName}` };
+    if (packComponentJson.contents && Array.isArray(packComponentJson.contents)) {
+      packComponentJson.contents.push(contentItem);
+    } else {
+      packComponentJson.contents = [contentItem];
+    }
+    fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
   }
-  fs.writeJSONSync(packComponentJsonPath, packComponentJson, { spaces: 2 });
 }
 
 /**
@@ -650,9 +751,11 @@ function _filterTsxTemplates(generator, destPath) {
   const componentName = _getComponentName(generator);
   const pathToClassBasedTemplate = path.join(destPath, `${componentName}.tsx`);
   const pathToFunctionalBasedTemplate = path.join(destPath, `${componentName}-functional-template.tsx`);
+  const isVdomApp = utils.loadToolingUtil().isVDOMApplication();
+  const isTsApp = utils.loadToolingUtil().isTypescriptApplication();
   if (generator.options.vcomponent === 'class') {
     // do nothing--file begins as class based with root name
-  } else if (generator.options.vcomponent) {
+  } else if (generator.options.vcomponent !== 'class' && (isVdomApp || isTsApp)) {
     // do function/functional by default
     // <componentName>.tsx now has functional based template after overwriting it
     // with <componentName-functional>.tsx contents. We need to do this because,
@@ -661,7 +764,12 @@ function _filterTsxTemplates(generator, destPath) {
     // the staging folder needs to have only one file: <componentName>.tsx. Hence,
     // the need to overwrite the file and delete <componentName-functional>.tsx after
     // overwriting.
-    fs.renameSync(pathToFunctionalBasedTemplate, pathToClassBasedTemplate);
+    if (fs.existsSync(pathToFunctionalBasedTemplate) && fs.existsSync(pathToClassBasedTemplate)) {
+      fs.renameSync(pathToFunctionalBasedTemplate, pathToClassBasedTemplate);
+    }
   }
-  fs.removeSync(pathToFunctionalBasedTemplate);
+
+  if (fs.existsSync(pathToFunctionalBasedTemplate)) {
+    fs.removeSync(pathToFunctionalBasedTemplate);
+  }
 }

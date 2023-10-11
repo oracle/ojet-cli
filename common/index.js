@@ -114,7 +114,7 @@ module.exports =
 
   validateArgs: function _validateArgs(generator) {
     const args = generator.arguments;
-    const validLength = _getValidArgLength(generator.options.namespace);
+    const validLength = 1;
 
     if (args.length > validLength) {
       return Promise.reject(commonMessages.error(`Invalid additional arguments: ${args.splice(validLength)}`, 'validateArgs'));
@@ -128,9 +128,6 @@ module.exports =
       const SUPPORTED_FLAGS = constants.SUPPORTED_FLAGS(flags.namespace);
       Object.keys(flags).forEach((key) => {
         if (SUPPORTED_FLAGS.indexOf(key) === -1) {
-          if (['platforms', 'platform', 'appid', 'appname'].indexOf(key) !== -1) {
-            reject(commonMessages.error(`Invalid flag: ${key} without flag --hybrid`, 'validateFlags'));
-          }
           reject(commonMessages.error(`Invalid flag: ${key}`, 'validateFlags'));
         }
       });
@@ -168,12 +165,6 @@ module.exports =
     return Promise.resolve();
   }
 };
-
-function _getValidArgLength(namespace) {
-  // add-hybrid allows no argument
-  // add-theme, app, hybrid, optional to take 1 argument
-  return (/add-hybrid/.test(namespace)) ? 0 : 1;
-}
 
 function _fileNotHidden(filename) {
   return !/^\..*/.test(filename);
@@ -216,10 +207,10 @@ function _removeSpaceInAppName(appName) {
 
 function _customizeVDOMTemplateTsconfigForWebpack() {
   // Add resolveJsonModule and esModuleInterop to app's tsconfig.json
+  const toolingUtil = utils.loadToolingUtil();
   const pathToApp = '.';
-  const pathToOraclejetConfigJson = path.join(pathToApp, 'oraclejetconfig.json');
-  const oraclejetConfigJson = fs.readJSONSync(pathToOraclejetConfigJson);
-  const pathToTsconfigJson = path.join(pathToApp, 'tsconfig.json');
+  const oraclejetConfigJson = toolingUtil.getOraclejetConfigJson(pathToApp);
+  const pathToTsconfigJson = toolingUtil.getPathToTsConfig(pathToApp);
   const tsconfigJson = fs.readJSONSync(pathToTsconfigJson);
   const preactCompat = path.join('node_modules', 'preact', 'compat', 'src', 'index.d.ts');
 
@@ -250,6 +241,7 @@ function _customizeAppTemplateForWebpack(generator) {
     'index.html'
   );
   let indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' }).toString();
+  const linkTagFlag = '<!-- Link-tag flag that webpack replaces with theme style links during build time -->';
   indexHtmlContent = indexHtmlContent.replace(
     /<link\s*rel="stylesheet"\s*href="css\/app.css"\s*type="text\/css"\s*\/>/gm,
     ''
@@ -258,10 +250,13 @@ function _customizeAppTemplateForWebpack(generator) {
     /<link\s*rel="stylesheet"\s*href="styles\/app.css"\s*type="text\/css"\s*\/>/gm,
     ''
   );
+  indexHtmlContent = indexHtmlContent.replace(/<!-- injector:theme -->/gm, '<link rel="stylesheet">');
   indexHtmlContent = indexHtmlContent.replace(/<!-- .* -->/gm, '');
-  indexHtmlContent = indexHtmlContent.replace(/(<meta name="description".* \/>)/, '$1\n    <!-- css:redwood | stable | custom theme -->');
+  // eslint-disable-next-line max-len
+  indexHtmlContent = indexHtmlContent.replace(/(<meta name="description".* \/>)/, '');
+  indexHtmlContent = indexHtmlContent.replace('<link rel="stylesheet">', `${linkTagFlag}\n<link rel="stylesheet">`);
   indexHtmlContent = indexHtmlContent.replaceAll(/^\s*\n/gm, '');
-  fs.outputFileSync(pathToIndexHtml, indexHtmlContent);
+  fs.outputFileSync(pathToIndexHtml, indexHtmlContent, { encoding: 'utf-8', spaces: 2 });
   // Delete ./src/main.js since webpack entry point is index.ts
   const pathToMainJs = path.join(
     pathToApp,
@@ -270,9 +265,22 @@ function _customizeAppTemplateForWebpack(generator) {
     'main.js'
   );
   fs.removeSync(pathToMainJs);
-  // Delete ./scripts since not used by webpack build
-  const pathToScriptsFolder = path.join(pathToApp, 'scripts');
-  fs.removeSync(pathToScriptsFolder);
+  // Delete some hooks not used by webpack build/serve process
+  const pathToHooksFolder = path.join(pathToApp, 'scripts', 'hooks');
+  const hooksFolderContents = fs.readdirSync(pathToHooksFolder);
+  const webpackHooks = new Set([
+    'after_build.js',
+    'after_serve.js',
+    'before_build.js',
+    'before_serve.js',
+    'hooks.json'
+  ]);
+  hooksFolderContents.forEach((folderContent) => {
+    if (!webpackHooks.has(folderContent)) {
+      const pathToFolderContent = path.join(pathToHooksFolder, folderContent);
+      fs.removeSync(pathToFolderContent);
+    }
+  });
   // Delete ./path_mapping.json since not used by webpack build
   const pathToPathMappingJson = path.join(pathToApp, 'path_mapping.json');
   fs.removeSync(pathToPathMappingJson);
@@ -291,10 +299,9 @@ function _customizeAppTemplateForWebpack(generator) {
       // Add custom element entries to preact.JSX.IntrinsicElements for custom elements
       // used in JSX that do not have the required type definitions
       declare namespace preact.JSX {
-      interface IntrinsicElements {
-
-      }
-    }`;
+        interface IntrinsicElements {
+        }
+      }`;
     fs.outputFileSync(pathToComponentTypes, componentTypesContent);
   }
 }

@@ -50,12 +50,6 @@ describe('PCSS Theme Test', () => {
     fs.rmdirSync(pathToJetCompositeFolder, {recursive : true});
     assert.ok(/node-sass is not installed. To install it, run: ojet add sass./.test(result.stdout), true, result.stdout);
   });
-  
-  it('Should not create a custom theme before running ojet add sass or ojet add theming.', async () => {
-    const result = await util.execCmd(`${util.OJET_APP_COMMAND} create theme ${THEME_NAME}`, { cwd: appDir }, true);
-    // "Please run 'ojet add sass'..." is part of the message that includes the suggestion to run ojet add theming, if preferred:
-    assert.ok(/Please run 'ojet add sass' to configure your projects for SASS processing./.test(result.stdout), result.stdout);
-  });
 
   it('Should throw a warning on creating a custom theme that defaults to alta as base-theme.', async () => {
     await util.execCmd(`${util.OJET_APP_COMMAND} add sass`, { cwd: appDir }, true);

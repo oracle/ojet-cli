@@ -14,7 +14,6 @@ const path = require('path');
 const utils = require('../../lib/util/utils');
 const constants = require('../../lib/util/constants');
 
-const _HYBRID = 'hybrid';
 const _WEB = 'web';
 
 module.exports =
@@ -89,12 +88,12 @@ function _validateTemplateName(templateName) {
   }
 }
 
-function _getGeneratorType(generatorNameSpace) {
-  return /hybrid/.test(generatorNameSpace) ? _HYBRID : _WEB;
+function _getGeneratorType() {
+  return _WEB;
 }
 
 function _validateTemplateType(templateType) {
-  if (templateType !== _WEB && templateType !== _HYBRID) {
+  if (templateType !== _WEB) {
     throw new Error(`Invalid template type: ${templateType}`);
   }
 }

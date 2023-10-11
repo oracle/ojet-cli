@@ -53,10 +53,6 @@ const config = {
           },
           examples: ['ojet add component flipcard']
         },
-        hybrid: {
-          description: 'Adds a hybrid app target to the web app',
-          examples: ['ojet add hybrid']
-        },
         pack: {
           aliases: ['packs'],
           description: 'Adds the specified pack(s) to the app',
@@ -78,23 +74,6 @@ const config = {
           },
           examples: ['ojet add pack oj-dvt']
         },
-        platform: {
-          aliases: ['platforms'],
-          description: 'Adds the specified platform(s) to the hybrid app',
-          parameters: '<platform1> [<platform2>]',
-          examples: ['ojet add platform ios']
-        },
-        plugin: {
-          aliases: ['plugins'],
-          description: 'Adds the specified plugin(s) to the hybrid app',
-          parameters: '<plugin1> [<plugin2>]',
-          examples: ['ojet add plugins cordova-plugin-camera cordova-plugin-file --variable=1234'],
-          options: {
-            variable: {
-              description: 'Specify a plugin\'s required variables'
-            }
-          }
-        },
         sass: {
           description: 'Adds SASS compilation and watch to the app',
           examples: ['ojet add sass']
@@ -111,6 +90,11 @@ const config = {
         docgen: {
           description: 'Adds JSDOC compilation to the app to generate API documentation. Works only for VComponents.',
           examples: ['ojet add docgen']
+        },
+        testing: {
+          description: 'Adds test environment and templates (Mocha for MVVM and Jest for VDOM) to the app.' + // eslint-disable-line
+                       newLine + 'Run \'npm run test\' for test results.',
+          examples: ['ojet add testing']
         },
         pwa: {
           description: 'Adds pwa support to the app',
@@ -145,10 +129,6 @@ const config = {
             optimize: {
               description: 'Specify rjs optimize value',
               parameters: '<string>'
-            },
-            'build-config': {
-              description: 'Specify the build config file for signing the hybrid app',
-              parameters: '<build_config_file>'
             },
             sass: {
               description: 'Enable SASS compilation',
@@ -186,32 +166,10 @@ const config = {
               parameters: '<string>'
             },
           },
-          hybridOnlyOptions: {
-            destination: {
-              description: 'Specify the destination for building the app',
-              parameters: 'device|emulator',
-              default: 'emulator'
-            },
-            device: {
-              description: 'Shortcut for --destination=device'
-            },
-            emulator: {
-              description: 'Shortcut for --destination=emulator'
-            },
-            'platform-options': {
-              description: 'Specify platform specific options that are passed to the Cordova command line',
-              parameters: '<platform_specific_options>' + // eslint-disable-line
-                newLine + 'Use quotes to pass multiple options as a single parameter value'
-            }
-          },
           examples: [
             'ojet build',
             'ojet build --cssvars=enabled',
-            'ojet build ios --no-sass',
-            'ojet build android --release',
-            'ojet build ios --device --build-config=./buildConfig.json --theme=myCustomTheme',
             'ojet build web --theme=alta:android',
-            'ojet build windows --platform-options="--archs=\\"x86 x64 arm\\""',
             'ojet build --user-options="arbitrary string" // provide user-defined options',
             'ojet build --release --optimize=none // Build a release with readable output. Useful for debugging'
           ]
@@ -268,16 +226,13 @@ const config = {
           isParameterOptional: true,
           default: 'The name of the current directory',
           options: {
-            hybrid: {
-              description: 'Create a hybrid app'
-            },
             web: {
               description: 'Create a web app (default)'
             },
             template: {
               description: 'Use a pre-defined app template',
-              parameters: 'blank[-ts]|basic[-ts|-vdom][:web|:hybrid]|navbar[-ts][:web|:hybrid]|' + // eslint-disable-line
-                newLine + ' navdrawer[-ts][:web|:hybrid]|<URL_to_zip_file>'
+              parameters: 'blank[-ts]|basic[-ts|-vdom][:web]|navbar[-ts][:web]|' + // eslint-disable-line
+                newLine + ' navdrawer[-ts][:web]|<URL_to_zip_file>'
             },
             typescript: {
               description: 'Create a typescript-based app',
@@ -292,30 +247,10 @@ const config = {
               description: 'Use the globally-installed tooling library installed with ojet-cli'
             }
           },
-          hybridOnlyOptions: {
-            appid: {
-              description: 'Specify the app ID for the hybrid app',
-              default: 'org.oraclejet.<app_name>'
-            },
-            appname: {
-              description: 'Specify the app name for the hybrid app',
-              default: '<current_working_directory>'
-            },
-            platform: {
-              description: 'Specify the supported platform for the hybrid app',
-              parameters: 'android|ios|windows'
-            },
-            platforms: {
-              description: 'Specify platforms for scaffolded hybrid app',
-              parameters: '[android],[ios],[windows]'
-            }
-          },
           examples: [
             'ojet create myWebApp --template=navbar',
             'ojet create myWebApp --template=navbar --typescript',
             'ojet create myWebApp --template=navbar --pwa',
-            'ojet create myHybridApp --hybrid --appid="com.oracle.myApp" --appname="My App" --platforms=ios,android --template=navdrawer',
-            'ojet create myApp --web --template=basic:hybrid',
             'ojet create FixItFast --template=http://www.oracle.com/webfolder/technetwork/jet/public_samples/FixItFast.zip'
           ]
         },
@@ -359,7 +294,7 @@ const config = {
     },
     help: {
       description: 'Displays command line help',
-      commands: '[add|build|clean|configure|create|list|remove|restore|serve|strip]'
+      commands: '[add|build|clean|configure|create|list|remove|restore|serve|strip|label]'
     },
     list: {
       aliases: ['ls'],
@@ -384,6 +319,52 @@ const config = {
           aliases: ['plugins'],
           description: 'Lists all installed plugins',
           examples: ['ojet list plugins']
+        }
+      }
+    },
+    label: {
+      aliases: ['lb'],
+      description: 'Adds a label to an existing component or pack in Exchange',
+      scopes: {
+        component: {
+          aliases: ['components', 'comp'],
+          description: 'Labels a component in exchange.',
+          examples: ['ojet label component my-component@1.2.0 rel2304'],
+          options: {
+            secure: {
+              description: 'Whether to enforce secure HTTPS protocol',
+              parameters: '[true|false]',
+              default: 'true'
+            },
+            username: {
+              aliases: ['u'],
+              description: 'The user\'s registered username'
+            },
+            password: {
+              aliases: ['p'],
+              description: 'The user\'s registered password'
+            }
+          },
+        },
+        pack: {
+          aliases: ['packs'],
+          description: 'Labels a pack and its components in component Exchange.',
+          examples: ['ojet label pack foo-bar@2304.0.0-rc.1 snapshot'],
+          options: {
+            secure: {
+              description: 'Whether to enforce secure HTTPS protocol',
+              parameters: '[true|false]',
+              default: 'true'
+            },
+            username: {
+              aliases: ['u'],
+              description: 'The user\'s registered username'
+            },
+            password: {
+              aliases: ['p'],
+              description: 'The user\'s registered password'
+            }
+          },
         }
       }
     },
@@ -529,6 +510,11 @@ const config = {
             ci: {
               description: 'Use npm ci instead of npm install',
               default: 'false'
+            },
+            'exchange-only': {
+              description: 'Restore the exchange components without running npm install',
+              parameters: '[true|false]',
+              default: 'true'
             }
           },
           examples: [
@@ -571,7 +557,7 @@ const config = {
     },
     serve: {
       aliases: ['s'],
-      description: 'Serves a JET app to an emulator, device or the browser',
+      description: 'Serves a JET app to the browser',
       scopes: {
         app: {
           description: 'Serves a JET app for the specified platform',
@@ -586,10 +572,6 @@ const config = {
             optimize: {
               description: 'Specify rjs optimize value',
               parameters: '<string>'
-            },
-            'build-config': {
-              description: 'Specify the build config file for signing the hybrid app',
-              parameters: '<build_config_file>'
             },
             build: {
               description: 'Build the app before serving it',
@@ -637,6 +619,11 @@ const config = {
               parameters: '[true|false](--no-livereload)',
               default: 'true'
             },
+            'watch-files': {
+              description: 'Enable watch file',
+              parameters: '[true|false](--no-watch-files)',
+              default: 'true'
+            },
             'livereload-port': {
               description: 'Specify the live reload port',
               parameters: '<integer>',
@@ -650,46 +637,11 @@ const config = {
               parameters: '<string>'
             },
           },
-          hybridOnlyOptions: {
-            destination: {
-              description: 'Specify the destination for serving the app',
-              parameters: 'device[:<device_name>]|emulator[:<emulator_name>]|' + // eslint-disable-line
-                newLine + ' browser[:chrome|:firefox|:edge|:ie|:safari]|server-only',
-              default: 'emulator' + // eslint-disable-line
-                newLine + 'Default browser: chrome'
-            },
-            browser: {
-              description: 'Shortcut for --destination=browser',
-              parameters: '[chrome|firefox|edge|ie|safari]',
-              default: 'chrome'
-            },
-            device: {
-              description: 'Shortcut for --destination=device',
-              parameters: '[<device_name>]',
-              default: 'The only connected device for the specified platform'
-            },
-            emulator: {
-              description: 'Shortcut for --destination=emulator',
-              parameters: '[<emulator_name>]',
-              default: 'The default emulator for the specified platform'
-            },
-            'platform-options': {
-              description: 'Specify platform specific options that are passed to the Cordova command line',
-              parameters: '<platform_specific_options>' + // eslint-disable-line
-                newLine + 'Use quotes to pass multiple options as a single parameter value'
-            }
-          },
           examples: [
             'ojet serve',
             'ojet serve --cssvars=enabled',
-            'ojet serve ios --no-livereload --emulator="iPad-Air, 10.2"',
-            'ojet serve --device --release',
-            'ojet serve windows --no-sass --livereload-port=35723',
-            'ojet serve android --browser',
             'ojet serve --browser=edge',
-            'ojet serve ios --device --build-config ./buildConfig.json --theme myCustomTheme',
             'ojet serve web --theme alta:android',
-            'ojet serve windows --platform-options "--archs=\\"x86 x64 arm\\""',
             'ojet serve --user-options="arbitrary string" // provide user-defined options.'
           ]
         }

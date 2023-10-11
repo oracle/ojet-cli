@@ -1,7 +1,7 @@
-# @oracle/ojet-cli 14.1.0
+# @oracle/ojet-cli 15.1.0
 
 ## About the module
-This module contains a command line interface for Oracle JET web and hybrid mobile application development.
+This module contains a command line interface for Oracle JET web application development.
 
 This is an open source project maintained by Oracle Corp.
 
@@ -9,11 +9,6 @@ This is an open source project maintained by Oracle Corp.
 For web app development, install this module as follows:
 ```
 npm install -g @oracle/ojet-cli
-```
-
-For hybrid mobile app development, install it together with Cordova:
-```
-npm install -g @oracle/ojet-cli cordova
 ```
 
 On macOS, you will need to use 'sudo'.
@@ -42,7 +37,7 @@ remove ............. Removes platforms, plugins and more from a JET app
 
 restore ............ Restores missing dependencies, plugins and libraries to a JET app
 
-serve .............. Serves a JET app to an emulator, device or the browser
+serve .............. Serves a JET app to the browser
 
 strip .............. Strips all non source files from the JET app
 
@@ -64,11 +59,14 @@ Or view help on adding a plugin:
 ojet help add plugin
 ```
 
-For more information on the Oracle JET CLI, refer to the [Oracle JET Developers Guide](http://www.oracle.com/pls/topic/lookup?ctx=jet1410&id=homepage).
+For more information on the Oracle JET CLI, refer to the [Oracle JET Developers Guide](http://www.oracle.com/pls/topic/lookup?ctx=jet1510&id=homepage).
 
-## [Contributing](https://github.com/oracle/ojet-cli/blob/master/CONTRIBUTING.md)
-Oracle JET is an open source project.  Pull Requests are currently not being accepted. See [CONTRIBUTING](https://github.com/oracle/ojet-cli/blob/master/CONTRIBUTING.md) for details.
+## Contributing
+This project is not accepting external contributions at this time. For bugs or enhancement requests, please file a GitHub issue unless it’s security related. When filing a bug remember that the better written the bug is, the more likely it is to be fixed. If you think you’ve found a security vulnerability, do not raise a GitHub issue and follow the instructions in our [security policy](./SECURITY.md).
 
-## [License](https://github.com/oracle/ojet-cli/blob/master/LICENSE)
+## Security
+Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
+
+## License
 Copyright (c) 2023 Oracle and/or its affiliates and released  under the 
 [Universal Permissive License (UPL)](https://oss.oracle.com/licenses/upl/), Version 1.0

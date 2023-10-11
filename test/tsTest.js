@@ -96,7 +96,7 @@ describe('Typescript Test', () => {
       assert.ok(!fs.pathExistsSync(pathToTSFolder), pathToTSFolder);
     });
   });
-  describe('Tsconfig "extends" option', () => {
+  describe('Tsconfig "extends" option and moving tsconfig.json to custom location', () => {
     if (!util.noBuild()) {
       it('should build ts app after adding "extends" to tsconfig.json', async () => {
         const BASE_TSCONFIG_JSON = 'base_tsconfig.json';
@@ -109,10 +109,17 @@ describe('Typescript Test', () => {
           }
         };
         fs.writeJSONSync(baseTsconfigJsonPath, baseTsconfigJson, { spaces: 2 });
-        const tsconfigJsonPath = path.join(pathToApp, util.TSCONFIG_JSON);
+        // Clean up and create a myconfig dir
+        fs.emptyDirSync(path.join(pathToApp, 'myconfig'));
+        fs.moveSync(path.join(pathToApp, util.TSCONFIG_JSON), path.join(pathToApp, 'myconfig', util.TSCONFIG_JSON));
+        const tsconfigJsonPath = path.join(pathToApp, 'myconfig', util.TSCONFIG_JSON);
         const tsconfigJson = fs.readJSONSync(tsconfigJsonPath);
         tsconfigJson.extends = `./${BASE_TSCONFIG_JSON}`;
         fs.writeJSONSync(tsconfigJsonPath, tsconfigJson, { spaces: 2 });
+
+        // Add 'tsconfig' option to paths.source in oraclejetconfig.json
+        util.setTsConfigPath(pathToApp, 'myconfig');
+        
         // Run build and ensure that it was successful
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(util.TS_APP_NAME) });
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
