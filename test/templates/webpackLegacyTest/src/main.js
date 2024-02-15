@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -31,9 +31,9 @@
       */
       // injector:mainReleasePaths
       {
-        'ojs': 'libs/oj/15.1.0/debug',
-        'ojL10n': 'libs/oj/15.1.0/ojL10n',
-        'ojtranslations': 'libs/oj/15.1.0/resources',
+        'ojs': 'libs/oj/16.0.0/debug',
+        'ojL10n': 'libs/oj/16.0.0/ojL10n',
+        'ojtranslations': 'libs/oj/16.0.0/resources',
           'knockout': 'libs/knockout/knockout-3.5.1.debug',
   'jquery': 'libs/jquery/jquery-3.6.0',
   'jqueryui-amd': 'libs/jquery/jqueryui-amd-1.13.0',

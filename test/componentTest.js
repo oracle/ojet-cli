@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -2677,6 +2677,56 @@ describe('Component & Jet Pack Tests', () => {
             const hasDTsFileUnderTypes = !fs.existsSync(pathToExtensionFile) && fs.existsSync(pathToExtensionDTsFile);
             assert.equal(hasDTsFileUnderTypes, true, 'Does not have the d.ts file under the types folder.');
           });
+          it ('it should not have a stub d.ts file under types folder', () => {
+            const { pathToBuiltComponents } = util.getAppPathData(appName, scriptsFolder);
+            const pathToStubDTsFile = path.join(pathToBuiltComponents, pack, '1.0.0', 'types', `${component}.d.ts`);
+            const hasNoStubFileUnderTypes = !fs.existsSync(pathToStubDTsFile);
+            assert.equal(hasNoStubFileUnderTypes, true, 'Component stub d.ts file under the types folder exists.');
+          });
+          it ('it should not have a declaration of type any in component index.d.ts in the pack in js folder', () => {
+            let hasAMatch = false;
+            const {
+              pathToBuiltComponents
+            } = util.getAppPathData(appName, scriptsFolder);
+            const pathToIndexDTsFileInJsFolder = path.join(pathToBuiltComponents, pack, '1.0.0', 'types', component, 'index.d.ts');
+
+            if (fs.existsSync(pathToIndexDTsFileInJsFolder)) {
+              const fileContent = fs.readFileSync(pathToIndexDTsFileInJsFolder, { encoding: 'utf-8' });
+              hasAMatch = fileContent.replaceAll(/\s*:\s*/g, ': ').includes(`'${pack}-${component}': any`) ||
+                fileContent.replaceAll(/\s*:\s*/g, ': ').includes(`"${pack}-${component}": any`);
+              const hasNoDeclarationTypeInIndexDtsFile = fs.existsSync(pathToIndexDTsFileInJsFolder) && !hasAMatch;
+              assert.equal(hasNoDeclarationTypeInIndexDtsFile, true, 'Component index d.ts file under the types folder has declaration of type any in js folder.');
+            }
+          });
+          it ('it should not have a declaration of type any in component index.ts and stub file in the pack in ts folder', () => {
+            let hasAMatchInIndexFile = false;
+            let hasAMatchInStubFile = false;
+            const {
+              pathToApp,
+              typescriptFolder,
+              stagingFolder,
+              componentsFolder
+            } = util.getAppPathData(appName, scriptsFolder);
+            const pathToComponentsInTsFolder = path.join(pathToApp, stagingFolder, typescriptFolder, componentsFolder);
+            const pathToIndexFileInTsFolder = path.join(pathToComponentsInTsFolder, pack, '1.0.0', component, 'index.ts');
+            const pathToStubFileInTsFolder = path.join(pathToComponentsInTsFolder, pack, '1.0.0', `${component}.ts`);
+
+            if (fs.existsSync(pathToIndexFileInTsFolder)) {
+              const fileContent = fs.readFileSync(pathToIndexFileInTsFolder, { encoding: 'utf-8'});
+              hasAMatchInIndexFile = fileContent.replaceAll(/\s*:\s*/g, ': ').includes(`'${pack}-${component}': any`) ||
+                fileContent.replaceAll(/\s*:\s*/g, ': ').includes(`"${pack}-${component}": any`);
+              const hasNoDeclarationTypeInIndexFile = fs.existsSync(pathToIndexFileInTsFolder) && !hasAMatchInIndexFile;
+              assert.equal(hasNoDeclarationTypeInIndexFile, true, 'Component index.ts file under the ts folder has declaration of type any.');
+            }
+
+            if (fs.existsSync(pathToStubFileInTsFolder)) {
+              const fileContent = fs.readFileSync(pathToStubFileInTsFolder, { encoding: 'utf-8'});
+              hasAMatchInStubFile = fileContent.replaceAll(/\s*:\s*/g, ': ').includes(`'${pack}-${component}': any`) ||
+                fileContent.replaceAll(/\s*:\s*/g, ': ').includes(`"${pack}-${component}": any`);
+              const hasNoDeclarationTypeInStubFile = fs.existsSync(pathToStubFileInTsFolder) && !hasAMatchInStubFile;
+              assert.equal(hasNoDeclarationTypeInStubFile, true, 'Component stub file under the ts folder has declaration of type any.');
+            }
+          });
         });
       }
     }
@@ -2871,11 +2921,6 @@ describe('Component & Jet Pack Tests', () => {
       }
     }
 
-/*
-  Re-visit this test case once oj-c mono-pack is published to exchange.
-  Once that is done, then there will be no need to copy the pack
-  from the oraclejet-core-pack module.
- */
 function doNotOverWriteOjCPathMappingTest({
       appName,
       scriptsFolder,
@@ -2885,12 +2930,10 @@ function doNotOverWriteOjCPathMappingTest({
           it('should not overwrite paths in main.js if component exists both in node_modules and jet_components', async () => {
             const appDir = util.getAppDir(appName);
             const {
-              pathToExchangeComponents,
-              pathToNodeModules
+              pathToExchangeComponents
             } = util.getAppPathData(appName, scriptsFolder);
-            const pathToOjCInNodeModules = path.join(pathToNodeModules, '@oracle', 'oraclejet-core-pack', 'oj-c');
+            await util.execCmd(`${util.OJET_APP_COMMAND} add component oj-c`, { cwd: appDir }, true, true);
             const pathToOjCInJetComponents = path.join(pathToExchangeComponents, 'oj-c');
-            fs.copySync(pathToOjCInNodeModules, pathToOjCInJetComponents);
             const result = buildType === 'release' ? await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true) : 
               await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(appName) }, true);
             fs.removeSync(pathToOjCInJetComponents);
@@ -2926,11 +2969,7 @@ function doNotOverWriteOjCPathMappingTest({
         })
        });
     }
-/*
-  Re-visit this test case once oj-c mono-pack is published to exchange.
-  Once that is done, then there will be no need to copy the pack
-  from the oraclejet-core-pack module.
- */
+
 function doNotOverWriteOjCPathMappingTest({
       appName,
       scriptsFolder,
@@ -2940,12 +2979,10 @@ function doNotOverWriteOjCPathMappingTest({
           it('should not overwrite paths in main.js if component exists both in node_modules and jet_components', async () => {
             const appDir = util.getAppDir(appName);
             const {
-              pathToExchangeComponents,
-              pathToNodeModules
+              pathToExchangeComponents
             } = util.getAppPathData(appName, scriptsFolder);
-            const pathToOjCInNodeModules = path.join(pathToNodeModules, '@oracle', 'oraclejet-core-pack', 'oj-c');
+            await util.execCmd(`${util.OJET_APP_COMMAND} add component oj-c`, { cwd: appDir }, true, true);
             const pathToOjCInJetComponents = path.join(pathToExchangeComponents, 'oj-c');
-            fs.copySync(pathToOjCInNodeModules, pathToOjCInJetComponents);
             const result = buildType === 'release' ? await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true) : 
               await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(appName) }, true);
             fs.removeSync(pathToOjCInJetComponents);

@@ -3,12 +3,12 @@
   "use": "local",
   "cdns": {
     "jet": {
-      "prefix": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/15.1.0/default/js",
-      "css": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/15.1.0/default/css",
-      "csspreact": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/15.1.0/3rdparty/oraclejet-preact/amd",
+      "prefix": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/16.0.0/default/js",
+      "css": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/16.0.0/default/css",
+      "csspreact": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/16.0.0/3rdparty/oraclejet-preact/amd",
       "config": "bundles-config.js"
     },
-    "3rdparty": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/15.1.0/3rdparty"
+    "3rdparty": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/16.0.0/3rdparty"
   },
   "libs": {
 
@@ -332,7 +332,7 @@
     
     "css": {
       "cdn": "3rdparty",
-      "cwd": "node_modules/require-css",
+      "cwd": "node_modules/@oracle/oraclejet/dist/js/libs/require-css",
       "debug": {
         "src":  ["css.js", "css-builder.js", "normalize.js"],
         "path": "libs/require-css/css.js",

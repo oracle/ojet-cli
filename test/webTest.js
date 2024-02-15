@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -187,6 +187,23 @@ describe('Web Test', () => {
   });
 });
 
+describe('Build with a sass file in component folder', () => {
+  if (!util.noBuild()) {
+    it('should not fail build if there is a sass file in component folder root', async  () => {
+      const { pathToApp, sourceFolder, javascriptFolder, componentsFolder } = util.getAppPathData(util.APP_NAME);
+      // add a sass file in there
+      const pathToANonComponentFolder = path.join(pathToApp, sourceFolder, javascriptFolder, componentsFolder, 'not-a-component');
+      fs.mkdirSync(pathToANonComponentFolder);
+      const pathToSassFile = path.join(pathToANonComponentFolder, 'foo.scss');
+      fs.writeFileSync(pathToSassFile, '// Here is the sample file.');
+      await util.execCmd(`${util.OJET_APP_COMMAND} add sass`, { cwd: util.getAppDir(util.APP_NAME) });
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+      fs.removeSync(pathToSassFile);
+      assert.equal(util.buildSuccess(result.stdout), true, result.error);
+    });
+  }
+});
+
 describe('Config Test', () => {
   let config;
   let ojetUtil;
@@ -296,6 +313,22 @@ if (!util.noServe()) {
       //ac.abort();
     });
 
+    it('should serve from a given server url if provided', async () => {
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --server-url=http://localhost:8080`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      assert.equal(/Connecting to http:\/\/localhost:8080/i.test(result.stdout), true, result.stdout);
+      assert.equal(/Success: Server ready: http:\/\/localhost:8080/i.test(result.stdout), true, result.stdout);
+      result.process.kill();
+      killServeWin();
+    });
+
+    it('should serve from http://localhost:8000 if an empty string or undefined values is provided as the server url', async () => {
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --server-url=`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      assert.equal(/Connecting to http:\/\/localhost:8000/i.test(result.stdout), true, result.stdout);
+      assert.equal(/Success: Server ready: http:\/\/localhost:8000/i.test(result.stdout), true, result.stdout);
+      result.process.kill();
+      killServeWin();
+    });
+
     it('should set destination to server-only when serving with the --server-only flag', async () => {
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve --server-only`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
       assert.equal(/Destination: server-only/i.test(result.stdout), true, result.stdout);
@@ -325,6 +358,45 @@ describe('add testing', () => {
     assert.equal(hasTestMainFile, true, 'Has no test-main.js file.');
     assert.equal(hasTsConfigJson, true, 'Has no tsconfig.json file.');
     
+  });
+});
+
+describe('mapping for react preact in JET templates', () => {
+  it('should check that an entry is added in the main.js on having requireMap in path_mapping.json', async () => {
+    const { pathToApp, javascriptFolder, sourceFolder, stagingFolder } = util.getAppPathData(util.APP_NAME);
+    const pathToMainJsInSrc = path.join(pathToApp, sourceFolder, javascriptFolder, 'main.js');
+    const pathToPathMappingInSrc = path.join(pathToApp, sourceFolder, javascriptFolder, 'path_mapping.json');
+    const pathToMainJsInStaging = path.join(pathToApp, stagingFolder, javascriptFolder, 'main.js');
+
+    if (fs.existsSync(pathToMainJsInSrc) && fs.existsSync(pathToPathMappingInSrc)) {
+      // Modify the path mapping entry for preact/compat to introduce the requireMap
+      // property:
+      const pathMappingObj = fs.readJSONSync(pathToPathMappingInSrc);
+      pathMappingObj.libs['preact/compat'].requireMap = ['react'];
+      fs.writeJSONSync(pathToPathMappingInSrc, pathMappingObj);
+
+      // Modify the main.js file to include the property map in the requireJs config
+      // object:
+      let mainJsContent = fs.readFileSync(pathToMainJsInSrc, { encoding: 'utf-8' });
+      mainJsContent = mainJsContent.replace(
+        'baseUrl: \'js\',', 
+        `
+        baseUrl: 'js',
+        map: 
+          // injector:requireMap
+          {
+          },
+          // endinjector`
+      );
+      fs.writeFileSync(pathToMainJsInSrc, mainJsContent, { encoding: 'utf-8' });
+    }
+
+    await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+    
+    const mainJsContentInWeb = fs.readFileSync(pathToMainJsInStaging, { encoding: 'utf-8' });
+    const regex = /\"\*\"\s*:\s*{\s*"react":\s*"preact\/compat"\s*}/gm;
+    const hasTheRequireMapping = fs.existsSync(pathToMainJsInStaging) && regex.test(mainJsContentInWeb);
+    assert.equal(hasTheRequireMapping, true, 'Has no map property in the main.js require config object.');
   });
 });
 
@@ -366,6 +438,7 @@ describe('Build with cdn', () => {
     }
     sharedTests({ debug: true });
   });
+
   describe('release build', () => {
     if (!util.noBuild()) {
       it('should build in release mode to reference the CDN', async () => {

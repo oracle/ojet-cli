@@ -1,8 +1,18 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 16.0.0
+
+* Update jest version to 29
+* Update webpack library to 5.76.0
+* Update typescript version to 5.3.2
+* Support for dependencyScope attribute in component.json
+* Added --server-url option for 'ojet serve'
+* Added a new webdriver-ts template
+* Default helper scripts now added to package.json when an app is created
+
 ### 15.1.0
 
-* Add calls to build and serve hooks during build and serve processes, respectively, for webpack projects
+* Add calls to build and serve hooks during build and serve processes, respectively, for a webpack project
 
 ### 15.0.0
 

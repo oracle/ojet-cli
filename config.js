@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -211,6 +211,9 @@ const config = {
             'exchange-url': {
               description: 'Specify the URL for the Exchange used by the app',
               parameters: '<exchange_url>'
+            },
+            global: {
+              description: 'Define a global value to use as a default when an application does not explicitly override it'
             }
           },
           examples: ['ojet configure --exchange-url=myExchange.org', 'ojet configure app --exchange-url=10.1.1.32:8010/v1/basepath/']
@@ -632,10 +635,14 @@ const config = {
             'server-only': {
               description: 'Shortcut for --destination=server-only'
             },
+            'server-url': {
+              description: 'Specify the server to serve from',
+              parameters: '<string>'
+            },
             'user-options': {
               description: 'Specify user-defined options - these are accessible in hooks config object',
               parameters: '<string>'
-            },
+            }
           },
           examples: [
             'ojet serve',

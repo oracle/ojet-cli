@@ -1,5 +1,5 @@
 import { customElement, ExtendGlobalProps } from "ojs/ojvcomponent";
-import { h, Component, ComponentChild } from "preact";
+import { Component, ComponentChild } from "preact";
 import Context = require("ojs/ojcontext");
 import { Footer } from "./footer";
 import { Header } from "./header";

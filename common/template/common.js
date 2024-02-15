@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -11,6 +11,20 @@ const fs = require('fs-extra');
 const path = require('path');
 const utils = require('../../lib/util/utils');
 const constants = require('../../lib/util/constants');
+
+function _dontCopyPackageJson(template) {
+  return constants.TEMPLATES_NO_COPY_PACKAGE.indexOf(template) > -1;
+}
+
+function _getFilesToCopy(pathToTemplates, template) {
+  let filesToCopy = utils
+    .readdirSync({ dir: pathToTemplates, recursive: true });
+  if (_dontCopyPackageJson(template)) {
+    // Must remove package.json from the list
+    filesToCopy = filesToCopy.filter(file => !file.endsWith('package.json'));
+  }
+  return filesToCopy;
+}
 
 /**
  * Inject template files into scaffolded application depending
@@ -36,8 +50,8 @@ function _injectTemplateFiles({ generator, namespace }) {
       { dereference: true }
     );
   }
-  const filesToCopy = utils
-    .readdirSync({ dir: pathToTemplates, recursive: true });
+  const filesToCopy = _getFilesToCopy(pathToTemplates, template);
+
   if (utils.isNPMTemplate(template)) {
     // is NPM template, filter out /src/* files since NPM templates
     // have all the required files and then inject remaining files from

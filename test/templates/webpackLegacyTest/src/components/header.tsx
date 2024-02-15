@@ -1,4 +1,4 @@
-import { h, Component, ComponentChild } from "preact";
+import { Component, ComponentChild } from "preact";
 import * as ResponsiveUtils from "ojs/ojresponsiveutils";
 import "ojs/ojtoolbar";
 import "ojs/ojmenu";

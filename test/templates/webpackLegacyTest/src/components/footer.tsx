@@ -1,5 +1,3 @@
-import { h } from "preact";
-
 type Props = {
   links?: FooterLink[]
 }

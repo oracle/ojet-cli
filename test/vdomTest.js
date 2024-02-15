@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2023, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -101,6 +101,23 @@ describe('VDOM Test', () => {
         } catch {
           assert.ok(false, 'Error creating component');
         }
+      });
+    }
+  });
+
+  describe('Build with a sass file in component folder', () => {
+    if (!util.noBuild()) {
+      it('should not fail build if there is a sass file in component folder root', async  () => {
+        const { pathToApp, sourceFolder } = util.getAppPathData(util.VDOM_APP_NAME);
+        // add a sass file in there
+        const pathToANonComponentFolder = path.join(pathToApp, sourceFolder, 'components', 'not-a-component');
+        fs.mkdirSync(pathToANonComponentFolder);
+        const pathToSassFile = path.join(pathToANonComponentFolder, 'foo.scss');
+        fs.writeFileSync(pathToSassFile, '// Here is the sample file.');
+        await util.execCmd(`${util.OJET_APP_COMMAND} add sass`, { cwd: util.getAppDir(util.VDOM_APP_NAME) });
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.VDOM_APP_NAME) });
+        fs.removeSync(pathToSassFile);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
     }
   });

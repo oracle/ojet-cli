@@ -1,5 +1,5 @@
 import { customElement, ExtendGlobalProps } from "ojs/ojvcomponent";
-import { h, Component, ComponentChild } from "preact";
+import { Component, ComponentChild } from "preact";
 import componentStrings = require("ojL10n!./resources/nls/@component-name@-strings");
 import "css!./@component-name@-styles.css";
 
