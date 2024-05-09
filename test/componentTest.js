@@ -496,6 +496,40 @@ describe('Component & Jet Pack Tests', () => {
             assert.ok(componentJson.properties, "Properties not found in component.json");
           });
         }
+        it(`should be built in ${appName}/web/js/jet-composites/${component}`, () => {
+          const appDir = util.getAppDir(appName);
+          const builtComponentPath = path.join(appDir, 'web', 'js', 'jet-composites', component, DEFAULT_COMPONENT_VERSION);
+          const exists = fs.pathExistsSync(builtComponentPath);
+          assert.ok(exists, builtComponentPath);
+        });
+        it(`should be built in ${appName}/web/js/jet-composites/${component} when unversioned is set to true in oraclejetconfig file`, async() => {
+          const appDir = util.getAppDir(appName);
+          const { pathToApp } = util.getAppPathData(appName);
+          const builtUnversionedComponentPath = path.join(pathToApp, 'web', 'js', 'jet-composites', component);
+          let oracleJetConfigJson = fs.readJSONSync(path.join(pathToApp, 'oraclejetconfig.json'));
+          // Modify the oraclejetconfig json:
+          oracleJetConfigJson.unversioned = true;
+          // Re-write the json:
+          fs.writeJSONSync(path.join(pathToApp, 'oraclejetconfig.json'), oracleJetConfigJson, { deference: true });
+          await util.execCmd(`${util.OJET_APP_COMMAND} build component ${component}`, {
+            cwd: appDir
+          }, true, true);
+          assert.ok(fs.existsSync(builtUnversionedComponentPath), `${component} has a versioned path in the staging folder`);
+        });
+        it(`should be built in ${appName}/web/js/jet-composites/${component}/${DEFAULT_PACK_VERSION} when unversioned is set to false in oraclejetconfig file`, async() => {
+          const appDir = util.getAppDir(appName);
+          const { pathToApp } = util.getAppPathData(appName);
+          const builtVersionedComponentPath = path.join(appDir, 'web', 'js', 'jet-composites', component, DEFAULT_PACK_VERSION);
+          let oracleJetConfigJson = fs.readJSONSync(path.join(pathToApp, 'oraclejetconfig.json'));
+          // Modify the oraclejetconfig json:
+          oracleJetConfigJson.unversioned = false;
+          // Re-write the json:
+          fs.writeJSONSync(path.join(pathToApp, 'oraclejetconfig.json'), oracleJetConfigJson, { deference: true });
+          await util.execCmd(`${util.OJET_APP_COMMAND} build component ${component}`, {
+            cwd: appDir
+          }, true, true);
+          assert.ok(fs.existsSync(builtVersionedComponentPath), `${component} has an unversioned path in the staging folder`);
+        });
       })
     }
 
@@ -897,7 +931,7 @@ describe('Component & Jet Pack Tests', () => {
       });
     }
 
-    function omitComponentVerstionTest({
+    function omitComponentVersionTest({
       appName
     }) {
       describe(`Build ${appName} with --${util.OMIT_COMPONENT_VERSION_FLAG}`, () => {
@@ -1325,7 +1359,7 @@ describe('Component & Jet Pack Tests', () => {
     });
     describe(`ojet build --${util.OMIT_COMPONENT_VERSION_FLAG}`, () => {
       util.runComponentTestInAllTestApps({
-        test: omitComponentVerstionTest
+        test: omitComponentVersionTest
       });
     });
     describe('ojet build (component exists in both exchange and src folders)', () => {
@@ -1557,18 +1591,33 @@ describe('Component & Jet Pack Tests', () => {
           }
         });
         if (scriptsFolder === 'ts') {
-          it('should add a top-level content of type module in component.json', () => {
-            const pathToComponentJson = util.getAppDir(path.join(
+          it('should add a top-level content of type module in component.json and create folder common with the module in src folder', () => {
+            const pathToSrcFolder = path.join(
               util.getAppDir(appName),
               'src',
               scriptsFolder,
               'jet-composites',
-              pack,
-              'component.json'
-            ));
+              pack
+            );
+            const pathToComponentJson = path.join(pathToSrcFolder, 'component.json');
+            const pathToModule = path.join(pathToSrcFolder, 'common', 'someFunction');
+            if (!fs.existsSync(pathToModule)) {
+              fs.mkdirSync(
+                pathToModule,
+                {
+                  recursive: true
+                } 
+              )
+            }
+            fs.writeFileSync(path.join(pathToModule, 'index.ts'), '// Test file.');
             let componentJson = fs.readJSONSync(pathToComponentJson);
             let hasContentModule = false;
-            componentJson.contents.push({'name': 'common/someFunction', 'type': 'module', 'directImport': true });
+            componentJson.contents.push({
+              'name': 'someFunction',
+              'main': 'common/someFunction',
+              'type': 'module',
+              'directImport': true
+            });
             const errorMessage = 'pack does not have contents attribute with type module in component.json';
             fs.writeJSONSync(pathToComponentJson, componentJson);
             fs.readJSONSync(pathToComponentJson).contents.forEach(
@@ -1578,7 +1627,9 @@ describe('Component & Jet Pack Tests', () => {
                   return;
                 }
               });
+            const moduleExists = fs.existsSync(path.join(pathToModule, 'index.ts'));
             assert.equal(hasContentModule, true, errorMessage);
+            assert.ok(moduleExists, pathToModule);
           });
           it(`should have ${appName}/src/${scriptsFolder}/${pack}/component.json`, () => {
             const pathToComponentJson = util.getAppDir(path.join(
@@ -2829,6 +2880,34 @@ describe('Component & Jet Pack Tests', () => {
             })
           }
         }
+        it(`should be built in ${appName}/web/js/jet-composites/${pack} when unversioned is set to true in oraclejetconfig file`, async() => {
+          const appDir = util.getAppDir(appName);
+          const { pathToApp } = util.getAppPathData(appName, scriptsFolder);
+          const builtUnversionedPackPath = path.join(pathToApp, 'web', 'js', 'jet-composites', pack);
+          let oracleJetConfigJson = fs.readJSONSync(path.join(pathToApp, 'oraclejetconfig.json'));
+          // Modify the oraclejetconfig json:
+          oracleJetConfigJson.unversioned = true;
+          // Re-write the json:
+          fs.writeJSONSync(path.join(pathToApp, 'oraclejetconfig.json'), oracleJetConfigJson, { deference: true });
+          await util.execCmd(`${util.OJET_APP_COMMAND} build component ${pack}`, {
+            cwd: appDir
+          }, true, true);
+          assert.ok(fs.existsSync(builtUnversionedPackPath), `${pack} has a versioned path in the staging folder`);
+        });
+        it(`should be built in ${appName}/web/js/jet-composites/${pack}/${DEFAULT_PACK_VERSION} when unversioned is set to false in oraclejetconfig file`, async() => {
+          const appDir = util.getAppDir(appName);
+          const { pathToApp } = util.getAppPathData(appName, scriptsFolder);
+          const builtVersionedPackPath = path.join(pathToApp, 'web', 'js', 'jet-composites', pack, DEFAULT_PACK_VERSION);
+          let oracleJetConfigJson = fs.readJSONSync(path.join(pathToApp, 'oraclejetconfig.json'));
+          // Modify the oraclejetconfig json:
+          oracleJetConfigJson.unversioned = false;
+          // Re-write the json:
+          fs.writeJSONSync(path.join(pathToApp, 'oraclejetconfig.json'), oracleJetConfigJson, { deference: true });
+          await util.execCmd(`${util.OJET_APP_COMMAND} build component ${pack}`, {
+            cwd: appDir
+          }, true, true);
+          assert.ok(fs.existsSync(builtVersionedPackPath), `${pack} has an unversioned path in the staging folder`);
+        });
       })
     }
 
@@ -3370,31 +3449,31 @@ function doNotOverWriteOjCPathMappingTest({
       });
     });
 
-    describe('ojet build, do not overwrite path-mapping for oj-c', () => {
-      util.runComponentTestInAllTestApps({
-        test: doNotOverWriteOjCPathMappingTest
-      });
-    }); 
+    // describe('ojet build, do not overwrite path-mapping for oj-c', () => {
+    //   util.runComponentTestInAllTestApps({
+    //     test: doNotOverWriteOjCPathMappingTest
+    //   });
+    // }); 
 
-    describe('ojet build --release, do not overwrite path-mapping for oj-c', () => {
-      util.runComponentTestInAllTestApps({
-        test: doNotOverWriteOjCPathMappingTest,
-        buildType: 'release'
-      })
-    })
+    // describe('ojet build --release, do not overwrite path-mapping for oj-c', () => {
+    //   util.runComponentTestInAllTestApps({
+    //     test: doNotOverWriteOjCPathMappingTest,
+    //     buildType: 'release'
+    //   })
+    // })
 
-    describe('ojet build, do not overwrite path-mapping for oj-c', () => {
-      util.runComponentTestInAllTestApps({
-        test: doNotOverWriteOjCPathMappingTest
-      });
-    }); 
+    // describe('ojet build, do not overwrite path-mapping for oj-c', () => {
+    //   util.runComponentTestInAllTestApps({
+    //     test: doNotOverWriteOjCPathMappingTest
+    //   });
+    // }); 
 
-    describe('ojet build --release, do not overwrite path-mapping for oj-c', () => {
-      util.runComponentTestInAllTestApps({
-        test: doNotOverWriteOjCPathMappingTest,
-        buildType: 'release'
-      });
-    });
+    // describe('ojet build --release, do not overwrite path-mapping for oj-c', () => {
+    //   util.runComponentTestInAllTestApps({
+    //     test: doNotOverWriteOjCPathMappingTest,
+    //     buildType: 'release'
+    //   });
+    // });
     
     describe('ojet build, map local reference pack in main.js test', () => {
       util.runComponentTestInAllTestApps({

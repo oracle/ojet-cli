@@ -1,5 +1,9 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 16.1.0
+
+* Update version of Express to 4.19.2
+
 ### 16.0.0
 
 * Update jest version to 29
