@@ -633,7 +633,7 @@ const config = {
               default: '35729'
             },
             'server-only': {
-              description: 'Shortcut for --destination=server-only'
+              description: 'Start server without opening browser'
             },
             'server-url': {
               description: 'Specify the server to serve from',

@@ -48,7 +48,7 @@ describe('PCSS Theme Test', () => {
     const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --sass`, {cwd: appDir}, true);
     // Delete the jet-composite folder created after running ojet build --sass
     fs.rmdirSync(pathToJetCompositeFolder, {recursive : true});
-    assert.ok(/node-sass is not installed. To install it, run: ojet add sass./.test(result.stdout), true, result.stdout);
+    assert.ok(/Sass compile skipped: node-sass is not installed. To install it, run ojet add sass./.test(result.stdout), true, result.stdout);
   });
 
   it('Should throw a warning on creating a custom theme that defaults to alta as base-theme.', async () => {

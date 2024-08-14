@@ -132,7 +132,9 @@ describe('Typescript Test', () => {
     it('should not have *.ts compiled to *.js because of noEmit in base_tsconfig.json', () => {
       const { pathToApp, sourceFolder, typescriptFolder, stagingFolder, javascriptFolder } = util.getAppPathData(util.TS_APP_NAME);
       const typescriptFilesPattern = path.join(pathToApp, sourceFolder, typescriptFolder, '**/*.ts');
-      const typescriptFiles = glob.sync(typescriptFilesPattern);
+      // glob now requires standard pattern
+      const convertedPattern = typescriptFilesPattern.split(path.sep).join(path.posix.sep);
+      const typescriptFiles = glob.sync(convertedPattern);
       typescriptFiles.forEach((file) => {
         const stagingPath = path.normalize(file)
           .replace(

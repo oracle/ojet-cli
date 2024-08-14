@@ -1,4 +1,4 @@
-# @oracle/ojet-cli 16.1.0
+# @oracle/ojet-cli 17.0.0
 
 ## About the module
 This module contains a command line interface for Oracle JET web application development.
@@ -59,7 +59,7 @@ Or view help on adding a plugin:
 ojet help add plugin
 ```
 
-For more information on the Oracle JET CLI, refer to the [Oracle JET Developers Guide](http://www.oracle.com/pls/topic/lookup?ctx=jet1610&id=homepage).
+For more information on the Oracle JET CLI, refer to the [Oracle JET Developers Guide](http://www.oracle.com/pls/topic/lookup?ctx=jet1700&id=homepage).
 
 ## Contributing
 This project is not accepting external contributions at this time. For bugs or enhancement requests, please file a GitHub issue unless it’s security related. When filing a bug remember that the better written the bug is, the more likely it is to be fixed. If you think you’ve found a security vulnerability, do not raise a GitHub issue and follow the instructions in our [security policy](./SECURITY.md).

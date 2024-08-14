@@ -1,5 +1,11 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 17.0.0
+
+* New applications created with ojet will now require nodejs versions 16 or higher
+* In the oraclejetconfig.json file, a new property called unversioned has been added. This property controls whether components in the staging folder are versioned. If unversioned is set to true, components will not be versioned; if set to false, components will be versioned. This setting will override the --omit-component-version flag during the build process. If unversioned is not defined, then the --omit-component-version flag will be respected. By default, unversioned is set to true.
+* Update typescript version to 5.4.5
+
 ### 16.1.0
 
 * Update version of Express to 4.19.2

@@ -87,6 +87,7 @@ function _copyNpmTemplate(generator, templateSpec, destination) {
       let indexHTML = fs.readFileSync(filePath, { encoding: 'utf-8' });
       const scriptsInjector = injectorUtils.scriptsInjector;
       const themeInjector = injectorUtils.themeInjector;
+      const fontInjector = injectorUtils.fontInjector;
       // remove content between injector:scripts token
       indexHTML = injectorUtils.removeInjectorTokensContent({
         content: indexHTML,
@@ -108,6 +109,17 @@ function _copyNpmTemplate(generator, templateSpec, destination) {
         eol: injectorUtils.getLineEnding(indexHTML),
         startTag: `\t\t${themeInjector.startTag}`,
         endTag: `\t\t${themeInjector.endTag}`
+      });
+      // remove content between injector:font token
+      indexHTML = injectorUtils.removeInjectorTokensContent({
+        content: indexHTML,
+        pattern: injectorUtils.getInjectorTagsRegExp(
+          fontInjector.startTag,
+          fontInjector.endTag
+        ),
+        eol: injectorUtils.getLineEnding(indexHTML),
+        startTag: `\t\t${fontInjector.startTag}`,
+        endTag: `\t\t${fontInjector.endTag}`
       });
       // write to /src
       filePathDest = path.join(destination, '..', filePathFromTemplateRoot);

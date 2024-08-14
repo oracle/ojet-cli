@@ -42,6 +42,13 @@ describe('PWA Test', () => {
       );
       assert.ok(/<script src="swinit\.js"><\/script>/.test(appIndexHtml), appIndexHtml);
     });
+    it('should have added link tags for splash-screens', () => {
+      const appIndexHtml = fs.readFileSync(
+        path.join(appDirSrc, 'index.html'),
+        { encoding: 'utf-8' }
+      );
+      assert.ok(/<!--\s*Splash\s*screens\s*-->/.test(appIndexHtml), appIndexHtml);
+    });
     it('should have a swinit.js file', () => {
       const pathToSwInit = path.resolve(appDirSrc, 'swinit.js');
       assert.ok(fs.pathExistsSync(pathToSwInit), pathToSwInit);
@@ -56,6 +63,37 @@ describe('PWA Test', () => {
         { encoding: 'utf-8' }
       );
       assert.ok(/<link rel="manifest" href="manifest\.json">/.test(appIndexHtml), appIndexHtml);
-    }); 
+    });
+    it('should have a manifest.json file and correct properties', () => {
+      const pathToManifest = path.resolve(appDirSrc, 'manifest.json');
+      const manifestObj = fs.readJSONSync(pathToManifest);
+      const manifestProperties = Object.getOwnPropertyNames(manifestObj);      
+      const requiredProperties = [
+        'name',
+        'short_name',
+        'description',
+        'start_url',
+        'scope',
+        'display',
+        'background_color',
+        'theme_color',
+        'orientation',
+        'icons',
+        'categories',
+        'lang',
+        'dir',
+      ];
+      const hasCorrectProperties = requiredProperties.every((property) => {
+        return manifestProperties.includes(property);
+      });
+      assert.ok(fs.pathExistsSync(pathToManifest), pathToManifest);
+      assert.equal(hasCorrectProperties, true, 'Manifest json file does not have the required properties.')
+    });
+    it('should have an assets folder with icons and screenshots subfolders', () => {
+      const pathToSplashscreens = path.resolve(appDirSrc, 'assets', 'splashscreens');
+      const pathToIcons = path.resolve(appDirSrc, 'assets', 'icons');
+      assert.ok(fs.pathExistsSync(pathToSplashscreens), pathToSplashscreens);
+      assert.ok(fs.pathExistsSync(pathToIcons), pathToIcons);
+    });
   });
 });

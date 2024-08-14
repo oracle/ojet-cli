@@ -26,13 +26,6 @@ const COMPONENT_TS_APP_NAME = 'webTsComponentTest';
 
 const JAVASCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_APP_NAME, scriptsFolder: 'js' };
 const TYPESCRIPT_COMPONENT_APP_CONFIG = { appName: COMPONENT_TS_APP_NAME, scriptsFolder: 'ts' };
-const COMPONENT_TEST_APP_CONFIGS = [JAVASCRIPT_COMPONENT_APP_CONFIG, TYPESCRIPT_COMPONENT_APP_CONFIG];
-
-function runComponentTestInAllTestApps(options) {
-  COMPONENT_TEST_APP_CONFIGS.forEach((config) => {
-    runComponentTestInTestApp(config, options);
-  })
-}
 
 function runComponentTestInTestApp(config, options) {
   describe(config.appName, () => {
@@ -277,8 +270,6 @@ module.exports = {
     fs.emptyDirSync(appDir);
     fs.rmdirSync(appDir);
   },
-
-  runComponentTestInAllTestApps,
 
   runComponentTestInTestApp,
 

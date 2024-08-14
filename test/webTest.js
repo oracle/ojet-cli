@@ -146,13 +146,13 @@ describe('Web Test', () => {
   //
   // paths: {
   // ...
-  // "test-component":"jet-composites/test-component/1.0.0"
+  // "test-component":"jet-composites/test-component"
   // ...
   // }
   //
   // And for the release build, we verify that paths has the minified component:
   //
-  // "test-component":"jet-composites/test-component/1.0.0/min"
+  // "test-component":"jet-composites/test-component/min"
   //
   describe('BuildWithComponent', () => {
     if (!util.noBuild()) {
@@ -169,17 +169,17 @@ describe('Web Test', () => {
         await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
         const mainContent = fs.readFileSync(path.join(appDir, 'web', 'js', 'main.js'));
 
-        assert.equal(mainContent.toString().match(`jet-composites/${testComp}/1.0.0`), `jet-composites/${testComp}/1.0.0`,
+        assert.equal(mainContent.toString().match(`jet-composites/${testComp}`), `jet-composites/${testComp}`,
           `main.js should contain the debug component ${testComp}`);
 
-        assert.equal(mainContent.toString().match(`jet-composites/${testComp}/1.0.0/min`), null,
+        assert.equal(mainContent.toString().match(`jet-composites/${testComp}/min`), null,
           `main.js should not contain the minified component ${testComp}`);
       });
       it('release build:  path mapping to minified component', async () => {
         await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
         const{ pathToBundleJs } = util.getAppPathData(util.APP_NAME);
         const bundleContent = fs.readFileSync(pathToBundleJs);
-        assert.equal(bundleContent.toString().match(`jet-composites/${testComp}/1.0.0/min`), `jet-composites/${testComp}/1.0.0/min`,
+        assert.equal(bundleContent.toString().match(`jet-composites/${testComp}/min`), `jet-composites/${testComp}/min`,
           `bundle.js should contain the minified component ${testComp}`);
 
       });
