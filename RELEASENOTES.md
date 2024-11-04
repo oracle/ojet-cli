@@ -1,5 +1,9 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 17.1.0
+
+* node-sass updated to 9.0.0
+
 ### 17.0.0
 
 * New applications created with ojet will now require nodejs versions 16 or higher

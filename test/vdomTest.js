@@ -184,19 +184,87 @@ describe('VDOM Test', () => {
       });
 
       it('should have appropriate testing files on running add testing', async () => {
-        await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+        const { pathToSourceComponents, pathToApp } = util.getAppPathData(util.VDOM_APP_NAME);
+        const hasComponentTags = (fileContent) => (/@component@/.test(fileContent) || /@camelcasecomponent-name@/.test(fileContent));
+        const pathToCompOneTests = path.join(pathToSourceComponents, 'comp-1', '__tests__', 'comp-1.spec.tsx');
+        const pathToCompOnePackTests = path.join(pathToSourceComponents, 'pack-1', 'comp-1', '__tests__', 'comp-1.spec.tsx');
+        const pathToCompTwoTests = path.join(pathToSourceComponents, 'comp-2', '__tests__', 'comp-2.spec.tsx');
+        const pathToCompTwoPackTests = path.join(pathToSourceComponents, 'pack-1', 'comp-2', '__tests__', 'comp-2.spec.tsx');
+      
         await util.execCmd(`${util.OJET_APP_COMMAND} create pack pack-1`, { cwd: appDir }, true, true);
         await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-1`, { cwd: appDir }, true, true);
         await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-1 --pack=pack-1`, { cwd: appDir }, true, true);
 
-        const { pathToApp, pathToSourceComponents } = util.getAppPathData(util.VDOM_APP_NAME);
+        const hasCompOneTestsBeforeAddCommand = fs.existsSync(pathToCompOneTests);
+        const hasCompOnePackTestsBeforeAddCommand = fs.existsSync(pathToCompOnePackTests);
+     
+        await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+
         const hasTestConfigFile = fs.existsSync(path.join(pathToApp, 'test-config', 'jest.config.js'));
-        const hasComponentTestFile = fs.existsSync(path.join(pathToSourceComponents, 'comp-1', '__tests__', 'comp-1.spec.tsx'));
-        const hasComponentInPackTestFile = fs.existsSync(path.join(pathToSourceComponents, 'pack-1', 'comp-1', '__tests__', 'comp-1.spec.tsx'));
+
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-2`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-2 --pack=pack-1`, { cwd: appDir }, true, true);
+
+        const hasCompOneTestsAfterAddCommand = fs.existsSync(pathToCompOneTests);
+        const hasCompTwoTestsAfterAddCommand = fs.existsSync(pathToCompTwoTests);
+        const hasCompOnePackTestsAfterAddCommand = fs.existsSync(pathToCompOnePackTests);
+        const hasCompTwoPackTestsAfterAddCommand = fs.existsSync(pathToCompTwoPackTests);
+
+        let fileContent = fs.readFileSync(pathToCompOneTests, { encoding: 'utf-8' });
+
+        const hasTagsInCompOneTest = hasComponentTags(fileContent);
+
+        fileContent = fs.readFileSync(pathToCompOnePackTests, { encoding: 'utf-8' });
+
+        const hasTagsInCompOnePackTest = hasComponentTags(fileContent);
+
+        fileContent = fs.readFileSync(pathToCompTwoTests, { encoding: 'utf-8' });
+
+        const hasTagsInCompTwoTest = hasComponentTags(fileContent);
+
+        fileContent = fs.readFileSync(pathToCompTwoPackTests, { encoding: 'utf-8' });
+
+        const hasTagsInCompTwoPackTest = hasComponentTags(fileContent);
 
         assert.equal(hasTestConfigFile, true, 'Has no jest.config.js file.');
-        assert.equal(hasComponentTestFile, true, 'Has no component test file.');
-        assert.equal(hasComponentInPackTestFile, true, 'Has no component in pack test file.'); 
+        assert.equal(!hasCompOneTestsBeforeAddCommand, true, 'Has component test files before runnning ojet add testing.');
+        assert.equal(!hasCompOnePackTestsBeforeAddCommand, true, 'Component in a pack has test files before runnning ojet add testing.');
+        assert.equal(hasCompOneTestsAfterAddCommand, true, 'Has no component test files in comp-1.');
+        assert.equal(hasCompTwoTestsAfterAddCommand, true, 'Has no component test files in comp-2.');
+        assert.equal(hasCompOnePackTestsAfterAddCommand, true, 'Has no component test files in comp-1 of pack-1.');
+        assert.equal(hasCompTwoPackTestsAfterAddCommand, true, 'Has no component test files in comp-2 of pack-1.');
+        assert.equal(!hasTagsInCompOneTest, true, 'Has no tags in component test files in comp-1.');
+        assert.equal(!hasTagsInCompOnePackTest, true, 'Has no tags in component test files in comp-1 of pack-1.');
+        assert.equal(!hasTagsInCompTwoTest, true, 'Has no tags in component test files in in comp-2.');
+        assert.equal(!hasTagsInCompTwoPackTest, true, 'Has no tags in component test files in comp-2 of pack-1.'); 
+      });
+
+      it('should not override pre-existing mappings after running ojet build (or with --release)', async () => {
+        const { pathToApp } = util.getAppPathData(util.VDOM_APP_NAME);
+        const configFilePath = path.join(pathToApp, 'test-config', 'jest.config.js');
+        let fileContent = fs.readFileSync(configFilePath, 'utf8');
+        const getExctractedRegexData = () => {
+          const regex = /(?<=moduleNameMapper:\s)\s*\s*{[\s\S]*?\}/s;
+          const extractedObj = fileContent.match(regex)[0];
+          return {
+            moduleNameMapper : JSON.parse(extractedObj) || {},
+            extractedObjString: extractedObj
+          };
+        };
+        let configObj = getExctractedRegexData();
+        configObj.moduleNameMapper['translation/(.*)'] = '<rootDir>/web/js/translation/$1';
+        const updatedFileContent = fileContent.replace(configObj.extractedObjString, JSON.stringify(configObj.moduleNameMapper, null, 2));
+        fs.writeFileSync(configFilePath, updatedFileContent, 'utf-8');
+        // Build the project. This will update the module name mapper to add component's mappings:
+        await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
+        
+        // Read the file again:
+        fileContent = fs.readFileSync(configFilePath, 'utf8');
+        // Retrieve the config object again to check that moduleNameMapper is not overwritten:
+        configObj = getExctractedRegexData();
+        const hasTranslationMapping =  Object.getOwnPropertyNames(configObj.moduleNameMapper).includes('translation/(.*)');
+        // Check that the components' mapping exist and that it does not override the mapping for translation entry:
+        assert.equal(hasTranslationMapping, true, 'jest config file module name mapper contents get overwritten on running building the project.');
       });
 
       it('should add test and debug subproperties if absent in the scripts property in package.json of the project on running add testing', async () => {

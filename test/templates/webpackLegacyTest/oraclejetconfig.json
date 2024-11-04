@@ -16,7 +16,7 @@
     }
   },
   "defaultBrowser": "chrome",
-  "sassVer": "8.0.0",
+  "sassVer": "9.0.0",
   "typescriptLibraries": "typescript@5.4.5 yargs-parser@~13.1.2",
   "webpackLibraries": "webpack@5.76.0 @types/node@18.16.3 webpack-dev-server style-loader css-loader ts-loader@8.4.0 raw-loader noop-loader html-webpack-plugin html-replace-webpack-plugin copy-webpack-plugin @prefresh/webpack @prefresh/babel-plugin webpack-merge compression-webpack-plugin mini-css-extract-plugin clean-webpack-plugin css-fix-url-loader",
   "defaultTheme": "redwood",
