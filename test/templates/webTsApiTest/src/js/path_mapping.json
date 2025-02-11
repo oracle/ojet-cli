@@ -3,12 +3,12 @@
   "use": "local",
   "cdns": {
     "jet": {
-      "prefix": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/17.1.0/default/js",
-      "css": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/17.1.0/default/css",
-      "csspreact": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/17.1.0/3rdparty/oraclejet-preact/amd",
+      "prefix": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/18.0.0/default/js",
+      "css": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/18.0.0/default/css",
+      "csspreact": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/18.0.0/3rdparty/oraclejet-preact/amd",
       "config": "bundles-config.js"
     },
-    "3rdparty": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/17.1.0/3rdparty"
+    "3rdparty": "https://ci-cloud.us.oracle.com/jenkins/uitech/job/CDN_13.0.0/lastSuccessfulBuild/artifact/cdn/18.0.0/3rdparty"
   },
   "libs": {
 
@@ -33,12 +33,12 @@
       "debug": {
         "src": "jquery.js",
         "path": "libs/jquery/jquery-#{version}.js",
-        "cdnPath": "jquery/jquery-3.6.0"
+        "cdnPath": "jquery/jquery-3.7.1"
       },
       "release": {
         "src": "jquery.min.js",
         "path": "libs/jquery/jquery-#{version}.min.js",
-        "cdnPath": "jquery/jquery-3.6.0.min"
+        "cdnPath": "jquery/jquery-3.7.1.min"
       }
     },
 
@@ -48,12 +48,12 @@
       "debug": {
         "src": ["*.js", "widgets/draggable.js", "widgets/mouse.js", "widgets/sortable.js", "vendor/jquery-color/jquery.color.js"],
         "path": "libs/jquery/jqueryui-amd-#{version}",
-        "cdnPath": "jquery/jqueryui-amd-1.13.0"
+        "cdnPath": "jquery/jqueryui-amd-1.14.1"
       },
       "release": {
         "src": ["*.js", "widgets/draggable.js", "widgets/mouse.js", "widgets/sortable.js", "vendor/jquery-color/jquery.color.js"],
         "path": "libs/jquery/jqueryui-amd-#{version}.min",
-        "cdnPath": "jquery/jqueryui-amd-1.13.0.min"
+        "cdnPath": "jquery/jqueryui-amd-1.14.1.min"
       }
     },
 

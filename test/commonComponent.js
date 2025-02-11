@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -16,23 +16,25 @@ const util = require('./util');
 
 const EXCHANGE_COMPONENT_PACK = 'oj-dynamic';
 const EXCHANGE_COMPONENT_PACK_MEMBER = 'form';
-const COMPONENT_NAME = 'comp-1';
+const COMPONENT_NAME = 'comp-one';
+const INVALID_COMPONENT_NAME = 'comp-1';
 const DEFAULT_COMPONENT_VERSION = '1.0.0';
 const LOADERLESS_COMPONENT_NAME = 'loaderless-component';
 // Component with type:demo
 const COMPONENT_NAME_DEMO = 'comp-demo';
-const VCOMPONENT_NAME = 'vcomp-1';
+const VCOMPONENT_NAME = 'vcomp-one';
+const VBCS_PATTERN_COMPONENT_NAME = 'pat-one';
 
-const BUNDLE_COMPONENT_NAME1 = 'bundlecomp-1';
-const BUNDLE_COMPONENT_NAME2 = 'bundlecomp-2';
+const BUNDLE_COMPONENT_NAME1 = 'bundlecomp-one';
+const BUNDLE_COMPONENT_NAME2 = 'bundlecomp-two';
 
-const BUNDLE_VCOMPONENT_NAME1 = 'bundlevcomp-1';
-const BUNDLE_VCOMPONENT_NAME2 = 'bundlevcomp-2';
+const BUNDLE_VCOMPONENT_NAME1 = 'bundlevcomp-one';
+const BUNDLE_VCOMPONENT_NAME2 = 'bundlevcomp-two';
 
 const RESOURCE_COMPONENT_NAME = 'resources';
 
 const DEFAULT_PACK_VERSION ='1.0.0';
-const BUNDLE_PACK_NAME = 'packbundle-1';
+const BUNDLE_PACK_NAME = 'packbundle-one';
 
 // Component with type:composite
 const COMPONENT_NAME_COMPOSITE = 'comp-composite';
@@ -52,7 +54,8 @@ const RESOURCE_COMPONENT_OPTIMIZED_FILE = 'index.js';
 
 const BUNDLE_NAME = 'component-bundle';
 
-const PACK_NAME = 'pack-1';
+const PACK_NAME = 'pack-one';
+const INVALID_PACK_NAME = 'pack-1';
 const MONO_PACK_NAME = 'mono-pack';
 const EXCHANGE_PACK = 'oj-gbu-app';
 const EXCHANGE_PACK_VERSION = '3.0.0';
@@ -71,7 +74,7 @@ const EXPECTED_STRIPPED_JSON = {"name":"comp-strip","version":"1.0.0","propertie
     // The pack's vcomponent will have:
     //   - missing ojmetadata from the vcomponent's .tsx file 
     //     (including version, jetVersion, pack)
-    //     (e.g: webTsComponentTest/src/ts/pack-1/vcomp-1/vcomp-1.tsx
+    //     (e.g: webTsComponentTest/src/ts/pack-one/vcomp-one/vcomp-one.tsx
     //   - missing dependencies from the pack's component.json.
     // 
         function _createVComponentInPackTest({
@@ -126,7 +129,7 @@ const EXPECTED_STRIPPED_JSON = {"name":"comp-strip","version":"1.0.0","propertie
                 //   - delete "ojmetadata pack" 
                 // So we test it by just validating the pack build 
                 // and comparing the version etc. info from the component.json's under
-                // webTsComponentTest/web/js/jet-composites/pack-1
+                // webTsComponentTest/web/js/jet-composites/pack-one
                 // (this verfication is done in buildPackTest())
                 //
                 if (pack === PACK_NAME) {
@@ -540,6 +543,26 @@ function _createPackTest({
         });
       }
     });
+  };
+
+function _createPackFailureTest({
+    appName,
+    pack
+  }) {
+    describe('check pack create failure', () => {
+      it('should fail with "The second segment of the pack name must not start with a digit."', async () => {
+        const task = 'create';
+        const result = await _execComponentCommand({
+          task,
+          app: appName,
+          pack
+        });
+        assert.ok(util[`${task}ComponentFailure`]({
+          pack,
+          stdout: result.stdout
+        }), result.error);
+      })
+    })
   };
 
 function _buildPackTest({
@@ -1158,7 +1181,7 @@ function _buildReleaseCheckBundle({
 
       it('release build: path mapping to minified bundle', async () => {
         // The following entry should be in paths:
-        // "packbundle-1":"jet-composites/packbundle-1/min"
+        // "packbundle-one":"jet-composites/packbundle-one/min"
         const bundleContent = _getBundleJsContent({
           appName
         });
@@ -1334,6 +1357,7 @@ function _buildComponentPackAppTest({
     component,
     vcomponent,
     resourceComponent,
+    vbcsPatternComponent,
     release,
     scriptsFolder
   }) {
@@ -1351,7 +1375,33 @@ function _buildComponentPackAppTest({
         }
         fs.writeFileSync(path.join(pathToPackInSrc, 'extension', 'extension.js'), '// Test file.');
         assert.ok(path.join(pathToPackInSrc, 'extension'));
-      })
+      });
+      if (release) {
+        it(`should add resources for vbcs-pattern component type`, async () => {
+          const {
+            pathToSourceComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          const pathToPackInSrc = path.join(pathToSourceComponents, pack);
+          const pathToPackComponentJson = path.join(pathToPackInSrc, 'component.json');
+
+          // Create the pat-1 folder and its contents
+          const pathToVbcsPattern = path.join(pathToPackInSrc, vbcsPatternComponent);
+          fs.mkdirSync(pathToVbcsPattern);
+          const pathToHtmlTemplate = path.join(pathToVbcsPattern, 'html.template');
+          fs.writeFileSync(pathToHtmlTemplate, '');
+          const pathToTestPatternJson = path.join(pathToVbcsPattern, 'testPattern.json');
+          fs.writeFileSync(pathToTestPatternJson, '{}');
+          const pathToComponentJson = path.join(pathToVbcsPattern, 'component.json');
+          const componentJsonContent = {"name":`${vbcsPatternComponent}`,"pack":`${pack}`,"displayName":"Collapsing Page Section","description":"Stamps out a page section with a title and collapsing content area","type":"vbcs-pattern","version":"1.0.0","jetVersion":"^16.0.0","extension":{"vbdt":{"template":{"content":{"$ref":"html.template"}},"assetDefinition":{"$ref":"testPattern.json"}}}};
+          fs.writeJSONSync(pathToComponentJson, componentJsonContent, { encoding: 'utf-8', spaces: 2 });
+
+          // Assert that the vbcs-pattern component and its contents exist
+          assert.ok(fs.existsSync(pathToVbcsPattern), `${vbcsPatternComponent} folder does not exist`);
+          assert.ok(fs.existsSync(pathToHtmlTemplate), 'html.template does not exist');
+          assert.ok(fs.existsSync(pathToTestPatternJson), 'testPattern.json does not exist');
+          assert.ok(fs.existsSync(pathToComponentJson), 'component.json does not exist');
+        });
+      }
       if (!util.noBuild()) {
         it(`should build ${buildType} component app`, async () => {
           const appDir = util.getAppDir(appName);
@@ -1411,7 +1461,21 @@ function _buildComponentPackAppTest({
           } = util.getAppPathData(appName, scriptsFolder);
           const pathToPackInWeb = path.join(pathToBuiltComponents, pack);
           assert.ok(fs.existsSync(path.join(pathToPackInWeb, 'extension')));
-        })
+        });
+        
+        it(`should have html.template, component.json, and testPattern.json in the min folder under the pack folder in staging`, async () => {
+          const {
+            pathToBuiltComponents
+          } = util.getAppPathData(appName, scriptsFolder);
+          const pathToPackInStaging = path.join(pathToBuiltComponents, pack, 'min');
+          const pathToHtmlTemplateInStaging = path.join(pathToPackInStaging, vbcsPatternComponent, 'html.template');
+          const pathToComponentJsonInStaging = path.join(pathToPackInStaging, vbcsPatternComponent, 'component.json');
+          const pathToTestPatternJsonInStaging = path.join(pathToPackInStaging, vbcsPatternComponent, 'testPattern.json');
+
+          assert.ok(fs.existsSync(pathToHtmlTemplateInStaging), 'html.template does not exist in staging');
+          assert.ok(fs.existsSync(pathToComponentJsonInStaging), 'component.json does not exist in staging');
+          assert.ok(fs.existsSync(pathToTestPatternJsonInStaging), 'testPattern.json does not exist in staging');
+        });
         _packMemberExistenceTest({
           packDir: packMinDir,
           component,
@@ -1798,7 +1862,7 @@ function _vcomponentApiDocumentationComponentTest({
           const result = await util.execCmd(`${util.OJET_APP_COMMAND} add docgen`, {
             cwd: appDir
           }, true);
-          assert.ok(/Success: add jsdoc complete/.test(result.stdout), result.stdout);
+          assert.ok(/Success: API docgen setup finished./.test(result.stdout), result.stdout);
         });
         it('should have apidoc_templates html files after running ojet add docgen', () => {
           const {
@@ -1808,6 +1872,11 @@ function _vcomponentApiDocumentationComponentTest({
           const pathToApiDocTemplate = path.join(pathToApp, sourceFolder, 'apidoc_templates');
           assert.ok(fs.existsSync(pathToApiDocTemplate), 'apidoc_templates folder does not exist in source folder.');
         });
+        it('should have enableDocGen property is set to true in oraclejetconfig.json file after running ojet add docgen', () => {
+          const { pathToApp } = util.getAppPathData(appName, scriptsFolder);
+          const { enableDocGen } = fs.readJSONSync(path.join(pathToApp, 'oraclejetconfig.json'));
+          assert.equal(enableDocGen, true, 'enableDocGen property is not set to true in oraclejetconfig.json even after running ojet add docgen');
+        });
         it('should have generated api docs in web after building the component', async () => {
           const {
             pathToBuiltComponents
@@ -1815,10 +1884,15 @@ function _vcomponentApiDocumentationComponentTest({
           await util.execCmd(`${util.OJET_APP_COMMAND} build component ${component}`, {
             cwd: appDir
           }, true);
+          const apiDocMetadataFile = path.join(pathToBuiltComponents, component, `${util.toCamelCase(component)}.json`);
           const pathToComponentDocsInWeb = path.join(pathToBuiltComponents, component, 'docs');
+          
+          const hasApiDocMetadata = fs.pathExistsSync(apiDocMetadataFile);
           const hasDocsIndexFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, 'index.html'));
           const hasComponentHtmlFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, `${component}.html`));
           const hasDocsJsonFile = fs.pathExistsSync(path.join(pathToComponentDocsInWeb, 'jsDocMd.json'));
+
+          assert.ok(hasApiDocMetadata, `Does not have ${apiDocMetadataFile}`);
           assert.ok(hasDocsIndexFile, "Does not have index.html in docs folder.");
           assert.ok(hasComponentHtmlFile, `Does not have ${component}.html in docs folder.`);
           assert.ok(hasDocsJsonFile, "Does not have jsDocMd.json in docs folder.");
@@ -2356,17 +2430,17 @@ function _addComponentTestFilesTest({
         const result = await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, {
           cwd: appDir
         }, true, true);
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component ${component}-1`, {
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component ${component}-one`, {
           cwd: appDir
         }, true, true);
-        const pathToComponentTestFiles = path.join(pathToSourceComponents, `${component}-1`, '__tests__');
-        const hasKnockoutSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-1-knockout.spec.ts`));
-        const hasUiSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-1-ui.spec.ts`));
-        const hasViewModelSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-1-viewmodel.spec.ts`));
+        const pathToComponentTestFiles = path.join(pathToSourceComponents, `${component}-one`, '__tests__');
+        const hasKnockoutSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-one-knockout.spec.ts`));
+        const hasUiSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-one-ui.spec.ts`));
+        const hasViewModelSpecFile = fs.pathExistsSync(path.join(pathToComponentTestFiles, `${component}-one-viewmodel.spec.ts`));
         assert.ok(/Success: add testing complete/.test(result.stdout), result.stdout);
-        assert.ok(hasKnockoutSpecFile, `Has no ${component}-1-knockout.spec.ts`);
-        assert.ok(hasUiSpecFile, `${component}-1-ui.spec.ts` );
-        assert.ok(hasViewModelSpecFile, `${component}-1-viewmodel.spec.ts`);
+        assert.ok(hasKnockoutSpecFile, `Has no ${component}-one-knockout.spec.ts`);
+        assert.ok(hasUiSpecFile, `${component}-one-ui.spec.ts` );
+        assert.ok(hasViewModelSpecFile, `${component}-one-viewmodel.spec.ts`);
       });
       it(`should create component without test file templates after running the test libraries without defined mocha and jest libraries in oraclejetconfig.json`, async() => {
         const appDir = util.getAppDir(appName);
@@ -2476,7 +2550,8 @@ function _createComponentTypeLoaderlessTest({
 
 function _createComponentFailureTest({
     appName,
-    component
+    component,
+    flags
   }) {
     describe('check component create failure', () => {
       it('should fail with "Invalid component name:"', async () => {
@@ -2484,7 +2559,8 @@ function _createComponentFailureTest({
         const result = await _execComponentCommand({
           task,
           app: appName,
-          component
+          component,
+          flags
         });
         assert.ok(util[`${task}ComponentFailure`]({
           component,
@@ -2763,7 +2839,14 @@ module.exports = {
             describe('capital letter in name', () => {
             util.runComponentTestInTestApp(appConfig, {
                 test: _createComponentFailureTest,
-                component: 'Comp-1'
+                component: 'Comp-one'
+            });
+            });
+            describe('starting digit in second segment', () => {
+            util.runComponentTestInTestApp(appConfig, {
+                test: _createComponentFailureTest,
+                component: INVALID_COMPONENT_NAME,
+                flags: '--vcomponent'
             });
             });
         });
@@ -2940,11 +3023,20 @@ module.exports = {
               const exists = fs.pathExistsSync(typesDir);
               assert.ok(exists, typesDir);
             });
-            it(`should have an apidoc json file in ${appName}/web/js/jet-composites/${component}`, () => {
+            it(`should not have an apidoc json file in ${appName}/web/js/jet-composites/${component} if doc gen flag is not set`, () => {
               const appDir = util.getAppDir(appName);
-              const apiDocFile = path.join(appDir, 'web', 'js', 'jet-composites', component, 'Vcomp1.json');
-              const exists = fs.pathExistsSync(apiDocFile);
-              assert.ok(exists, apiDocFile);
+              const { enableDocGen } = fs.readJSONSync(path.join(appDir, 'oraclejetconfig.json'));
+              const apiDocFile = path.join(appDir, 'web', 'js', 'jet-composites', component, `${util.toCamelCase(component)}.json`);
+              const apiDocMetadataExists = fs.pathExistsSync(apiDocFile);
+              let errorMessage;
+              
+              if (enableDocGen) {
+                errorMessage = `${apiDocFile} does not exists even if enableDocGen is set to true in oraclejetconfig.json file.`
+                assert.equal(apiDocMetadataExists, true, errorMessage);
+              } else {
+                errorMessage = `${apiDocFile} exists even if enableDocGen is set to false or it is undefined in oraclejetconfig.json file.`
+                assert.equal(apiDocMetadataExists, false, errorMessage);
+              }
             });
             it(`should not have api-doc files generated without running 'ojet add docgen'`, () => {
               const appDir = util.getAppDir(appName);
@@ -3008,6 +3100,7 @@ module.exports = {
       beforePackTest: _beforePackTest,
       beforeComponentInPackTest: _beforeComponentInPackTest,
       createPackTest: _createPackTest,
+      createPackFailureTest: _createPackFailureTest,
       createMonoPackTest: _createMonoPackTest,
       createComponentInPackTest: _createComponentInPackTest,
       createComponentInMonoPackTest: _createComponentInMonoPackTest,
@@ -3036,6 +3129,12 @@ module.exports = {
         util.runComponentTestInTestApp(appConfig, {
           test: _createPackTest,
           pack: PACK_NAME
+        });
+      });
+      describe('ojet create pack (failure)', () => {
+        util.runComponentTestInTestApp(appConfig, {
+          test: _createPackFailureTest,
+          pack: INVALID_PACK_NAME
         });
       });
       describe('ojet create pack', () => {
@@ -3197,6 +3296,7 @@ module.exports = {
           component: COMPONENT_NAME,
           vcomponent: VCOMPONENT_NAME,
           resourceComponent: RESOURCE_COMPONENT_NAME,
+          vbcsPatternComponent: VBCS_PATTERN_COMPONENT_NAME,
           release: true
         });
       });

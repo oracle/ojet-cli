@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -42,7 +42,7 @@ function _replaceOraclejetToolingProp(packageJson) {
   packageJson.dependencies['@oracle/oraclejet-tooling'] = `file:${path.join('..', '..', '..', 'oraclejet-tooling',
   'dist', 'oraclejet-tooling')}`;
 }
-
+const PATH_MAPPING_JSON = 'path_mapping.json';
 const ORACLEJET_CONFIG_JSON = 'oraclejetconfig.json';
 const DEFAULT_COMPONENTS_FOLDER = 'jet-composites';
 const OMIT_COMPONENT_VERSION_FLAG = 'omit-component-version';
@@ -80,6 +80,7 @@ module.exports = {
   TS_APP_NAME: 'webTsTest',
   TS_NAV_DRAWER_APP_NAME: 'webTsNavDrawerTest',
   THEME_APP_NAME: 'webJsThemeTest',
+  MIGRATION_APP_NAME: 'webMigrationTest',
   PWA_APP_NAME: 'webJsPwaTest',
   API_APP_NAME: 'webTsApiTest',
   VDOM_APP_NAME: 'vdomTest',
@@ -102,6 +103,7 @@ module.exports = {
   COMPONENT_JSON,
   OJET_CONFIG_JS,
   TSCONFIG_JSON,
+  PATH_MAPPING_JSON,
   execCmd: function _execCmd(cmd, options, squelch = false, logCommand = true) {
     if (logCommand) {
       console.log(cmd);
@@ -371,5 +373,10 @@ module.exports = {
 
   getTemplatesDir: function _getTempatesDir() {
     return path.resolve(__dirname, '..', 'templates');
+  },
+
+  toCamelCase: function _toCamelCase(str) {
+    const camelCase = str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+    return `${camelCase[0].toUpperCase()}${camelCase.substring(1)}`;
   }
 };

@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -75,7 +75,7 @@ describe('VDOM Test', () => {
           typescriptFolder,
           componentsFolder
         } = util.getAppPathData(util.VDOM_APP_NAME)
-        const componentName = 'vcomp-1';
+        const componentName = 'vcomp-one';
         const pathToComponentTsx = path.join(
           pathToApp,
           sourceFolder,
@@ -183,27 +183,27 @@ describe('VDOM Test', () => {
         assert.equal(swJSHasRequiredResourcesTocache, true, errorMessage); 
       });
 
-      it('should have appropriate testing files on running add testing', async () => {
+      it('should have appropriate testing files after running ojet add testing', async () => {
         const { pathToSourceComponents, pathToApp } = util.getAppPathData(util.VDOM_APP_NAME);
         const hasComponentTags = (fileContent) => (/@component@/.test(fileContent) || /@camelcasecomponent-name@/.test(fileContent));
-        const pathToCompOneTests = path.join(pathToSourceComponents, 'comp-1', '__tests__', 'comp-1.spec.tsx');
-        const pathToCompOnePackTests = path.join(pathToSourceComponents, 'pack-1', 'comp-1', '__tests__', 'comp-1.spec.tsx');
-        const pathToCompTwoTests = path.join(pathToSourceComponents, 'comp-2', '__tests__', 'comp-2.spec.tsx');
-        const pathToCompTwoPackTests = path.join(pathToSourceComponents, 'pack-1', 'comp-2', '__tests__', 'comp-2.spec.tsx');
-      
-        await util.execCmd(`${util.OJET_APP_COMMAND} create pack pack-1`, { cwd: appDir }, true, true);
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-1`, { cwd: appDir }, true, true);
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-1 --pack=pack-1`, { cwd: appDir }, true, true);
+        const pathToCompOneTests = path.join(pathToSourceComponents, 'comp-one', '__tests__', 'comp-one.spec.tsx');
+        const pathToCompOnePackTests = path.join(pathToSourceComponents, 'pack-one', 'comp-one', '__tests__', 'comp-one.spec.tsx');
+        const pathToCompTwoTests = path.join(pathToSourceComponents, 'comp-two', '__tests__', 'comp-two.spec.tsx');
+        const pathToCompTwoPackTests = path.join(pathToSourceComponents, 'pack-one', 'comp-two', '__tests__', 'comp-two.spec.tsx');
+
+        await util.execCmd(`${util.OJET_APP_COMMAND} create pack pack-one`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-one`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-one --pack=pack-one`, { cwd: appDir }, true, true);
 
         const hasCompOneTestsBeforeAddCommand = fs.existsSync(pathToCompOneTests);
         const hasCompOnePackTestsBeforeAddCommand = fs.existsSync(pathToCompOnePackTests);
-     
+
         await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
 
         const hasTestConfigFile = fs.existsSync(path.join(pathToApp, 'test-config', 'jest.config.js'));
 
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-2`, { cwd: appDir }, true, true);
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-2 --pack=pack-1`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-two`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-two --pack=pack-one`, { cwd: appDir }, true, true);
 
         const hasCompOneTestsAfterAddCommand = fs.existsSync(pathToCompOneTests);
         const hasCompTwoTestsAfterAddCommand = fs.existsSync(pathToCompTwoTests);
@@ -229,14 +229,14 @@ describe('VDOM Test', () => {
         assert.equal(hasTestConfigFile, true, 'Has no jest.config.js file.');
         assert.equal(!hasCompOneTestsBeforeAddCommand, true, 'Has component test files before runnning ojet add testing.');
         assert.equal(!hasCompOnePackTestsBeforeAddCommand, true, 'Component in a pack has test files before runnning ojet add testing.');
-        assert.equal(hasCompOneTestsAfterAddCommand, true, 'Has no component test files in comp-1.');
-        assert.equal(hasCompTwoTestsAfterAddCommand, true, 'Has no component test files in comp-2.');
-        assert.equal(hasCompOnePackTestsAfterAddCommand, true, 'Has no component test files in comp-1 of pack-1.');
-        assert.equal(hasCompTwoPackTestsAfterAddCommand, true, 'Has no component test files in comp-2 of pack-1.');
-        assert.equal(!hasTagsInCompOneTest, true, 'Has no tags in component test files in comp-1.');
-        assert.equal(!hasTagsInCompOnePackTest, true, 'Has no tags in component test files in comp-1 of pack-1.');
-        assert.equal(!hasTagsInCompTwoTest, true, 'Has no tags in component test files in in comp-2.');
-        assert.equal(!hasTagsInCompTwoPackTest, true, 'Has no tags in component test files in comp-2 of pack-1.'); 
+        assert.equal(hasCompOneTestsAfterAddCommand, true, 'Has no component test files in comp-one.');
+        assert.equal(hasCompTwoTestsAfterAddCommand, true, 'Has no component test files in comp-two.');
+        assert.equal(hasCompOnePackTestsAfterAddCommand, true, 'Has no component test files in comp-one of pack-one.');
+        assert.equal(hasCompTwoPackTestsAfterAddCommand, true, 'Has no component test files in comp-two of pack-one.');
+        assert.equal(!hasTagsInCompOneTest, true, 'Has no tags in component test files in comp-one.');
+        assert.equal(!hasTagsInCompOnePackTest, true, 'Has no tags in component test files in comp-one of pack-one.');
+        assert.equal(!hasTagsInCompTwoTest, true, 'Has no tags in component test files in in comp-two.');
+        assert.equal(!hasTagsInCompTwoPackTest, true, 'Has no tags in component test files in comp-two of pack-one.'); 
       });
 
       it('should not override pre-existing mappings after running ojet build (or with --release)', async () => {
@@ -251,10 +251,13 @@ describe('VDOM Test', () => {
             extractedObjString: extractedObj
           };
         };
+
         let configObj = getExctractedRegexData();
+
         configObj.moduleNameMapper['translation/(.*)'] = '<rootDir>/web/js/translation/$1';
         const updatedFileContent = fileContent.replace(configObj.extractedObjString, JSON.stringify(configObj.moduleNameMapper, null, 2));
         fs.writeFileSync(configFilePath, updatedFileContent, 'utf-8');
+
         // Build the project. This will update the module name mapper to add component's mappings:
         await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
         

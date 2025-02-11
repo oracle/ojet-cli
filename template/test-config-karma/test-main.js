@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -30,8 +30,8 @@ require.config({
   // Note that every file listed here must also be listed in Karma's "files" array
   paths: {
     "knockout":"libs/knockout/knockout-3.5.1.debug",
-    "jquery":"libs/jquery/jquery-3.6.0",
-    "jqueryui-amd":"libs/jquery/jqueryui-amd-1.13.2",
+    "jquery":"libs/jquery/jquery-3.7.1",
+    "jqueryui-amd":"libs/jquery/jqueryui-amd-1.14.1",
     "hammerjs":"libs/hammer/hammer-2.0.8",
     "ojdnd":"libs/dnd-polyfill/dnd-polyfill-1.0.2",
     "ojs":"libs/oj/13.1.2/debug",

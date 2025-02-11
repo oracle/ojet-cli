@@ -1,0 +1,40 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "es6",
+    "strict": true,
+    "module": "amd",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+  "lib": [
+      "es2021",
+      "dom",
+      "esnext.asynciterable"
+    ],
+    "typeRoots": [
+      "./node_modules/@oracle/oraclejet/dist/types",
+      "./node_modules/@types"
+    ],
+    "paths": {
+      "ojs/*": [
+        "./node_modules/@oracle/oraclejet/dist/types/*"
+      ],
+      "my-pack/*": [
+        "./src/ts/jet-composites/my-pack/*"
+      ],
+      "my-component/*": [
+        "./src/ts/jet-composites/my-component/*"
+      ]
+    },
+    "declaration": true,
+    "noEmitOnError": true,
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "removeComments": true
+  },
+  "include": [
+    "./src/ts/**/*"
+  ]
+}

@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -142,12 +142,10 @@ const config = {
             },
             theme: {
               description: 'Specify the theme to be used by the app,' + // eslint-disable-line
-                newLine + '-> alta themes are platform specific' +
                 newLine + '-> redwood theme is for all platforms',
-              parameters: '<theme_name>[:<platform>]' + // eslint-disable-line
-                newLine + 'where <theme_name> is: alta or <custom_theme_name>' + // eslint-disable-line
-                newLine + 'and <platform> is one of: android, ios, web, windows',
-              default: 'redwood for web platform'
+              parameters: '<theme_name>' + // eslint-disable-line
+                newLine + 'where <theme_name> is a <custom_theme_name>',
+              default: 'redwood'
             },
             themes: {
               description: 'Specify multiple themes separated by comma(s)' + // eslint-disable-line
@@ -169,7 +167,7 @@ const config = {
           examples: [
             'ojet build',
             'ojet build --cssvars=enabled',
-            'ojet build web --theme=alta:android',
+            'ojet build web --theme=redwood',
             'ojet build --user-options="arbitrary string" // provide user-defined options',
             'ojet build --release --optimize=none // Build a release with readable output. Useful for debugging'
           ]
@@ -285,7 +283,13 @@ const config = {
           aliases: ['packs'],
           description: 'Creates a pack with the specified name in an existing app',
           parameters: '<pack-name>',
-          examples: ['ojet create pack demo-pack']
+          options: {
+            type: {
+              description: 'Create a mono-pack',
+              parameters: 'mono-pack'
+            }
+          },
+          examples: ['ojet create pack demo-pack --type=mono-pack']
         },
         theme: {
           aliases: ['themes'],
@@ -298,6 +302,28 @@ const config = {
     help: {
       description: 'Displays command line help',
       commands: '[add|build|clean|configure|create|list|remove|restore|serve|strip|label]'
+    },
+    migrate: {
+      description: 'Migrates an app to designated JET version',
+      scopes: {
+        app: {
+          description: 'Migrates an app to designated JET version',
+          examples: [
+            'ojet migrate',
+            'ojet migrate app',
+            'ojet migrate app --sassVer=9.0.0',
+            'ojet migrate app --theme=[myCustomTheme | redwood | stable]'
+          ],
+          options: {
+            sassVer: {
+              description: 'Specifies the sass version to use.'
+            },
+            theme: {
+              description: 'Specifies the default theme to set in your oraclejetconfig.json.'
+            },
+          }
+        },
+      },
     },
     list: {
       aliases: ['ls'],
@@ -469,12 +495,32 @@ const config = {
           description: 'Removes the specified component(s) from the app',
           aliases: ['components', 'comp'],
           parameters: '<component1> [<component2>]',
+          options: {
+            username: {
+              aliases: ['u'],
+              description: 'The user\'s registered username'
+            },
+            password: {
+              aliases: ['p'],
+              description: 'The user\'s registered password'
+            }
+          },
           examples: ['ojet remove components flipcard dv-gantt']
         },
         pack: {
           aliases: ['packs'],
           description: 'Removes the specified pack(s) from the app',
           parameters: '<pack1> [<pack2>]',
+          options: {
+            username: {
+              aliases: ['u'],
+              description: 'The user\'s registered username'
+            },
+            password: {
+              aliases: ['p'],
+              description: 'The user\'s registered password'
+            }
+          },
           examples: ['ojet remove pack oj-core']
         },
         platform: {
@@ -598,12 +644,10 @@ const config = {
             },
             theme: {
               description: 'Specify the theme to be used by the app,' + // eslint-disable-line
-                newLine + '-> alta themes are platform specific' +
                 newLine + '-> redwood theme is for all platforms',
-              parameters: '<theme_name>[:<platform>]' + // eslint-disable-line
-                newLine + 'where <theme_name> is: alta or <custom_theme_name>' + // eslint-disable-line
-                newLine + 'and <platform> is one of: android, ios, web, windows',
-              default: 'redwood for web platform'
+              parameters: '<theme_name>' + // eslint-disable-line
+                newLine + 'where <theme_name> is a <custom_theme_name>',
+              default: 'redwood'
             },
             themes: {
               description: 'Specify multiple themes separated by comma.' + // eslint-disable-line
@@ -648,7 +692,7 @@ const config = {
             'ojet serve',
             'ojet serve --cssvars=enabled',
             'ojet serve --browser=edge',
-            'ojet serve web --theme alta:android',
+            'ojet serve web --theme redwood',
             'ojet serve --user-options="arbitrary string" // provide user-defined options.'
           ]
         }

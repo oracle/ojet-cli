@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -248,8 +248,7 @@ module.exports = function (parameters, opt) {
     utils.log.error('The flag --basetheme is required. It supports values for two themes, redwood and stable. For example, "ojet create theme myCustomTheme --basetheme=stable"\n\nredwood: Redwood is the theme for Oracle applications. Oracle will make future changes to this theme that can affect custom themes that use it as the base theme.\n\nstable: Use the Stable theme as the base theme for your custom theme if you want to minimize the possibility that your custom theme will be affected by future changes to the base theme.\n');
   }
 
-  if (pcssTheme.themeName === constants.DEFAULT_PCSS_NAME ||
-    pcssTheme.themeName === constants.DEFAULT_THEME) {
+  if (pcssTheme.themeName === constants.DEFAULT_PCSS_NAME) {
     utils.log.error(`Theme ${pcssTheme.themeName} is reserved.`);
   }
 

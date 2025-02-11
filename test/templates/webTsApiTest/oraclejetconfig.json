@@ -14,7 +14,7 @@
     }
   },
   "defaultBrowser": "chrome",
-  "sassVer": "9.0.0",
+  "sassVer": "1.80.5",
   "webpackLibraries": "webpack@5.76.0 @types/node@18.16.3 webpack-dev-server style-loader css-loader ts-loader@8.4.0 raw-loader noop-loader html-webpack-plugin html-replace-webpack-plugin copy-webpack-plugin @prefresh/webpack @prefresh/babel-plugin webpack-merge compression-webpack-plugin mini-css-extract-plugin clean-webpack-plugin css-fix-url-loader",
   "defaultTheme": "redwood",
   "fontUrl": "https://static.oracle.com/cdn/fnd/gallery/2404.0.0/images/iconfont/ojuxIconFont.min.css",

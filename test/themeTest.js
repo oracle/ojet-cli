@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -47,17 +47,11 @@ describe('PCSS Theme Test', () => {
     // set squelch to true to not catch anything on resolving the promise
     const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --sass`, {cwd: appDir}, true);
     // Delete the jet-composite folder created after running ojet build --sass
-    fs.rmdirSync(pathToJetCompositeFolder, {recursive : true});
-    assert.ok(/Sass compile skipped: node-sass is not installed. To install it, run ojet add sass./.test(result.stdout), true, result.stdout);
+    fs.rmSync(pathToJetCompositeFolder, {recursive : true});
+    assert.ok(/Sass compile skipped: sass \(or node-sass\) is not installed. To install it, run ojet add sass./.test(result.stdout), true, result.stdout);
   });
 
-  it('Should throw a warning on creating a custom theme that defaults to alta as base-theme.', async () => {
-    await util.execCmd(`${util.OJET_APP_COMMAND} add sass`, { cwd: appDir }, true);
-    const result = await util.execCmd(`${util.OJET_APP_COMMAND} create theme ${THEME_NAME}`, { cwd: appDir }, true);
-    assert.ok(/The created theme defaults to alta as base-theme, which is deprecated./.test(result.stdout), result.stdout);
-  });
-
-  it('Should add theming to enable node-sass, postcss-custom-theme, postcss-calc, autoprefixer', async () => {
+  it('Should add theming to enable sass, postcss-custom-theme, postcss-calc, autoprefixer', async () => {
     const result = await util.execCmd(`${util.OJET_APP_COMMAND} add theming`, { cwd: appDir });
     assert.equal(/add pcss complete/.test(result.stdout), true, result.stdout);
   });

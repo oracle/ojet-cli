@@ -1,8 +1,14 @@
 ﻿## Release Notes for ojet-cli ##
 
-### 17.1.0
+### 18.0.0
 
 * node-sass updated to 9.0.0
+* Building applications where npm dependencies are hoisted to any level of parent directory is now supported (monorepo directory structure)
+* Remove alta based theme creation
+* Install 'sass' instead of 'node-sass' for theme building.  Use 'node-sass' only if 'sass' is not present
+* Introduced a new flag enableDocGen in oraclejetconfig.json to control API documentation generation. Running ojet add docgen will add this flag and set it to true, allowing API documentation to be generated. Setting enableDocGen to false will disable API documentation generation.
+* Added a new entry for jsdocLibraries in oraclejetconfig.json to facilitate maintenance of packages required for API documentation generation.
+* Update typescript to 5.7.2
 
 ### 17.0.0
 

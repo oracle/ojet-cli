@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -119,6 +119,9 @@ module.exports = {
     let errorMessage;
     if (componentName === undefined || componentName === null) {
       errorMessage = 'Invalid component name: must not be null or undefined.';
+      utils.log.error(errorMessage);
+    } else if (_isVComponent(generator) && !utils.loadToolingUtil().isValidName(componentName)) {
+      errorMessage = 'Invalid component name: the second segment of the vcomponent name must not start with a digit.';
       utils.log.error(errorMessage);
     } else if (!pack && _isResourceComponent(generator)) {
       errorMessage = 'Cannot create resource component: please re-run the command with --pack and provide an existing JET pack';
