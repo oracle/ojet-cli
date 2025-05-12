@@ -1145,6 +1145,23 @@ function _packagePackTest({
             assert.equal(hasNoDeclarationTypeInStubFile, true, 'Component stub file under the ts folder has declaration of type any.');
           }
         });
+        it ('it should have a correct exported path in the generated stub file', () => {
+          const {
+            pathToApp,
+            typescriptFolder,
+            stagingFolder,
+            componentsFolder
+          } = util.getAppPathData(appName, scriptsFolder);
+          const pathToComponentsInTsFolder = path.join(pathToApp, stagingFolder, typescriptFolder, componentsFolder);
+          const pathToStubFileInTsFolder = path.join(pathToComponentsInTsFolder, pack, `${component}.ts`);
+          if (fs.existsSync(pathToStubFileInTsFolder)) {
+            const fileContent = fs.readFileSync(pathToStubFileInTsFolder, { encoding: 'utf-8'});
+            const exportStatementRegex = /export\s*\{\s*(\w+)\s*\}\s*from\s*"([^"]+)"/g;
+            const matches = Array.from(fileContent.matchAll(exportStatementRegex));
+            const hasInvalidExportPath = matches.some(match => match[2].includes('/./'));
+            assert.equal(hasInvalidExportPath, false, 'Export path in stub file contains "/./".');
+          }
+        });
       });
     }
 };

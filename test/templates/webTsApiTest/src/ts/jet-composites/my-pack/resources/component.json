@@ -1,7 +1,7 @@
 {
   "name": "resources",
   "version": "1.0.0",
-  "jetVersion": "^18.0.0",
+  "jetVersion": "^18.1.0",
   "type": "resource",
   "pack": "my-pack"
 }

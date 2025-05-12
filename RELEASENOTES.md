@@ -1,5 +1,7 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 18.1.0
+
 ### 18.0.0
 
 * node-sass updated to 9.0.0
