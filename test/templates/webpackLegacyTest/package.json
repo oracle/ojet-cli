@@ -12,7 +12,7 @@
     "yargs-parser": "~13.1.2",
     "typescript": "5.7.2",
     "underscore": "^1.10.2",
-    "webpack": "5.76.0",
+    "webpack": "5.94.0",
     "@types/node": "18.16.3",
     "text-loader": "^0.0.1",
     "style-loader": "^3.1.0",
