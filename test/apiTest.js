@@ -17,7 +17,7 @@ describe('CLI API Tests', () => {
       util.removeAppDir(util.API_APP_NAME);
   
       // Scaffold webTsApiTest application using ojet API
-      const ojet = new Ojet({ cwd: util.testDir, logs: false });
+      const ojet = new Ojet({ cwd: util.testDir, logs: true });
       try {
         await ojet.execute({
           task: 'create',
@@ -144,7 +144,41 @@ describe('CLI API Tests', () => {
         }
       });
     });
+
+    describe('ojet publish and label', () => {
+        // Do a mock server and then publish/label
+        it('should publish and label component', async () => {
+          const nock = require('nock');
+          nock(`${util.EXCHANGE_URL}`)
+                  .post('/components/?access=PUBLIC') // Specify the HTTP method and path
+                  .reply(200, { message: 'Published' }); // Define the status code and response body
+
+          const ojet = new Ojet({ cwd: util.getAppDir(util.API_APP_NAME), logs: false });
+          try {
+            await ojet.execute({ task: 'publish', parameters: ['component', 'my-component']});
+            assert.ok(true);
+          } catch (e) {
+            console.log(e);
+            assert.ok(false);
+          }
+
+          nock(`${util.EXCHANGE_URL}`)
+                  .post('/components/my-component/versions/1.0.0/labels') // Specify the HTTP method and path
+                  .reply(200, { message: 'Labeled' }); // Define the status code and response body          
+          try {
+            await ojet.execute({ task: 'label', parameters: ['component', 'my-component@1.0.0', 'thelabel'] });
+            assert.ok(true);
+          } catch (e) {
+            console.log(e);
+            assert.ok(false);
+          }
+          nock.cleanAll(); 
+          nock.enableNetConnect();
+          nock.restore();
+        });        
+      });    
   });
+
   describe('ojet strip', () => {
     it(`should have ${util.API_APP_NAME}/node_modules && ${util.API_APP_NAME}/jet_components`, () => {
       const pathToNodeModules = path.join(
@@ -204,6 +238,16 @@ describe('CLI API Tests', () => {
         assert.ok(false);
       }
     });
+    it('should use the flag --legacy-peer-deps when running ojet restore and if enableLegacyPeerDeps is enabled in oraclejetconfig.json file', async () => {
+      const appDir = util.getAppDir(util.API_APP_NAME);
+      const oracleJetConfigJSON = util.getOracleJetConfigJson(util.API_APP_NAME);
+      oracleJetConfigJSON.enableLegacyPeerDeps = true;
+      util.writeOracleJetConfigJson(util.API_APP_NAME, oracleJetConfigJSON);
+  
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} restore`, { cwd: appDir }, false, true);
+  
+      assert.equal(/--legacy-peer-deps/.test(result.stdout), true, result.error);
+    });
     it(`should have ${util.API_APP_NAME}/node_modules && ${util.API_APP_NAME}/jet_components`, () => {
       const pathToNodeModules = path.join(
         util.getAppDir(util.API_APP_NAME),
@@ -217,6 +261,7 @@ describe('CLI API Tests', () => {
       assert.ok(fs.existsSync(pathToJetComponents), pathToJetComponents);
     });
   });
+
   describe('ojet strip using oraclejetconfig.json property', () => {    
     it(`should have ${util.API_APP_NAME}/node_modules && ${util.API_APP_NAME}/jet_components`, () => {
       const appName = util.API_APP_NAME;

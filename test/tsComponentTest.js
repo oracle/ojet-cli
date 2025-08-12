@@ -66,6 +66,13 @@ describe('TS Component & Jet Pack Tests', () => {
             const exists = fs.pathExistsSync(typesDir);
             assert.ok(!exists, typesDir);
           });
+          it('should have demo-card in the list of components', async () => {
+            const command = `${util.OJET_APP_COMMAND} list component`;
+            const result = await util.execCmd(command, {
+              cwd: util.getAppDir(appName)
+            }, true, true);
+            assert.equal(new RegExp('oj-dynamic-form').test(result.stdout), true, result.error);
+          });
         }
       });
     }

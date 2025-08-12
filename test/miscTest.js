@@ -15,4 +15,15 @@ describe('ojet-cli', () => {
     const version = util.getCliVersion();
     assert.equal(new RegExp(version).test(result.stdout), true, result.error);
   });
+
+  it('should return help text', async () => {
+    let result = await util.execCmd(`${util.OJET_COMMAND} --help`, { cwd: util.testDir });
+    assert.equal(new RegExp('ojet <command>').test(result.stdout), true, result.error);
+
+    result = await util.execCmd(`${util.OJET_COMMAND} add --help`, { cwd: util.testDir });
+    assert.equal(new RegExp('ojet add <scope>').test(result.stdout), true, result.error);
+
+    result = await util.execCmd(`${util.OJET_COMMAND} add component --help`, { cwd: util.testDir });
+    assert.equal(new RegExp('ojet add component <parameter').test(result.stdout), true, result.error);    
+  });
 });

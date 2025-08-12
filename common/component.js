@@ -45,7 +45,23 @@ module.exports = {
       fs.ensureDirSync(componentDestDirectory);
       fs.copySync(componentTemplateSrc, componentDestDirectory);
       if (_addTestFiles({ options })) {
-        fs.copySync(componentTestTemplate, path.join(componentDestDirectory, '__tests__'));
+        const pathToTestFolder = path.join(componentDestDirectory, '__tests__');
+        const pathToTestFile = path.join(pathToTestFolder, '@component@.spec.tsx');
+
+        fs.copySync(componentTestTemplate, pathToTestFolder);
+
+        if (testType === 'test-jest') {
+          let replaceText;
+          let testFileContent = fs.readFileSync(pathToTestFile, 'utf8');
+          if (pack) {
+            replaceText = `${pack}/${componentName}${_withLoader({ generator, pack }) ? '/loader' : ''}`;
+          } else {
+            replaceText = `${componentName}/${_withLoader({ generator, pack }) ? 'loader' : componentName}`;
+          }
+
+          testFileContent = testFileContent.replace('@component-name@/@component-name@', replaceText);
+          fs.writeFileSync(pathToTestFile, testFileContent);
+        }
       }
 
       // Rename loader.ts in destination directory to index.ts for loaderless

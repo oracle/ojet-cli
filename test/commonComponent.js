@@ -789,6 +789,21 @@ function _manageMappedLocalReferencePackPathTest({
     });
   };
 
+function _ojetListTest({ appName, scriptsFolder }) {
+  it('should list components', async () => {
+    const appDir = util.getAppDir(appName);
+    const result = await util.execCmd(`${util.OJET_APP_COMMAND} list component`, { cwd: appDir }, true);
+
+    assert.ok(/Success: Components listed/.test(result.stdout), result.stdout);
+  });
+  it('should list packs', async () => {
+    const appDir = util.getAppDir(appName);
+    const result = await util.execCmd(`${util.OJET_APP_COMMAND} list pack`, { cwd: appDir }, true);
+
+    assert.ok(/Success: Packs listed/.test(result.stdout), result.stdout);
+  });  
+};
+
 function _ojetRestoreCommandTest({ appName, scriptsFolder }) {
     describe('check that ojet restore --exchange-only restores exchange components without running npm install', () => {
       it('should have node_modules folder and exchange components before running ojet strip command', async () => {
@@ -1145,6 +1160,7 @@ function _packagePackTest({
             assert.equal(hasNoDeclarationTypeInStubFile, true, 'Component stub file under the ts folder has declaration of type any.');
           }
         });
+
         it ('it should have a correct exported path in the generated stub file', () => {
           const {
             pathToApp,
@@ -1158,6 +1174,7 @@ function _packagePackTest({
             const fileContent = fs.readFileSync(pathToStubFileInTsFolder, { encoding: 'utf-8'});
             const exportStatementRegex = /export\s*\{\s*(\w+)\s*\}\s*from\s*"([^"]+)"/g;
             const matches = Array.from(fileContent.matchAll(exportStatementRegex));
+
             const hasInvalidExportPath = matches.some(match => match[2].includes('/./'));
             assert.equal(hasInvalidExportPath, false, 'Export path in stub file contains "/./".');
           }
@@ -1880,6 +1897,19 @@ function _vcomponentApiDocumentationComponentTest({
             cwd: appDir
           }, true);
           assert.ok(/Success: API docgen setup finished./.test(result.stdout), result.stdout);
+        });
+        it('should use the flag --legacy-peer-deps when running ojet add docgen and if enableLegacyPeerDeps is enabled in oracljetconfig.json', async () => {
+          const oracleJetConfigJSON = util.getOracleJetConfigJson(appName);
+          oracleJetConfigJSON.enableLegacyPeerDeps = true;
+          util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+      
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} add docgen`, { cwd: appDir }, false, true);
+
+          // disable legacy peer deps:
+          oracleJetConfigJSON.enableLegacyPeerDeps = false;
+          util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+      
+          assert.equal(/--legacy-peer-deps/.test(result.stdout), true, result.error);
         });
         it('should have apidoc_templates html files after running ojet add docgen', () => {
           const {
@@ -3425,6 +3455,12 @@ module.exports = {
           component: 'comp-in-pack-docs-test'
         });
       });
+
+      describe('ojet list tests', () => {
+        util.runComponentTestInTestApp(appConfig, {
+          test: _ojetListTest
+        });
+      });      
   
       // describe('ojet build, do not overwrite path-mapping for oj-c', () => {
       //   util.runComponentTestInTestApp(appConfig, {
@@ -3463,6 +3499,17 @@ module.exports = {
         util.runComponentTestInTestApp(appConfig, {
           test: _ojetRestoreCommandTest
         });
+      });
+    },
+
+    removePack: (appName) => {
+      describe('remove pack', () => { 
+        it('should remove pack', async () => {    
+            const appDir = util.getAppDir(appName);
+        
+            const result = await util.execCmd(`${util.OJET_APP_COMMAND} remove pack oj-sample`, { cwd: appDir }, true, true);
+            assert.equal(/Success: Pack/.test(result.stdout), true, result.error);
+          });
       });
     }
 };

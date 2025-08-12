@@ -22,8 +22,6 @@ const appDir = util.getAppDir(util.APP_NAME);
 describe('Web Test', () => {
   before(async () => {
     if (!util.noScaffold()) {
-      const platform = util.getPlatform(process.env.OS);
-
       util.removeAppDir(util.APP_NAME);
       util.removeAppDir(util.TEST_DIR);
   
@@ -32,10 +30,11 @@ describe('Web Test', () => {
       console.log(result.stdout);
       // Check that it output the right text to the command line
       assert.strictEqual(util.norestoreSuccess(result.stdout), true, result.stderr);
+      
       // Restore
-      result = await util.execCmd(`${util.OJET_APP_COMMAND} restore`, { cwd: util.getAppDir(util.APP_NAME) });
+      result = await util.execCmd(`${util.OJET_APP_COMMAND} restore`, { cwd: appDir });
       console.log(result.stdout);
-  
+
       // Scaffold a basic app without a name
       result = await util.execCmd(`${util.OJET_COMMAND} create --norestore=true`, { cwd: util.testDir });
       // Check that it worked
@@ -60,7 +59,7 @@ describe('Web Test', () => {
   describe('Build', () => {
     if (!util.noBuild()) {
       it('should build default js app', async () => {
-        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: appDir });
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
     }
@@ -74,7 +73,7 @@ describe('Web Test', () => {
   describe('Build (Release) without the bundle name attribute', () => {
     if (!util.noBuild()) {
       it('should build release js app', async () => {
-        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: appDir });
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
     }
@@ -97,7 +96,7 @@ describe('Web Test', () => {
         const oracleJetConfigJSON = util.getOracleJetConfigJson(util.APP_NAME);
         oracleJetConfigJSON.bundleName = `${util.API_APP_NAME}.js`;
         util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
-        const result = await (util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) }));
+        const result = await (util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: appDir }));
         // Delete the bundleName attribute. Having it might cause the subsequent case(s) to fail:
         delete oracleJetConfigJSON.bundleName;
         util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
@@ -124,7 +123,7 @@ describe('Web Test', () => {
         const oracleJetConfigJSON = util.getOracleJetConfigJson(util.APP_NAME);
         oracleJetConfigJSON.bundleName = 'main.js';
         util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
-        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: appDir });
         delete oracleJetConfigJSON.bundleName;
         util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
@@ -135,6 +134,63 @@ describe('Web Test', () => {
       const hasMainJs = fs.existsSync(pathToMainJs);
       assert.ok(hasMainJs, pathToMainJs);
     })
+  });
+
+  describe('Build (Release) source maps generation', () => {
+    describe('Generate source maps for default bundle name attribute', () => {
+      if (!util.noBuild()) {
+        it('should include source maps files for the generated bundles', async () => {
+          const oraclejetConfig = util.getOracleJetConfigJson(util.APP_NAME);
+          oraclejetConfig.generateSourceMaps = true;
+          util.writeOracleJetConfigJson(util.APP_NAME, oraclejetConfig);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
+          
+          // Restore the value:
+          oraclejetConfig.generateSourceMaps = false;
+          util.writeOracleJetConfigJson(util.APP_NAME, oraclejetConfig);
+          assert.equal(util.buildSuccess(result.stdout), true, result.error);
+        });
+      }
+      it('should have bundle.js.map', async () => {
+        const{ pathToBundleJs } = util.getAppPathData(util.APP_NAME)
+        const hasBundleJsMap = fs.existsSync(`${pathToBundleJs}.map`);
+        assert.ok(hasBundleJsMap, `${pathToBundleJs}.map`);
+      })
+      it('should not have main.js.map', async () => {
+        const{ pathToMainJs } = util.getAppPathData(util.APP_NAME)
+        const hasMainJsMap = fs.existsSync(`${pathToMainJs}.map`);
+        assert.ok(!hasMainJsMap, `${pathToMainJs}.map`);
+      })
+    });
+    describe('Generate source maps for any given bundle name other than main.js', () => {
+      if (!util.noBuild()) {
+        it('should build release js app', async () => {
+          // get the oraclejetconfig.json file and add bundleName attribute value to <appName>.js:
+          const oracleJetConfigJSON = util.getOracleJetConfigJson(util.APP_NAME);
+          oracleJetConfigJSON.bundleName = `${util.API_APP_NAME}.js`;
+          oracleJetConfigJSON.generateSourceMaps = true;
+          util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+          const result = await (util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) }));
+          // Delete the bundleName attribute. Having it might cause the subsequent case(s) to fail:
+          delete oracleJetConfigJSON.bundleName;
+          oracleJetConfigJSON.generateSourceMaps = false;
+          util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+          assert.equal(util.buildSuccess(result.stdout), true, result.error);
+        });
+      }
+      it(`should have ${util.API_APP_NAME}.js.map`, async () => {
+        // retrieve the path for the created js file and check its presence:
+        const{ pathToApp, stagingFolder, javascriptFolder } = util.getAppPathData(util.APP_NAME)
+        const pathToBundleNameJsMapFile = path.join(pathToApp, stagingFolder, javascriptFolder, `${util.API_APP_NAME}.js.map`);
+        const hasBundleNameJsMapFile = fs.existsSync(pathToBundleNameJsMapFile);
+        assert.ok(hasBundleNameJsMapFile, pathToBundleNameJsMapFile);
+      })
+      it('should not have main.js.map', async () => {
+        const{ pathToMainJs } = util.getAppPathData(util.APP_NAME)
+        const hasMainJsMap = fs.existsSync(`${pathToMainJs}.map`);
+        assert.ok(!hasMainJsMap, `${pathToMainJs}.map`);
+      })
+    });
   });
 
   //
@@ -161,12 +217,12 @@ describe('Web Test', () => {
 
       before(() => {
         wd = process.cwd();
-        process.chdir(util.getAppDir(util.APP_NAME));
-        util.execCmd(`${util.OJET_APP_COMMAND} create component ${testComp}`, { cwd: util.getAppDir(util.APP_NAME) });
+        process.chdir(appDir);
+        util.execCmd(`${util.OJET_APP_COMMAND} create component ${testComp}`, { cwd: appDir });
         process.chdir(wd);
       });
       it('build: path mapping to debug component', async () => {
-        await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+        await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: appDir });
         const mainContent = fs.readFileSync(path.join(appDir, 'web', 'js', 'main.js'));
 
         assert.equal(mainContent.toString().match(`jet-composites/${testComp}`), `jet-composites/${testComp}`,
@@ -176,7 +232,7 @@ describe('Web Test', () => {
           `main.js should not contain the minified component ${testComp}`);
       });
       it('release build:  path mapping to minified component', async () => {
-        await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
+        await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: appDir });
         const{ pathToBundleJs } = util.getAppPathData(util.APP_NAME);
         const bundleContent = fs.readFileSync(pathToBundleJs);
         assert.equal(bundleContent.toString().match(`jet-composites/${testComp}/min`), `jet-composites/${testComp}/min`,
@@ -196,8 +252,8 @@ describe('Build with a sass file in component folder', () => {
       fs.mkdirSync(pathToANonComponentFolder);
       const pathToSassFile = path.join(pathToANonComponentFolder, 'foo.scss');
       fs.writeFileSync(pathToSassFile, '// Here is the sample file.');
-      await util.execCmd(`${util.OJET_APP_COMMAND} add sass`, { cwd: util.getAppDir(util.APP_NAME) });
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+      await util.execCmd(`${util.OJET_APP_COMMAND} add sass`, { cwd: appDir });
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: appDir });
       fs.removeSync(pathToSassFile);
       assert.equal(util.buildSuccess(result.stdout), true, result.error);
     });
@@ -220,7 +276,7 @@ describe('Config Test', () => {
 
   it('should get all themes', () => {
     const wd = process.cwd();
-    process.chdir(util.getAppDir(util.APP_NAME));
+    process.chdir(appDir);
     config();
     config.loadOraclejetConfig('web');
     const themes = ojetUtil.getAllThemes();
@@ -230,7 +286,7 @@ describe('Config Test', () => {
 
   it('should read path mapping', () => {
     const wd = process.cwd();
-    process.chdir(util.getAppDir(util.APP_NAME));
+    process.chdir(appDir);
     config();
     config.loadOraclejetConfig('web');
     const map = ojetUtil.readPathMappingJson();
@@ -242,7 +298,7 @@ describe('Config Test', () => {
 
   it('should validateBuildType and types', () => {
     const wd = process.cwd();
-    process.chdir(util.getAppDir(util.APP_NAME));
+    process.chdir(appDir);
     assert(valid.buildType({ buildType: undefined }) === 'dev');
     assert(valid.buildType({ buildType: 'dev' }) === 'dev');
     assert(valid.buildType({ buildType: 'release' }) === 'release');
@@ -267,7 +323,7 @@ describe('Paths Mapping Test', () => {
 
   it('should have single Path Mapping Not Empty -- Dev', () => {
     const wd = process.cwd();
-    process.chdir(util.getAppDir(util.APP_NAME));
+    process.chdir(appDir);
     const mapping = npmCopy.getMappingLibsList('dev', 'web');
     process.chdir(wd);
     assert(_.isEmpty(mapping) === false);
@@ -275,7 +331,7 @@ describe('Paths Mapping Test', () => {
 
   it('should have Single Path Mapping Not Empty -- Release', () => {
     const wd = process.cwd();
-    process.chdir(util.getAppDir(util.APP_NAME));
+    process.chdir(appDir);
     const mapping = npmCopy.getMappingLibsList('release', 'web');
     process.chdir(wd);
     assert(_.isEmpty(mapping) === false);
@@ -293,20 +349,56 @@ function killServeWin() {
   }  
 }
 
+describe('add theming', () => {
+  it('should add pcss generator', async () => {
+    const result = await util.execCmd(`${util.OJET_APP_COMMAND} add theming`, { cwd: appDir });
+    assert.equal(/add pcss complete/.test(result.stdout), true, result.stdout);
+  });
+
+  it('Should create theme with basetheme stable after add theming', async () => {
+    const removetheme = path.resolve(appDir, 'src/themes');
+    fs.removeSync(removetheme);
+    const result = await util.execCmd(`${util.OJET_APP_COMMAND} create theme themestable --basetheme=stable`, {cwd: appDir});
+    assert.equal(/with css variables support/.test(result.stdout), true, result.stdout);
+  });  
+});
+
+
 if (!util.noServe()) {
   describe('serve', () => {
     it('should serve with nobuild', async () => {
-      //const ac = new AbortController();
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      // Write out new after_serve.js hook
+      const { pathToAppHooks } = util.getAppPathData(util.APP_NAME);
+      const afterServeHookPath = path.join(pathToAppHooks, `after_serve.js`);
+      const defaultAfterServeHookContent = fs.readFileSync(afterServeHookPath);
+
+      const newAfterServeHookContent = "'use strict';\n" + 
+            "const exec = require('child_process').exec;\n" + 
+            "module.exports = function (configObj) {\n" + 
+            "return new Promise( (resolve, reject) => {\n" + 
+            "let result = exec('node ../../ojet-cli/test/util/modSource.mjs');\n" + 
+  	        "resolve(configObj);\n"+
+            "});};";
+            
+      fs.writeFileSync(afterServeHookPath, newAfterServeHookContent);
+  
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
       assert.equal(/Watching files/i.test(result.stdout), true, result.stdout);
       assert.equal(/Watching Interval: 1000./i.test(result.stdout), true, result.stdout);
+
+      const pathToWebIndexHTML = path.join(appDir, 'web', 'index.html');
+      const webIndexHTML = fs.readFileSync(pathToWebIndexHTML, { encoding: 'utf-8' });      
+      assert.equal(/<!-- test -->/.test(webIndexHTML), true, webIndexHTML);
       result.process.kill();
       killServeWin();
+
+      // Replace after_serve.js hook
+      fs.writeFileSync(afterServeHookPath, defaultAfterServeHookContent);
     });
 
     it('should serve with the chosen watch interval value', async () => {
       //const ac = new AbortController();
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --watchInterval=2000`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --watchInterval=2000`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
       assert.equal(/Watching Interval: 2000./i.test(result.stdout), true, result.stdout);
       result.process.kill();
       killServeWin();
@@ -314,7 +406,7 @@ if (!util.noServe()) {
     });
 
     it('should serve from a given server url if provided', async () => {
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --server-url=http://localhost:8080`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --server-url=http://localhost:8080`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
       assert.equal(/Connecting to http:\/\/localhost:8080/i.test(result.stdout), true, result.stdout);
       assert.equal(/Success: Server ready: http:\/\/localhost:8080/i.test(result.stdout), true, result.stdout);
       result.process.kill();
@@ -322,7 +414,7 @@ if (!util.noServe()) {
     });
 
     it('should serve from http://localhost:8000 if an empty string or undefined values is provided as the server url', async () => {
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --server-url=`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --server-url=`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
       assert.equal(/Connecting to http:\/\/localhost:8000/i.test(result.stdout), true, result.stdout);
       assert.equal(/Success: Server ready: http:\/\/localhost:8000/i.test(result.stdout), true, result.stdout);
       result.process.kill();
@@ -330,7 +422,7 @@ if (!util.noServe()) {
     });
 
     it('should set destination to server-only when serving with the --server-only flag', async () => {
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve --server-only`, { cwd: util.getAppDir(util.APP_NAME), maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve --server-only`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
       assert.equal(/Destination: server-only/i.test(result.stdout), true, result.stdout);
       assert.equal(/Success: Server ready:/i.test(result.stdout), true, result.stdout);
       result.process.kill();
@@ -338,13 +430,6 @@ if (!util.noServe()) {
     });
   });
 }
-
-describe('add theming', () => {
-  it('should add pcss generator', async () => {
-    const result = await util.execCmd(`${util.OJET_APP_COMMAND} add theming`, { cwd: appDir });
-    assert.equal(/add pcss complete/.test(result.stdout), true, result.stdout);
-  });
-});
 
 describe('add testing', () => {
   it('should add testing config files', async () => {
@@ -358,6 +443,16 @@ describe('add testing', () => {
     assert.equal(hasTestMainFile, true, 'Has no test-main.js file.');
     assert.equal(hasTsConfigJson, true, 'Has no tsconfig.json file.');
     
+  });
+  
+  it('should use the flag --legacy-peer-deps when running ojet add testing and if enableLegacyPeerDeps is enabled in oracljetconfig.json', async () => {
+    const oracleJetConfigJSON = util.getOracleJetConfigJson(util.APP_NAME);
+    oracleJetConfigJSON.enableLegacyPeerDeps = true;
+    util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+
+    const result = await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, false, true);
+
+    assert.equal(/--legacy-peer-deps/.test(result.stdout), true, result.error);
   });
 });
 
@@ -391,7 +486,7 @@ describe('mapping for react preact in JET templates', () => {
       fs.writeFileSync(pathToMainJsInSrc, mainJsContent, { encoding: 'utf-8' });
     }
 
-    await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+    await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: appDir });
     
     const mainJsContentInWeb = fs.readFileSync(pathToMainJsInStaging, { encoding: 'utf-8' });
     const regex = /\"\*\"\s*:\s*{\s*"react":\s*"preact\/compat"\s*}/gm;
@@ -432,7 +527,7 @@ describe('Build with cdn', () => {
   describe('debug build', () => {
     if (!util.noBuild()) {
       it('should build in debug mode to reference the CDN', async  () => {
-        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: util.getAppDir(util.APP_NAME) });
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web`, { cwd: appDir });
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
     }
@@ -442,7 +537,7 @@ describe('Build with cdn', () => {
   describe('release build', () => {
     if (!util.noBuild()) {
       it('should build in release mode to reference the CDN', async () => {
-        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: util.getAppDir(util.APP_NAME) });
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build web --release`, { cwd: appDir });
         assert.equal(util.buildSuccess(result.stdout), true, result.error);
       });
     }
@@ -477,19 +572,19 @@ describe('Build with cdn', () => {
   
   
     it('should get configured paths', () => {
-      const confPaths = ojetPaths.getConfiguredPaths(util.getAppDir(util.APP_NAME));
+      const confPaths = ojetPaths.getConfiguredPaths(appDir);
       assert(!_.isEmpty(confPaths));
     });
   
     it('should validate configured paths', () => {
       const defaultPaths = ojetPaths.getDefaultPaths();
-      const confPaths = ojetPaths.getConfiguredPaths(util.getAppDir(util.APP_NAME));
+      const confPaths = ojetPaths.getConfiguredPaths(appDir);
       assert(_.isEqual(confPaths, defaultPaths));
     });
   
     it('should validate is cwd is JET App', () => {
       const wd = process.cwd();
-      process.chdir(util.getAppDir(util.APP_NAME));
+      process.chdir(appDir);
       const isJetApp = ojetUtil.ensureJetApp();
       process.chdir(wd);
       assert(isJetApp);
@@ -500,5 +595,29 @@ describe('Build with cdn', () => {
         ojetUtil.ensureParameters('component');
       });
     });
-  });  
+  });
+
+  describe('Webpack with components test', () => {
+    it('should prompt user when adding webpack with local components', async () => {
+//      util.execCmd(`${util.OJET_APP_COMMAND} add webpack`, { cwd: appDir }, false, true).then((result) => {
+      const child = require('child_process').exec(`${util.OJET_APP_COMMAND} add webpack`, { cwd: appDir }, (error, stdout, stderr) => {
+        const result = { error, stdout, stderr, process: child };
+        if (error) {
+          console.log(result);        
+        } else {
+          assert.equal(new RegExp('Aborting the command "ojet add webpack"').test(result.stdout), true, result.error);
+        }
+      });
+      child.stdin.write('no\n');
+    });
+  });
+
+  describe('Clean up test', () => {  
+    if (!util.noBuild()) {
+      it('should clean successfully', async  () => {
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} clean`, { cwd: appDir });
+        assert.equal(new RegExp('Finished clean path').test(result.stdout), true, result.error);
+      });
+    }
+  });
 });

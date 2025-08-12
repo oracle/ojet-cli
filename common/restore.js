@@ -36,10 +36,23 @@ module.exports =
 
   npmInstall: function _npmInstall(app, opt) {
     const installer = utils.getInstallerCommand(opt);
+    const configPath = path.join(process.cwd(), constants.APP_CONFIG_JSON);
+    let configJson;
 
-    const cmd = `${installer.installer} ${installer.verbs.install}`;
+    if (fs.existsSync(configPath)) {
+      configJson = utils.readJsonAndReturnObject(configPath);
+    }
+
+    const { enableLegacyPeerDeps } = configJson || {};
+
+    let command = `${installer.installer} ${installer.verbs.install}`;
+
+    if (enableLegacyPeerDeps && installer.installer === 'npm') {
+      command += ` ${installer.flags.legacy}`; // putting extra space to ensure the flag is properly appended
+    }
+
     fs.ensureDirSync(path.join('node_modules'));
-    execSync(cmd, null);
+    execSync(command, null);
     return Promise.resolve();
   }
 };

@@ -1,6 +1,6 @@
 {
   "name": "@oracle/ojet-cli",
-  "version": "18.1.0",
+  "version": "19.0.0",
   "description": "Oracle JET Command Line Interface",
   "license": "UPL-1.0",
   "homepage": "http://www.oracle.com/jet",
@@ -12,10 +12,12 @@
     "adm-zip": "~0.4.7",
     "fs-extra": "~8.1.0",
     "glob": "10.4.5",
-    "inquirer": "~8.2.2",
     "minimist": "~1.2.0",
-    "@oracle/oraclejet-tooling": "~18.1.0",
-    "@oracle/oraclejet-templates": "~18.1.0"
+    "@oracle/oraclejet-tooling": "~19.0.0",
+    "@oracle/oraclejet-templates": "~19.0.0"
+  },
+  "devDependencies": {
+    "nock": "14.0.3"
   },
   "overrides": {
     "glob": "10.4.5"

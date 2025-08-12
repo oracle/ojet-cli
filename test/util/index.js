@@ -226,7 +226,7 @@ module.exports = {
   noServe: function _noServe() {
     return process.argv.indexOf('--noserve') > -1 || _isQuick();
   },
-
+  
   createComponentSuccess: function _createComponentSuccess({ stdout, component }) {
     const regex = new RegExp(`Add component '${component}' finished`);
     return regex.test(stdout);
@@ -294,6 +294,17 @@ module.exports = {
         const componentName = configObj.component;
         console.log('Running ${hookName}_component_package for component: component being packaged is', componentName);
         resolve(configObj);
+      });
+    }`
+      fs.writeFileSync(filePath, customHookContent);
+  },
+
+  writeCustomBeforeBuildHookContents: function _writeCustomHookContents({filePath}) {
+    const customHookContent = `module.exports = function (configObj) {
+      return new Promise((resolve) => {
+  	    console.log("Running before_build hook.");
+        configObj.opts.svgSprite.options.shape.spacing.padding = 4;
+      	resolve(configObj);
       });
     }`
       fs.writeFileSync(filePath, customHookContent);

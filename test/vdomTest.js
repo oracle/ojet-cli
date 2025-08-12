@@ -191,19 +191,19 @@ describe('VDOM Test', () => {
         const pathToCompTwoTests = path.join(pathToSourceComponents, 'comp-two', '__tests__', 'comp-two.spec.tsx');
         const pathToCompTwoPackTests = path.join(pathToSourceComponents, 'pack-one', 'comp-two', '__tests__', 'comp-two.spec.tsx');
 
-        await util.execCmd(`${util.OJET_APP_COMMAND} create pack pack-one`, { cwd: appDir }, true, true);
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-one`, { cwd: appDir }, true, true);
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-one --pack=pack-one`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create pack pack-one`, { cwd: appDir }, false, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-one`, { cwd: appDir }, false, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-one --pack=pack-one`, { cwd: appDir }, false, true);
 
         const hasCompOneTestsBeforeAddCommand = fs.existsSync(pathToCompOneTests);
         const hasCompOnePackTestsBeforeAddCommand = fs.existsSync(pathToCompOnePackTests);
 
-        await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, false, true);
 
         const hasTestConfigFile = fs.existsSync(path.join(pathToApp, 'test-config', 'jest.config.js'));
 
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-two`, { cwd: appDir }, true, true);
-        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-two --pack=pack-one`, { cwd: appDir }, true, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-two`, { cwd: appDir }, false, true);
+        await util.execCmd(`${util.OJET_APP_COMMAND} create component comp-two --pack=pack-one`, { cwd: appDir }, false, true);
 
         const hasCompOneTestsAfterAddCommand = fs.existsSync(pathToCompOneTests);
         const hasCompTwoTestsAfterAddCommand = fs.existsSync(pathToCompTwoTests);
@@ -315,6 +315,150 @@ describe('VDOM Test', () => {
         assert.equal(hasTestProperty, true, 'Has no test-jest-ojet sub-property in package.json scripts property.');
         assert.equal(hasDebugProperty, true, 'Has no test-debug-ojet sub-property in package.json scripts property.');
       });
+
+      it('should search component', async () => {
+        await util.execCmd(`${util.OJET_APP_COMMAND} configure --global --exchange-url=${util.EXCHANGE_URL}`, { cwd: appDir });
+
+        let result = await util.execCmd(`${util.OJET_APP_COMMAND} search exchange nonsense-one`, { cwd: appDir }, true, true);
+        assert.equal(/No components found/i.test(result.stdout), true, result.error);
+
+        result = await util.execCmd(`${util.OJET_APP_COMMAND} search exchange demo-card`, { cwd: appDir }, true, true);
+        assert.equal(/Demo Flip Card/i.test(result.stdout), true, result.error);
+      });
+      
+      it('should remove component', async () => {
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} remove component comp-one`, { cwd: appDir }, true, true);
+        assert.equal(/Success: Component/i.test(result.stdout), true, result.error);
+      });
+      it ('should give not found error', async () => {
+        // Removal that causes not found error
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} remove pack comp-one`, { cwd: appDir }, true, true);
+        assert.equal(/Error: pack 'comp-one' not found/i.test(result.stdout), true, result.error);
+      });      
     }
   });
+
+describe('Build translation bundles', () => {
+  if (!util.noBuild()) {
+    it('should not have translation configurations in the oraclejetconfig.json file before running ojet add translation', async  () => {
+      const oracleJetConfigJSON = util.getOracleJetConfigJson(util.VDOM_APP_NAME);
+      
+      // "buildICUTranslationBundle" is a flag to invoke building the translation bundles.
+      const hasbuildICUTranslationBundleEntry = oracleJetConfigJSON.buildICUTranslationsBundle === undefined;
+      // "translation" entry contains the config options and the translation type needed to build the bundles.
+      const hasTranslationEntry = oracleJetConfigJSON.translation === undefined; 
+
+      assert.equal(hasbuildICUTranslationBundleEntry, true, 'buildICUTranslationBundle flag exists in the oraclejetconfig.json file');
+      assert.equal(hasTranslationEntry, true, 'translation entry with needed configurations exists in the oraclejetconfig.json file');
+    });
+
+    it('should add libraries and needed configurations in the oraclejetconfig.json file after running ojet add translation', async  () => {
+      await util.execCmd(`${util.OJET_APP_COMMAND} add translation`, { cwd: util.getAppDir(util.VDOM_APP_NAME) });
+      
+      const oracleJetConfigJSON = util.getOracleJetConfigJson(util.VDOM_APP_NAME);
+      
+      const hasbuildICUTranslationBundleEntry = oracleJetConfigJSON.buildICUTranslationsBundle;
+      const hasTranslationEntry = oracleJetConfigJSON.translation &&
+        Object.keys(oracleJetConfigJSON.translation).every((entry) => ['type', 'options'].includes(entry)); 
+
+      assert.equal(hasbuildICUTranslationBundleEntry, true, 'buildICUTranslationBundle flag either does not exist or is set to false');
+      assert.equal(hasTranslationEntry, true, 'translation entry with needed configurations does not exist');
+    });
+
+    it('should build translation bundle during the build time after running the ojet add translation command', async () => {
+    const { pathToApp, javascriptFolder, sourceFolder, stagingFolder } = util.getAppPathData(util.VDOM_APP_NAME);
+    const pathToResourcesFolder = path.join(pathToApp, sourceFolder, javascriptFolder, 'resources');
+    const pathToResourcesNlsFolder = path.join(pathToResourcesFolder, 'nls');
+    const pathToBundleTsFile = path.join(pathToResourcesNlsFolder, 'translationBundle.ts');
+    const pathToBuiltBundleJsFile = path.join(pathToResourcesNlsFolder.replace(sourceFolder, stagingFolder), 'translationBundle.js');
+    const pathToSupportedLocalesFile = path.join(pathToResourcesNlsFolder, 'supportedLocales.ts');
+
+    // We check this to ensure that the translation bundle is built successfully.
+    const hasBundleTsFileBeforeRunningOjetBuild = fs.existsSync(pathToBundleTsFile);
+
+    // Add the configuration options for rootDir, bundleName in the oraclejetconfig.json
+    // now that we know where they are located:
+    const oracleJetConfigJSON = util.getOracleJetConfigJson(util.VDOM_APP_NAME);
+
+    oracleJetConfigJSON.translation.options = {
+      ...oracleJetConfigJSON.translation.options,
+      // We are putting the random spaces here because we are testing the trim function
+      // in the buildICUTranslationBundle function as, by default, the l10nBundleBuilder
+      // will pick the first locale in the list (and generate its folder and bundle)
+      // only and leave others if there are spaces in the locales list:
+      supportedLocales: 'es, fr,    de,ar',
+    };
+
+    util.writeOracleJetConfigJson(util.VDOM_APP_NAME, oracleJetConfigJSON);
+
+    // Now we can run ojet build, which also builds the translation bundle:
+    const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(util.VDOM_APP_NAME) });
+
+    const hasTranslationBundleTsFile = fs.existsSync(pathToBundleTsFile);
+ 
+    let translatedBundleHasRightContent;
+    if (hasTranslationBundleTsFile) {
+      translatedBundleHasRightContent = fs.readFileSync(pathToBundleTsFile).includes('"Hello! How are you doing?"');
+    }
+
+    const resourcesDirItems = fs.readdirSync(pathToResourcesNlsFolder);
+    const hasGeneratedLocaleFolders = ['es', 'fr', 'de', 'ar'].every(item => resourcesDirItems.includes(item));
+    const hasGeneratedSupportedLocalesFile = fs.existsSync(pathToSupportedLocalesFile);
+    const hasBuiltTranslationBundleInStaging = fs.existsSync(pathToBuiltBundleJsFile);
+
+    assert.equal(hasBundleTsFileBeforeRunningOjetBuild, false, 'Translation bundle ts file should exist after running ojet build.');
+    assert.equal(util.buildSuccess(result.stdout), true, result.error);
+    assert.equal(/Building ICU translation bundles finished./.test(result.stdout), true, result.error);
+    assert.equal(hasTranslationBundleTsFile, true, 'There is no translation bundle .ts file created.');
+    assert.equal(hasGeneratedSupportedLocalesFile, true, 'There is no generated supported locales file.');
+    assert.equal(translatedBundleHasRightContent, true, hasTranslationBundleTsFile ? 'The translation .ts bundle file has incorrect contenst' : 'There is no translation bundle .ts file created.');
+    assert.equal(hasGeneratedLocaleFolders, true, 'There are not generated locale folders.');
+    assert.equal(hasBuiltTranslationBundleInStaging, true, 'There is no built translation bundle in staging.');
+  });
+
+  it('should create a bundle at component level and ensure that translations are generated correctly', async  () => {
+    const { pathToSourceComponents } = util.getAppPathData(util.VDOM_APP_NAME);
+    const pathToCompOne = path.join(pathToSourceComponents, 'comp-one');
+    const pathToNlsRootBundleName = path.join(pathToCompOne, 'resources', 'nls', 'comp-one-strings.json');
+    
+    fs.writeJSONSync(pathToNlsRootBundleName, { "greetings": "Hello, how are you?" });
+
+    // Build the component:
+    const result = await util.execCmd(`${util.OJET_APP_COMMAND} build component comp-one`, { cwd: util.getAppDir(util.VDOM_APP_NAME) });
+
+    const hasGeneratedBundleFile = fs.existsSync(pathToNlsRootBundleName.replace('.json', '.ts'));
+
+    assert.equal(hasGeneratedBundleFile, true, 'There is no translation bundle .ts file created.');
+    assert.equal(/Built ICU translations bundle for component comp-one successfully/.test(result.stdout), true, result.error);
+  });
+
+  it('should customize componentBundleName and ensure that the component translations are generated correctly', async  () => {
+    const { pathToSourceComponents } = util.getAppPathData(util.VDOM_APP_NAME);
+    const pathToCompOne = path.join(pathToSourceComponents, 'comp-one');
+    const pathToNlsRootBundleName = path.join(pathToCompOne, 'resources', 'nls', 'comp-one-strings.json');
+    const pathToUpdatedNlsRootBundleName = path.join(pathToCompOne, 'resources', 'nls', 'comp-one-icu-translations.json');
+    // Add the configuration options for rootDir, bundleName in the oraclejetconfig.json
+    // now that we know where they are located:
+    const oracleJetConfigJSON = util.getOracleJetConfigJson(util.VDOM_APP_NAME);
+
+    oracleJetConfigJSON.translation.options = {
+      ...oracleJetConfigJSON.translation.options,
+      componentBundleName: '${componentName}-icu-translations.json'
+    };
+
+    util.writeOracleJetConfigJson(util.VDOM_APP_NAME, oracleJetConfigJSON);
+
+    // Rename the bundle file to reflect the name changes:
+    fs.renameSync(pathToNlsRootBundleName, pathToUpdatedNlsRootBundleName);
+
+    // Build the component:
+    const result = await util.execCmd(`${util.OJET_APP_COMMAND} build component comp-one`, { cwd: util.getAppDir(util.VDOM_APP_NAME) });
+
+    const hasGeneratedBundleFile = fs.existsSync(pathToUpdatedNlsRootBundleName.replace('.json', '.ts'));
+
+    assert.equal(hasGeneratedBundleFile, true, 'There is no translation bundle .ts file created.');
+    assert.equal(/Built ICU translations bundle for component comp-one successfully/.test(result.stdout), true, result.error);
+  });
+  }
+});
 });

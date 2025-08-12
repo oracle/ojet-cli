@@ -1,6 +1,14 @@
 ﻿## Release Notes for ojet-cli ##
 
-### 18.1.0
+### 19.0.0
+
+* update typescript to 5.8.3
+* update express server to 5.1.0
+* Introduced a new configuration option, enableLegacyPeerDeps, in oraclejetconfig.json. This flag allows users to opt-in to installing NPM packages with the --legacy-peer-deps flag. When enabled (true),the CLI includes this flag in the installation
+command; otherwise, it does not.
+* generateSourceMaps flag is introduced in the oraclejetconfig.json file. This new flag controls the generation of source maps, with a default value of false. When enabled (true), the CLI configures Terser and RequireJS (r.js) packages to generate source maps as needed.
+* Running ojet migrate command now adds a log file that includes explanations of what has been migrated and what has not. This log file is located in the project root directory and is named ojet.migrate.log.
+* Added an override entry in the package.json file of generated JET applications to pin @types/minimatch to version 5.1.2, ensuring compatibility and preventing errors caused by the latest deprecated version.
 
 ### 18.0.0
 
@@ -56,7 +64,7 @@ will still be watched unless the watch-files is set to false or no-watch-files f
 * oraclejet-serve.js and oraclejet-build.js are no longer read or processed.  Users should use other options in oraclejetconfig.json or the user hook system to set similar settings to what is found in oraclejet-serve.js and oraclejet-build.js.  The same configuration objects formerly found in oraclejet-serve.js and oraclejet-build.js can be found in the 'opts' section of the context object passed into the before_build and before_serve hooks.
 * Add a "before_injection" hook that runs after all copying but before output files are modified by injectors
 * Hybrid build/serve capability based on Cordova is deprecated as of 10.1.0 and is planned for removal in version 15.0.0
-* Add 'webpackLibraries' and 'typescriptLibraries' propety to oraclejetconfig.json to facilitate maintenance of third-party libraries needed by Webpack and Typescript, respectively
+* Add 'webpackLibraries' and 'typescriptLibraries' properties to oraclejetconfig.json to facilitate maintenance of third-party libraries needed by Webpack and Typescript, respectively
 * Update default typescript version to 4.8.4.  If you see a message warning about the wrong typescript version during build, please check your application's package.json to ensure that it is installing 4.8.4
 * When creating a vcomponent component, the template type now defaults to 'function' instead of 'class' if the value of the --vcomponent flag is not specified.
 * The CLI now installs itself within an application's node_modules for easy use of npx to issue ojet commands

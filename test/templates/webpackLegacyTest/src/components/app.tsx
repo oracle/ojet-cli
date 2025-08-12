@@ -1,36 +1,32 @@
-import { customElement, ExtendGlobalProps } from "ojs/ojvcomponent";
-import { Component, ComponentChild } from "preact";
+import { registerCustomElement } from "ojs/ojvcomponent";
+import { h } from "preact";
+import { useEffect } from "preact/hooks";
 import Context = require("ojs/ojcontext");
 import { Footer } from "./footer";
 import { Header } from "./header";
 import { Content } from "./content/index";
 
-type Props = {
+type Props = Readonly<{
   appName?: string;
   userLogin?: string;
-}
+}>;
 
-@customElement("app-root")
-export class App extends Component<ExtendGlobalProps<Props>> {
-  static defaultProps: Props = {
-    appName: 'App Name',
-    userLogin: "john.hancock@oracle.com"
-  };
-
-  render(props: ExtendGlobalProps<Props>): ComponentChild {
+export const App = registerCustomElement(
+  "app-root",
+  ({ appName = "App Name", userLogin = "john.hancock@oracle.com" }: Props) => {
+    useEffect(() => {
+      Context.getPageContext().getBusyContext().applicationBootstrapComplete();
+    }, []);
+    
     return (
       <div id="appContainer" class="oj-web-applayout-page">
         <Header
-          appName={props.appName} 
-          userLogin={props.userLogin} 
+          appName={appName} 
+          userLogin={userLogin} 
         />
         <Content />
         <Footer />
       </div>
     );
   }
-
-  componentDidMount() {
-    Context.getPageContext().getBusyContext().applicationBootstrapComplete();
-  }
-}
+);

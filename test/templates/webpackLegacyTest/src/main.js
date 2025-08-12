@@ -31,9 +31,9 @@
       */
       // injector:mainReleasePaths
       {
-        'ojs': 'libs/oj/18.1.0/debug',
-        'ojL10n': 'libs/oj/18.1.0/ojL10n',
-        'ojtranslations': 'libs/oj/18.1.0/resources',
+        'ojs': 'libs/oj/19.0.0/debug',
+        'ojL10n': 'libs/oj/19.0.0/ojL10n',
+        'ojtranslations': 'libs/oj/19.0.0/resources',
           'knockout': 'libs/knockout/knockout-3.5.1.debug',
   'jquery': 'libs/jquery/jquery-3.7.1',
   'jqueryui-amd': 'libs/jquery/jqueryui-amd-1.14.1',

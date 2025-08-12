@@ -173,5 +173,19 @@ describe('PCSS Theme Test', () => {
       });
       assert.ok(everyExpectedEntryIsPresent, "Not all redwood files are present in staging location.");
     });
+
+    it('Should run spriter with altered padding', async () => {
+      // install svg-sprite
+      await util.execCmd('npm install svg-sprite', { cwd: appDir });
+
+      const { pathToAppHooks } = util.getAppPathData(util.THEME_APP_NAME);
+      const beforeBuildPath = path.join(pathToAppHooks, `before_build.js`);    
+      // write custom hooks file content for testing
+      util.writeCustomBeforeBuildHookContents({          
+        filePath: beforeBuildPath
+      });
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --themes=all`, {cwd: appDir});
+      assert.ok(/Optimizing svg into SVG sprites/.test(result.stdout), true, result.stdout);
+    });
   });
 });

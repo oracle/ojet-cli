@@ -20,6 +20,9 @@
     "paths": {
       "ojs/*": [
         "./node_modules/@oracle/oraclejet/dist/types/*"
+      ],
+      "preact": [
+        "./node_modules/preact"
       ]
     },
     "declaration": true,

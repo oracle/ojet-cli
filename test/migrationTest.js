@@ -13,6 +13,8 @@ const Ojet = require('../ojet');
 const appDir = util.getAppDir(util.MIGRATION_APP_NAME);
 const SASS_VERSION = '1.32.8';
 const INCORRECT_SASS_VERSION = '1.32';
+const OUTDATED_VERSION = '13.0.0';
+
 // Properties that should exist in the oraclejetconfig.json file after a
 // successful JET version migration:
 const CONFIG_PROPERTIES_TO_HAVE_POST_MIGRATION = [
@@ -23,6 +25,38 @@ const CONFIG_PROPERTIES_TO_HAVE_POST_MIGRATION = [
   'mochaTestingLibraries',
   'jestTestingLibraries'
 ];
+
+function checkUrl(url, version) {
+  if (typeof url === 'string' && url.startsWith('http')) {
+    return url.includes(version);
+  } else if (Array.isArray(url)) {
+    return url.every(item => checkUrl(item, version));
+  } else if (typeof url === 'object') {
+    return Object.values(url).every(value => checkUrl(value, version));
+  }
+  return true; // if it does not start with http we will treat it as valid
+}
+
+const checkCdnsProperties = (cdns, version) => checkUrl(cdns, version);
+
+function rewriteUrl(url, version, outdatedVersion) {
+  if (typeof url === 'string' && url.startsWith('http')) {
+    return url.replace(version, outdatedVersion);
+  } else if (Array.isArray(url)) {
+    return url.map(item => rewriteUrl(item, version, outdatedVersion));
+  } else if (typeof url === 'object') {
+    return Object.fromEntries(Object.entries(url).map(([key, value]) => [
+      key, rewriteUrl(value, version, outdatedVersion)
+    ]));
+  }
+  return url;
+}
+
+const modifyCdnsPathJetVersions = (cdns, outdatedVersion) => {
+  const version = util.getJetVersion(util.MIGRATION_APP_NAME);
+
+  return rewriteUrl(cdns, version, outdatedVersion);
+}
 
 describe('Migration Test', () => {
   before(async () => {
@@ -79,7 +113,7 @@ describe('Index HTML File Validation Test', () => {
       fs.writeFileSync(pathToIndexHtml, updatedContent, 'utf8');
 
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
-      assert.equal(/To enable theme injection, include the injector:theme flag in your index.html file/.test(result.stdout), true, result.stdout);
+      assert.equal(/To enable theme injection, include the <!-- injector:theme --> flag in your index.html file/.test(result.stdout), true, result.stdout);
 
       fs.writeFileSync(pathToIndexHtml, originalContent, 'utf8'); // Restore the original content
     });
@@ -93,7 +127,7 @@ describe('Index HTML File Validation Test', () => {
       const updatedContent = originalContent.replace(regex, replacement);
 
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
-      assert.equal(/Style tags will be automatically inserted during the build process/.test(result.stdout), true, result.stdout);
+      assert.equal(/Style tags will be automatically inserted in-between the tags during the build process./.test(result.stdout), true, result.stdout);
 
       fs.writeFileSync(pathToIndexHtml, updatedContent, 'utf8'); // remove the link tag in between the flags
     });
@@ -106,7 +140,7 @@ describe('Index HTML File Validation Test', () => {
       fs.writeFileSync(pathToIndexHtml, updatedContent, 'utf8');
 
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
-      assert.equal(/To enable js scripts to be injected, include the injector:scripts flag in your index.html file/.test(result.stdout), true, result.stdout);
+      assert.equal(/To enable js scripts to be injected, include the <!-- injector:scripts --> flag in your index.html file/.test(result.stdout), true, result.stdout);
 
       fs.writeFileSync(pathToIndexHtml, originalContent, 'utf8'); // Restore the original content
     });
@@ -126,7 +160,7 @@ describe('Index HTML File Validation Test', () => {
 
     it('should not log any errors if the index.html file is valid', async () => {
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
-      assert.equal(/Validating index.html file finished./.test(result.stdout), true, result.stdout);
+      assert.equal(/Validating index.html file task finished./.test(result.stdout), true, result.stdout);
     });
   });
 
@@ -170,7 +204,7 @@ describe('Index HTML File Validation Test', () => {
       }
 
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
-      assert.equal(/Project hooks are validated and updated successfully/.test(result.stdout), true, result.stdout);
+      assert.equal(/Validating and updating project hooks task finished/.test(result.stdout), true, result.stdout);
 
       const fileNameWithoutExtension = path.basename(hookFileToRemove, path.extname(hookFileToRemove));
       const updatedHooksJson = fs.readJSONSync(pathToHooksJson);
@@ -194,7 +228,7 @@ describe('Index HTML File Validation Test', () => {
       fs.writeJSONSync(pathToPathMappingJson, originalContent);
 
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
-      assert.equal(/Path mappings are updated successfully/.test(result.stdout), true, result.stdout);
+      assert.equal(/Validating and updating path_mapping.json file task finished./.test(result.stdout), true, result.stdout);
 
       const updatedContent = JSON.parse(fs.readFileSync(pathToPathMappingJson, 'utf8'));
       const updatedContentHasTheDeletedEntry = Object.getOwnPropertyNames(updatedContent.libs).includes(libEntryToRemove);
@@ -204,22 +238,31 @@ describe('Index HTML File Validation Test', () => {
     it('should update the cdns in the path_mapping.json file', async () => {
       const { pathToApp, sourceFolder, javascriptFolder } = util.getAppPathData(util.MIGRATION_APP_NAME);
       const pathToPathMappingJson = path.join(pathToApp, sourceFolder, javascriptFolder, util.PATH_MAPPING_JSON);
-      const cdns = fs.readJSONSync(pathToPathMappingJson).cdns;
-      const checkCdnsProperties = (cdns) => {
-        const version = util.getJetVersion(util.MIGRATION_APP_NAME);
+      const pathMappingJson = fs.readJSONSync(pathToPathMappingJson);
+      const cdns = pathMappingJson.cdns;
+      const updatedVersion = util.getJetVersion(util.MIGRATION_APP_NAME);
 
-        function checkUrl(url) {
-          if (typeof url === 'string' && url.startsWith('http')) {
-            return url.includes(version);
-          } else if (typeof url === 'object') {
-            return Object.values(url).every(checkUrl);
-          }
-          return true; // if it does not start with http we will treat it as valid
-        }
+      // Modify the paths to ensure that they have outdated versions:
+      const modifiedToOutdatedCdns = modifyCdnsPathJetVersions(cdns, OUTDATED_VERSION);
 
-        return Object.values(cdns).every(checkUrl);
-      }
-      const hasUpdatedCdnsProperties = checkCdnsProperties(cdns);
+      // Check if the versions are set to the outdated version:
+      const hasOutdatedCdnsProperties = checkCdnsProperties(modifiedToOutdatedCdns, OUTDATED_VERSION);
+      
+      // Update the path_mapping.json:
+      pathMappingJson.cdns = modifiedToOutdatedCdns;
+
+      fs.writeJSONSync(
+        pathToPathMappingJson,
+        pathMappingJson,
+        { encoding: 'utf-8', spaces: 2 }
+      );
+
+      await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
+
+      // Check if the paths have been updated to version migrating to:
+      const hasUpdatedCdnsProperties = checkCdnsProperties(cdns, updatedVersion);
+
+      assert.equal(hasOutdatedCdnsProperties, true, 'The cdns properties are not outdated as expected.');
       assert.equal(hasUpdatedCdnsProperties, true, 'The cdns properties are not updated.');
     });
   });
@@ -239,14 +282,52 @@ describe('Index HTML File Validation Test', () => {
 
     it('should not log an error if the "injector:mainReleasePaths" flag is present in main.js', async () => {
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
-      assert.equal(/Validating main.js file finished successfully/.test(result.stdout), true, result.stdout);
+      assert.equal(/Validating main.js file task finished./.test(result.stdout), true, result.stdout);
     });
   });
 
   describe('Install Updated TypeScript Version Test', () => {
+    it('should update without overriding existing configurations in the tsconfig file', async () => {
+      const { pathToApp } = util.getAppPathData(util.MIGRATION_APP_NAME);
+      const pathToTsConfigFile = path.join(pathToApp, util.TSCONFIG_JSON);
+      const tsConfigJson = fs.readJSONSync(pathToTsConfigFile);
+      // Remove some existing values:
+      delete tsConfigJson.compileOnSave;
+      delete tsConfigJson.compilerOptions.paths['ojs/*'];
+
+      // Modify some values to indicate user's preferred values--these should not be overriden:
+      tsConfigJson.compilerOptions.skipLibCheck = false;  // change from true
+      tsConfigJson.compilerOptions.removeComments = false;  // change from true
+
+      // Add some values into the config object:
+      tsConfigJson.include.push("./web/ts/**/*");
+
+      // Update the tsconfig.json file with out new changes
+      fs.writeJSONSync(
+        pathToTsConfigFile,
+        tsConfigJson,
+        { spaces: 2, encoding: 'utf-8'}
+      );
+
+      // Run the ojet migrate command:
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
+
+      const updatedTsConfigJson = fs.readJSONSync(pathToTsConfigFile);
+
+      const hasUpdatedSkipLibCheckProperty = updatedTsConfigJson.compilerOptions.skipLibCheck === false;
+      const hasUpdatedRemoveCommentsProperty = updatedTsConfigJson.compilerOptions.removeComments === false
+      const hasAddedIncludeItem = updatedTsConfigJson.include.includes('./web/ts/**/*');
+
+      assert.equal(hasAddedIncludeItem, true, 'The added item in the include array is removed.');
+      assert.equal(hasUpdatedRemoveCommentsProperty, true, 'The removeComments property value is overriden.');
+      assert.equal(hasUpdatedSkipLibCheckProperty, true, 'The skipLibCheck property value is overriden.');
+      assert.equal(/Added new property compileOnSave with value: true/.test(result.stdout), true, result.stdout);
+      assert.equal(/Added new property compilerOptions.paths.ojs\/*/.test(result.stdout), true, result.stdout);
+      assert.equal(/Updating typescript version and tsconfig.json file task finished./.test(result.stdout), true, result.stdout);
+    });
     it('should install the updated TypeScript version for a TypeScript application', async () => {
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} migrate app`, {cwd: appDir}, true, true);
-      assert.equal(/add typescript complete/.test(result.stdout), true, result.stdout);
+      assert.equal(/Updating typescript version and tsconfig.json file task finished./.test(result.stdout), true, result.stdout);
     });
   });
 

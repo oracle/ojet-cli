@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "An Oracle JavaScript Extension Toolkit(JET) web app",
   "dependencies": {
-    "@oracle/oraclejet": "https://artifacthub-phx.oci.oraclecorp.com/ojet-dev-local/oracle-oraclejet-18.1.0.tgz"
+    "@oracle/oraclejet": "https://artifacthub-phx.oci.oraclecorp.com/ojet-dev-local/oracle-oraclejet-19.0.0.tgz"
   },
   "devDependencies": {
     "@oracle/ojet-cli": "file:../../ojet-cli",
     "fs-extra": "^8.1.0",
     "glob": "10.4.5",
     "yargs-parser": "~13.1.2",
-    "typescript": "5.7.2",
+    "typescript": "5.8.3",
     "underscore": "^1.10.2",
     "webpack": "5.76.0",
     "@types/node": "18.16.3",

@@ -1,3 +1,5 @@
+import { h } from "preact";
+
 type Props = {
   links?: FooterLink[]
 }
@@ -50,8 +52,8 @@ export function Footer({ links = _DEFAULT_LINKS } : Props ) {
           ))}
         </ul>
       </div>
-      <div class="oj-web-applayout-footer-item oj-web-applayout-max-width oj-text-secondary-color oj-text-sm">
-        Copyright © 2014, 2021 Oracle and/or its affiliates All rights reserved.
+      <div class="oj-web-applayout-footer-item oj-web-applayout-max-width oj-text-color-secondary oj-typography-body-sm">
+        Copyright © 2014, 2025 Oracle and/or its affiliates All rights reserved.
       </div>
     </footer>
   );

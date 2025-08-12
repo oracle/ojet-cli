@@ -273,6 +273,7 @@ function _customizeAppTemplateForWebpack(generator) {
     'after_serve.js',
     'before_build.js',
     'before_serve.js',
+    'after_app_create.js',
     'hooks.json'
   ]);
   hooksFolderContents.forEach((folderContent) => {

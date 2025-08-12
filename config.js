@@ -22,7 +22,7 @@ const newLine = `\n${helpDescNewLineIndent}`;
 const config = {
   tasks: {
     add: {
-      description: 'Adds platforms, plugins and more to a JET app',
+      description: 'Adds components, packs, and more to a JET app',
       // 'hideFromHelp' not used += v7.2.0, implementation hasn't been removed
       // can be used on task and scope level, example below:
       // hideFromHelp: true,
@@ -91,6 +91,10 @@ const config = {
           description: 'Adds JSDOC compilation to the app to generate API documentation. Works only for VComponents.',
           examples: ['ojet add docgen']
         },
+        translation: {
+          description: 'Adds support for building ICU translations bundle.',
+          examples: ['ojet add translation']
+        },
         testing: {
           description: 'Adds test environment and templates (Mocha for MVVM and Jest for VDOM) to the app.' + // eslint-disable-line
                        newLine + 'Run \'npm run test\' for test results.',
@@ -115,10 +119,9 @@ const config = {
       description: 'Builds a JET app',
       scopes: {
         app: {
-          description: 'Builds a JET app for the specified platform,' + // eslint-disable-line
+          description: 'Builds a JET app,' + // eslint-disable-line
           newLine + 'where [app] is the directory context of the JET app.' + newLine, // eslint-disable-line
-          parameters: '[android|ios|windows|web] - specifies the build platform' + // eslint-disable-line
-              newLine + 'The default platform is \'web\'',
+          parameters: '',
           isParameterOptional: true,
           options: {
             release: {
@@ -159,17 +162,22 @@ const config = {
               parameters: '[enabled|disabled]',
               default: 'disabled'
             },
+            locale: {
+              description: 'Specify the locale of the root bundle',
+              parameters: '<string>'
+            },
             'user-options': {
               description: 'Specify user-defined options - these are accessible in hooks config object',
               parameters: '<string>'
-            },
+            }
           },
           examples: [
             'ojet build',
             'ojet build --cssvars=enabled',
             'ojet build web --theme=redwood',
             'ojet build --user-options="arbitrary string" // provide user-defined options',
-            'ojet build --release --optimize=none // Build a release with readable output. Useful for debugging'
+            'ojet build --release --optimize=none // Build a release with readable output. Useful for debugging',
+            'ojet build --locale=en-US'
           ]
         },
         component: {
@@ -194,9 +202,9 @@ const config = {
       description: 'Cleans build output from a JET app',
       scopes: {
         app: {
-          description: 'Cleans build output from a JET app for the specified platform',
-          parameters: 'android|ios|windows|web',
-          examples: ['ojet clean android', 'ojet clean ios']
+          description: 'Cleans build output from a JET app',
+          parameters: '',
+          examples: ['ojet clean']
         },
       },
     },
@@ -243,6 +251,9 @@ const config = {
             },
             webpack: {
               description: 'Create a webpack-supported app',
+            },
+            'multi-locale': {
+              description: 'Adds support for multi-locale translations. Only works when creating a webpack-supported app.',
             },
             'use-global-tooling': {
               description: 'Use the globally-installed tooling library installed with ojet-cli'
@@ -297,7 +308,7 @@ const config = {
           parameters: '<theme-name>',
           examples: ['ojet create theme xyz --basetheme=stable | redwood']
         }
-      },
+      }
     },
     help: {
       description: 'Displays command line help',
@@ -320,14 +331,14 @@ const config = {
             },
             theme: {
               description: 'Specifies the default theme to set in your oraclejetconfig.json.'
-            },
+            }
           }
-        },
-      },
+        }
+      }
     },
     list: {
       aliases: ['ls'],
-      description: 'Lists platforms, plugins and more within a JET app',
+      description: 'Lists components and more within a JET app',
       scopes: {
         component: {
           aliases: ['components', 'comp'],
@@ -338,16 +349,6 @@ const config = {
           aliases: ['packs'],
           description: 'Lists all installed packs',
           examples: ['ojet list packs']
-        },
-        platform: {
-          aliases: ['platforms'],
-          description: 'Lists all installed platforms',
-          examples: ['ojet list platform']
-        },
-        plugin: {
-          aliases: ['plugins'],
-          description: 'Lists all installed plugins',
-          examples: ['ojet list plugins']
         }
       }
     },
@@ -357,7 +358,7 @@ const config = {
       scopes: {
         component: {
           aliases: ['components', 'comp'],
-          description: 'Labels a component in exchange.',
+          description: 'Labels a component in Exchange.',
           examples: ['ojet label component my-component@1.2.0 rel2304'],
           options: {
             secure: {
@@ -488,11 +489,11 @@ const config = {
       }
     },
     remove: {
-      description: 'Removes platforms, plugins and more from a JET app',
+      description: 'Removes Exchange components and packs from a JET app',
       aliases: ['rm'],
       scopes: {
         component: {
-          description: 'Removes the specified component(s) from the app',
+          description: 'Removes the specified Exchange component(s) from the app',
           aliases: ['components', 'comp'],
           parameters: '<component1> [<component2>]',
           options: {
@@ -509,7 +510,7 @@ const config = {
         },
         pack: {
           aliases: ['packs'],
-          description: 'Removes the specified pack(s) from the app',
+          description: 'Removes the specified Exchange pack(s) from the app',
           parameters: '<pack1> [<pack2>]',
           options: {
             username: {
@@ -522,26 +523,14 @@ const config = {
             }
           },
           examples: ['ojet remove pack oj-core']
-        },
-        platform: {
-          description: 'Removes the specified platform(s) from the app',
-          aliases: ['platforms'],
-          parameters: '<platform1> [<platform2>]',
-          examples: ['ojet remove platforms ios android']
-        },
-        plugin: {
-          description: 'Removes the specified plugin(s) from the app',
-          aliases: ['plugins'],
-          parameters: '<plugin1> [<plugin2>]',
-          examples: ['ojet remove plugin cordova-plugin-camera']
         }
-      },
+      }
     },
     restore: {
-      description: 'Restores missing dependencies, plugins, and libraries to a JET app',
+      description: 'Restores missing dependencies and libraries to a JET app',
       scopes: {
         app: {
-          description: 'Restores missing dependencies, plugins, and libraries to a JET app',
+          description: 'Restores missing dependencies and libraries to a JET app',
           options: {
             secure: {
               description: 'Whether to enforce secure HTTPS protocol',
@@ -561,7 +550,7 @@ const config = {
               default: 'false'
             },
             'exchange-only': {
-              description: 'Restore the exchange components without running npm install',
+              description: 'Restore the Exchange components without running npm install',
               parameters: '[true|false]',
               default: 'true'
             }
@@ -686,14 +675,19 @@ const config = {
             'user-options': {
               description: 'Specify user-defined options - these are accessible in hooks config object',
               parameters: '<string>'
-            }
+            },
+            locale: {
+              description: 'Specify the locale of the root bundle',
+              parameters: '<string>'
+            },
           },
           examples: [
             'ojet serve',
             'ojet serve --cssvars=enabled',
             'ojet serve --browser=edge',
             'ojet serve web --theme redwood',
-            'ojet serve --user-options="arbitrary string" // provide user-defined options.'
+            'ojet serve --user-options="arbitrary string" // provide user-defined options.',
+            'ojet serve --locale=en-US'
           ]
         }
       }

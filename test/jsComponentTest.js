@@ -195,5 +195,7 @@ describe('JS Component & Jet Pack Tests', () => {
     cc.ojetCreatePackBundleTest(util.JAVASCRIPT_COMPONENT_APP_CONFIG);
 
     cc.ojetCreateResourceComponentBundle(util.JAVASCRIPT_COMPONENT_APP_CONFIG);
+
+    cc.removePack(util.COMPONENT_APP_NAME);
   });
 });
