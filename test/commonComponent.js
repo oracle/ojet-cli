@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2026, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -220,6 +220,84 @@ function _createVComponentTest({
       assert.ok(hasGlobalNameSpace, 'Does not have a declared global namespace in loader.ts');
     });
   });
+};
+
+function _consumeCssFileFromReferenceComponentTest({
+    appName,
+    scriptsFolder,
+    component = 'test-reference-component'
+}) {
+    if (!util.noScaffold()) {
+      _beforeComponentTest({
+        task: 'create',
+        app: appName,
+        scriptsFolder,
+        component
+      });
+    }
+
+    describe('consume CSS file from reference component and validate build', () => {
+      it('should add and consume CSS from a reference component and build successfully', async () => {
+        const appDir = util.getAppDir(appName);
+        const {
+          pathToSourceComponents,
+          pathToApp
+        } = util.getAppPathData(appName, scriptsFolder);
+
+        // Add oj-sp-ref-maplibre-gl component
+        let result = await util.execCmd(
+          `${util.OJET_APP_COMMAND} add component oj-sp-ref-maplibre-gl`,
+          { cwd: appDir },
+          false,
+          true
+        );
+        // Validate component addition
+        assert.match(result.stdout, /Success: Component\(s\) 'oj-sp-ref-maplibre-gl' added\./);
+
+        // Prepare path and update TSX file
+        const testComponentDir = path.join(pathToSourceComponents, component);
+        let filePath = path.join(testComponentDir, `loader.${scriptsFolder}`);
+        let fileContent = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+
+        if (scriptsFolder === 'ts') {
+          // Dynamically use the component name in the import path
+          const importStatement = `import "css!./${component}-styles.css";`;
+          fileContent = fileContent.replace(
+            importStatement,
+            `${importStatement}\nimport "css!oj-fa-maplibre-gl/maplibre-gl.css";`
+          );
+        } else {
+          // Build dynamic RegExp for require-style dependency arrays
+          const regex = new RegExp(
+            `(['"])css!\\./${component}-styles\\.css\\1`
+          );
+          fileContent = fileContent.replace(
+            regex,
+            `$1css!./${component}-styles.css$1, $1css!oj-fa-maplibre-gl/maplibre-gl.css$1`
+          );
+        }
+        fs.writeFileSync(filePath, fileContent, 'utf8');
+
+        // Edit hooks file for additional path
+        const hooksFilePath = path.join(pathToApp, 'scripts', 'hooks', 'before_component_optimize.js');
+        let hooksContent = fs.readFileSync(hooksFilePath, 'utf8');
+        hooksContent = hooksContent.replace(
+            'resolve(configObj);',
+            'configObj.componentRequireJs.paths["oj-fa-maplibre-gl"] = "empty:";\nresolve(configObj);'
+        );
+        fs.writeFileSync(hooksFilePath, hooksContent, 'utf8');
+
+        // Build app
+        result = await util.execCmd(
+          `${util.OJET_APP_COMMAND} build --release`,
+          { cwd: appDir },
+          false,
+          true
+        );
+        // Validate successful build
+        assert.match(result.stdout, /Success: Build finished/);
+      });
+    });
 };
 
 function _createComponentInMonoPackTest({
@@ -2935,6 +3013,11 @@ module.exports = {
         util.runComponentTestInTestApp(appConfig, {
           test: _customComponentResourceBundleTest,
           component: 'comp-res-bundle'
+        });
+      });
+      describe('ojet build --release, consuming css from reference component', () => {
+        util.runComponentTestInTestApp(appConfig, {
+          test: _consumeCssFileFromReferenceComponentTest
         });
       });
       describe(`ojet build --${util.OMIT_COMPONENT_VERSION_FLAG}`, () => {

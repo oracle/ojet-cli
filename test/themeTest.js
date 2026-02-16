@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2026, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -10,7 +10,6 @@ const path = require('path');
 const util = require('./util');
 
 const appDir = util.getAppDir(util.THEME_APP_NAME);
-const THEME_NAME = 'testTheme';
 
 describe('PCSS Theme Test', () => {
   before(async () => {
@@ -87,10 +86,7 @@ describe('PCSS Theme Test', () => {
       // Run the build command and get the emitted build info:
       const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, {cwd: appDir}, true);
       let errorMessageForCorruptedFile;
-      const pathToTestFileCreated = fs.existsSync(pathToSvgTestFile);
-      if (pathToTestFileCreated) {
-        errorMessageForFailingFile = `Error caused by file: ${pathToSvgTestFile}`;
-      }
+
       // Delete the corrupted file; otherwise, subsequent tests will fail:
       fs.removeSync(pathToSvgTestFile);
       const pathToTestFileDeleted = fs.existsSync(pathToSvgTestFile);

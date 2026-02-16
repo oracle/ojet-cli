@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2026, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -146,6 +146,7 @@ describe('Typescript Test', () => {
       });
     });
   });
+
   describe('Build (an app with navdrawer template)', () => {
     if (!util.noBuild()) {
       it('should build the ts app with navdrawer template', async () => {
@@ -163,6 +164,36 @@ describe('Typescript Test', () => {
         });
       }
       assert.ok(hasMap, filelist);
+    });
+  });
+
+  describe('Add Testing with view models (an app with navdrawer template)', () => {
+    it('should install the needed testing files and have configurations for view models', async () => {
+      const appDir = util.getAppDir(util.TS_NAV_DRAWER_APP_NAME);
+      const pathToKarmaConfig = path.join(appDir, 'test-config', 'karma.conf.js');
+      const pathToTsConfig = path.join(appDir, 'test-config', 'tsconfig.json');
+
+      // Run the command to add testing files
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} add testing --view-models`, {
+        cwd: appDir,
+      }, true, true);
+
+      // Verify the command execution was successful
+      assert.ok(/Success: add testing complete/.test(result.stdout), result.stdout);
+
+      // Load tsconfig.json and verify viewModels entry
+      const tsConfig = fs.readJSONSync(pathToTsConfig);
+      const hasViewModelsConfigEntryInTsConfig = tsConfig.compilerOptions?.paths?.['viewModels/*'];
+      assert.ok(hasViewModelsConfigEntryInTsConfig, 'Has no viewModels/* entry in the tsconfig.json');
+
+      // Load karma.conf.js and verify viewModels entry and pattern
+      const karmaConfigContent = fs.readFileSync(pathToKarmaConfig, { encoding: 'utf-8' });
+      const viewModelRegex = /['"]web\/js\/viewModels\/\*\*\/\*\.js['"]\s*:\s*\[\s*['"]coverage['"]\s*\]/gm;
+      const viewModelPatternRegex = /pattern\s*:\s*['"]web\/js\/viewModels\/\*\*\/\*\.js['"]/;
+      const hasViewModelsEntryInKarmaConfig = viewModelRegex.test(karmaConfigContent);
+      const hasViewModelsPatternInKarmaConfig = viewModelPatternRegex.test(karmaConfigContent);
+      assert.ok(hasViewModelsEntryInKarmaConfig, 'Has no view models entry in karma.config.js file');
+      assert.ok(hasViewModelsPatternInKarmaConfig, 'Has no view models pattern in karma.config.js file');
     });
   });
 });

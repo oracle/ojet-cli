@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2026, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -81,6 +81,7 @@ module.exports = {
   TS_NAV_DRAWER_APP_NAME: 'webTsNavDrawerTest',
   THEME_APP_NAME: 'webJsThemeTest',
   MIGRATION_APP_NAME: 'webMigrationTest',
+  WEBPACK_MIGRATION_APP_NAME: 'webpackMigrationTest',
   PWA_APP_NAME: 'webJsPwaTest',
   API_APP_NAME: 'webTsApiTest',
   VDOM_APP_NAME: 'vdomTest',
@@ -384,6 +385,22 @@ module.exports = {
 
   getTemplatesDir: function _getTempatesDir() {
     return path.resolve(__dirname, '..', 'templates');
+  },
+
+  // Returns the known oraclejet-tooling templates/webpack directory inside the app,
+  // accounting for nested install under @oracle/ojet-cli/node_modules
+  getToolingTemplatesPathInApp: function _getToolingTemplatesPathInApp(pathToApp) {
+    return path.join(
+      pathToApp,
+      'node_modules',
+      '@oracle',
+      'ojet-cli',
+      'node_modules',
+      '@oracle',
+      'oraclejet-tooling',
+      'lib',
+      'templates'
+    );
   },
 
   toCamelCase: function _toCamelCase(str) {
