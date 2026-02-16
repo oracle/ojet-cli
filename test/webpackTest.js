@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2026, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -29,7 +29,7 @@ async function getICUTranslationTestVariables(appName) {
     sourceFolder,
     appName === util.WEBPACK_TS_APP_NAME ? typescriptFolder : javascriptFolder,
     'resources'
-  );
+    );
   const pathToResourcesNlsFolder = path.join(pathToResourcesFolder, 'nls');
   const pathToBundleTsFile = path.join(pathToResourcesNlsFolder, 'translationBundle.ts');
   const pathToSupportedLocalesFile = path.join(pathToResourcesNlsFolder, 'supportedLocales.ts');
@@ -306,6 +306,36 @@ describe('Webpack Test', () => {
       });
     });
 
+    describe('L10n default locale configuration', () => {
+      it('should build successfully when defaultWebpackOjL10nLocale is provided', async () => {
+        const appName = util.WEBPACK_APP_NAME;
+        const appDir = util.getAppDir(appName);
+        const oracleJetConfigJSON = util.getOracleJetConfigJson(appName);
+        // Set custom default locale for ojL10n webpack loader
+        oracleJetConfigJSON.defaultWebpackOjL10nLocale = 'fr-FR';
+        // Ensure multi-locale is off so default locale applies
+        oracleJetConfigJSON.multiLocaleSupport = false;
+        util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+      });
+
+      it('should build successfully and fallback to en-US when defaultWebpackOjL10nLocale is not set', async () => {
+        const appName = util.WEBPACK_JS_APP_NAME;
+        const appDir = util.getAppDir(appName);
+        const oracleJetConfigJSON = util.getOracleJetConfigJson(appName);
+        // Remove the property to test fallback behavior
+        delete oracleJetConfigJSON.defaultWebpackOjL10nLocale;
+        // Ensure multi-locale is off so default applies
+        oracleJetConfigJSON.multiLocaleSupport = false;
+        util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+      });
+    });
+
     describe('Multi-locale Support', () => {
       it('should add multi-locale support for a vdom app', async () => {
         const appDir = util.getAppDir(util.WEBPACK_APP_NAME);
@@ -353,6 +383,137 @@ describe('Webpack Test', () => {
 
         assert.equal(fs.existsSync(pathToInitRootFile), true, 'No init-root.js file present.');
         assert.ok(regex.test(initRootFileContent), 'No import for the bootstap module.');
+      });
+    });
+
+    describe('Multi-locale template missing behavior', () => {
+      it('should error and not create init-index.ts when template is missing in a VDOM app', async () => {
+        const appName = util.WEBPACK_APP_NAME;
+        const appDir = util.getAppDir(appName);
+        const { pathToApp, sourceFolder } = util.getAppPathData(appName);
+        const templateTs = path.join(util.getToolingTemplatesPathInApp(pathToApp), 'webpack', 'init-entry.ts.tmpl');
+        const backupTs = `${templateTs}.bak`;
+
+        // Backup and remove the template
+        if (fs.existsSync(templateTs)) fs.renameSync(templateTs, backupTs);
+        try {
+          const pathToInit = path.join(pathToApp, sourceFolder, 'init-index.ts');
+          // Ensure any existing init file is removed before the test
+          if (fs.existsSync(pathToInit)) fs.removeSync(pathToInit);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} add webpack --multi-locale`, { cwd: appDir }, true, true);
+          assert.equal(fs.existsSync(pathToInit), false, 'init-index.ts should not be created when template is missing');
+          // Expect an error or error text in stdout
+          assert.ok(result.error || /Missing multi-locale init entry template/i.test(result.stdout), 'Expected missing template error for VDOM app');
+        } finally {
+          // Restore template
+          if (fs.existsSync(backupTs)) fs.renameSync(backupTs, templateTs);
+        }
+      });
+
+      it('should error and not create init-root.js when template is missing in a JS app', async () => {
+        const appName = util.WEBPACK_JS_APP_NAME;
+        const appDir = util.getAppDir(appName);
+        const { pathToApp, sourceFolder, javascriptFolder } = util.getAppPathData(appName);
+        const templateJs = path.join(util.getToolingTemplatesPathInApp(pathToApp), 'webpack', 'init-entry.js.tmpl');
+        const backupJs = `${templateJs}.bak`;
+
+        if (fs.existsSync(templateJs)) fs.renameSync(templateJs, backupJs);
+        try {
+          const pathToInit = path.join(pathToApp, sourceFolder, javascriptFolder, 'init-root.js');
+          if (fs.existsSync(pathToInit)) fs.removeSync(pathToInit);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} add webpack --multi-locale`, { cwd: appDir }, true, true);
+          assert.equal(fs.existsSync(pathToInit), false, 'init-root.js should not be created when template is missing');
+          assert.ok(result.error || /Missing multi-locale init entry template/i.test(result.stdout), 'Expected missing template error for JS app');
+        } finally {
+          if (fs.existsSync(backupJs)) fs.renameSync(backupJs, templateJs);
+        }
+      });
+
+      it('should error and not create init-root.ts when template is missing in a TS app', async () => {
+        const appName = util.WEBPACK_TS_APP_NAME;
+        const appDir = util.getAppDir(appName);
+        const { pathToApp, sourceFolder, typescriptFolder } = util.getAppPathData(appName);
+        const templateTs = path.join(util.getToolingTemplatesPathInApp(pathToApp), 'webpack', 'init-entry.ts.tmpl');
+        const backupTs = `${templateTs}.bak`;
+
+        if (fs.existsSync(templateTs)) fs.renameSync(templateTs, backupTs);
+        try {
+          const pathToInit = path.join(pathToApp, sourceFolder, typescriptFolder, 'init-root.ts');
+          if (fs.existsSync(pathToInit)) fs.removeSync(pathToInit);
+          const result = await util.execCmd(`${util.OJET_APP_COMMAND} add webpack --multi-locale`, { cwd: appDir }, true, true);
+          assert.equal(fs.existsSync(pathToInit), false, 'init-root.ts should not be created when template is missing');
+          assert.ok(result.error || /Missing multi-locale init entry template/i.test(result.stdout), 'Expected missing template error for TS app');
+        } finally {
+          if (fs.existsSync(backupTs)) fs.renameSync(backupTs, templateTs);
+        }
+      });
+    });
+
+    describe('Multi-locale flag manual enablement (auto init-file generation)', () => {
+      it('should auto-generate init-index.ts when multiLocaleSupport is set manually in a VDOM app', async () => {
+        const appName = util.WEBPACK_APP_NAME;
+        const appDir = util.getAppDir(appName);
+        const { pathToApp, sourceFolder } = util.getAppPathData(appName);
+        const pathToInitIndex = path.join(pathToApp, sourceFolder, 'init-index.ts');
+        const regex = /import\s*\{\s*loadTranslationBundles\s*\}\s*from\s*'bootstrap'/;
+
+        // Remove init-* if it exists to simulate a pre-existing project where flag was toggled
+        if (fs.existsSync(pathToInitIndex)) fs.removeSync(pathToInitIndex);
+
+        // Toggle flag in oraclejetconfig.json
+        const oracleJetConfigJSON = util.getOracleJetConfigJson(appName);
+        oracleJetConfigJSON.multiLocaleSupport = true;
+        util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+
+        // Build should trigger auto-generation of init-index.ts
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+
+        assert.equal(fs.existsSync(pathToInitIndex), true, 'init-index.ts was not generated automatically.');
+        const content = fs.readFileSync(pathToInitIndex, 'utf-8');
+        assert.ok(regex.test(content), 'Generated init-index.ts missing bootstrap preload import.');
+      });
+
+      it('should auto-generate init-root.js when multiLocaleSupport is set manually in a JS app', async () => {
+        const appName = util.WEBPACK_JS_APP_NAME;
+        const appDir = util.getAppDir(appName);
+        const { pathToApp, sourceFolder, javascriptFolder } = util.getAppPathData(appName);
+        const pathToInitRoot = path.join(pathToApp, sourceFolder, javascriptFolder, 'init-root.js');
+        const regex = /import\s*\{\s*loadTranslationBundles\s*\}\s*from\s*'bootstrap'/;
+
+        if (fs.existsSync(pathToInitRoot)) fs.removeSync(pathToInitRoot);
+
+        const oracleJetConfigJSON = util.getOracleJetConfigJson(appName);
+        oracleJetConfigJSON.multiLocaleSupport = true;
+        util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+
+        assert.equal(fs.existsSync(pathToInitRoot), true, 'init-root.js was not generated automatically.');
+        const content = fs.readFileSync(pathToInitRoot, 'utf-8');
+        assert.ok(regex.test(content), 'Generated init-root.js missing bootstrap preload import.');
+      });
+
+      it('should auto-generate init-root.ts when multiLocaleSupport is set manually in a TS app', async () => {
+        const appName = util.WEBPACK_TS_APP_NAME;
+        const appDir = util.getAppDir(appName);
+        const { pathToApp, sourceFolder, typescriptFolder } = util.getAppPathData(appName);
+        const pathToInitRoot = path.join(pathToApp, sourceFolder, typescriptFolder, 'init-root.ts');
+        const regex = /import\s*\{\s*loadTranslationBundles\s*\}\s*from\s*'bootstrap'/;
+
+        if (fs.existsSync(pathToInitRoot)) fs.removeSync(pathToInitRoot);
+
+        const oracleJetConfigJSON = util.getOracleJetConfigJson(appName);
+        oracleJetConfigJSON.multiLocaleSupport = true;
+        util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+
+        const result = await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: appDir }, true, true);
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+
+        assert.equal(fs.existsSync(pathToInitRoot), true, 'init-root.ts was not generated automatically.');
+        const content = fs.readFileSync(pathToInitRoot, 'utf-8');
+        assert.ok(regex.test(content), 'Generated init-root.ts missing bootstrap preload import.');
       });
     });
 
@@ -479,20 +640,17 @@ describe('Webpack Test', () => {
           assert.ok(false);
         }
       });
-
       it('should have bundle.js file', () => {
         const { pathToBundleJs } = util.getAppPathData(util.WEBPACK_LEGACY_APP_NAME);
         const bundleFileExists = fs.existsSync(pathToBundleJs);
         assert.ok(bundleFileExists, `${pathToBundleJs} does not exist`);
       });
-
       it('should have bundle.js script in index.html', () => {
         const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_LEGACY_APP_NAME);
         const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
         const loadsBundleJs = /bundle\.js(?:'|")><\/script>/.test(indexHtmlContent);
         assert.ok(loadsBundleJs, `${pathToIndexHtml} does not load bundle.js`);
       });
-
       it('should not load require.js in index.html', () => {
         const { pathToIndexHtml } = util.getAppPathData(util.WEBPACK_LEGACY_APP_NAME);
         const indexHtmlContent = fs.readFileSync(pathToIndexHtml, { encoding: 'utf-8' });
@@ -500,114 +658,112 @@ describe('Webpack Test', () => {
         assert.ok(!loadsRequireJs, `${pathToIndexHtml} loads require.js`);
       })
     });
+  });
 
-    describe('Build translation bundles', () => {
-      if (!util.noBuild()) {
-        it('should not have translation configurations in the oraclejetconfig.json file before running ojet add translation', async () => {
-          const vdomAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_APP_NAME);
-          const tsAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_TS_APP_NAME);
-          const jsAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_JS_APP_NAME);
+  describe('Build translation bundles', () => {
+    if (!util.noBuild()) {
+      it('should not have translation configurations in the oraclejetconfig.json file before running ojet add translation', async () => {
+        const vdomAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_APP_NAME);
+        const tsAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_TS_APP_NAME);
+        const jsAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_JS_APP_NAME);
+        // "buildICUTranslationBundle" is a flag to invoke building the translation bundles.
+        const hasNoBuildICUTranslationBundleEntryInAllApps = [
+          vdomAppOracleJetConfigJSON,
+          tsAppOracleJetConfigJSON,
+          jsAppOracleJetConfigJSON
+        ].every(oracleJetConfigJSON => oracleJetConfigJSON.buildICUTranslationsBundle === undefined);
+        // "translation" entry contains the config options and the translation type needed to build the bundles.
+        const hasNoTranslationEntryInAllApps = [
+          vdomAppOracleJetConfigJSON,
+          tsAppOracleJetConfigJSON,
+          jsAppOracleJetConfigJSON
+        ].every(oracleJetConfigJSON => oracleJetConfigJSON.translation === undefined);
 
-          // "buildICUTranslationBundle" is a flag to invoke building the translation bundles.
-          const hasNoBuildICUTranslationBundleEntryInAllApps = [
-            vdomAppOracleJetConfigJSON,
-            tsAppOracleJetConfigJSON,
-            jsAppOracleJetConfigJSON
-          ].every(oracleJetConfigJSON => oracleJetConfigJSON.buildICUTranslationsBundle === undefined);
+        assert.equal(hasNoBuildICUTranslationBundleEntryInAllApps, true, 'buildICUTranslationBundle flag exists in the oraclejetconfig.json file in one or all apps');
+        assert.equal(hasNoTranslationEntryInAllApps, true, 'translation entry with needed configurations exists in the oraclejetconfig.json file in one or all apps');
+      });
 
-          // "translation" entry contains the config options and the translation type needed to build the bundles.
-          const hasNoTranslationEntryInAllApps = [
-            vdomAppOracleJetConfigJSON,
-            tsAppOracleJetConfigJSON,
-            jsAppOracleJetConfigJSON
-          ].every(oracleJetConfigJSON => oracleJetConfigJSON.translation === undefined);
 
-          assert.equal(hasNoBuildICUTranslationBundleEntryInAllApps, true, 'buildICUTranslationBundle flag exists in the oraclejetconfig.json file in one or all apps');
-          assert.equal(hasNoTranslationEntryInAllApps, true, 'translation entry with needed configurations exists in the oraclejetconfig.json file in one or all apps');
-        });
+      it('should add libraries and needed configurations in the oraclejetconfig.json file after running ojet add translation', async () => {
+        await util.execCmd(`${util.OJET_APP_COMMAND} add translation`, { cwd: util.getAppDir(util.WEBPACK_APP_NAME) });
+        await util.execCmd(`${util.OJET_APP_COMMAND} add translation`, { cwd: util.getAppDir(util.WEBPACK_TS_APP_NAME) });
+        await util.execCmd(`${util.OJET_APP_COMMAND} add translation`, { cwd: util.getAppDir(util.WEBPACK_JS_APP_NAME) });
 
-        it('should add libraries and needed configurations in the oraclejetconfig.json file after running ojet add translation', async () => {
-          await util.execCmd(`${util.OJET_APP_COMMAND} add translation`, { cwd: util.getAppDir(util.WEBPACK_APP_NAME) });
-          await util.execCmd(`${util.OJET_APP_COMMAND} add translation`, { cwd: util.getAppDir(util.WEBPACK_TS_APP_NAME) });
-          await util.execCmd(`${util.OJET_APP_COMMAND} add translation`, { cwd: util.getAppDir(util.WEBPACK_JS_APP_NAME) });
-          const vdomAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_APP_NAME);
-          const tsAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_TS_APP_NAME);
-          const jsAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_JS_APP_NAME);
+        const vdomAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_APP_NAME);
+        const tsAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_TS_APP_NAME);
+        const jsAppOracleJetConfigJSON = util.getOracleJetConfigJson(util.WEBPACK_JS_APP_NAME);
 
-          const hasBuildICUTranslationBundleEntryInAllApps = [
-            vdomAppOracleJetConfigJSON,
-            tsAppOracleJetConfigJSON,
-            jsAppOracleJetConfigJSON
-          ].every(oracleJetConfigJSON => oracleJetConfigJSON.buildICUTranslationsBundle !== undefined);
+        const hasBuildICUTranslationBundleEntryInAllApps = [
+          vdomAppOracleJetConfigJSON,
+          tsAppOracleJetConfigJSON,
+          jsAppOracleJetConfigJSON
+        ].every(oracleJetConfigJSON => oracleJetConfigJSON.buildICUTranslationsBundle !== undefined);
 
-          const hasTranslationEntryInAllApps = [
-            vdomAppOracleJetConfigJSON,
-            tsAppOracleJetConfigJSON,
-            jsAppOracleJetConfigJSON
-          ].every(oracleJetConfigJSON => (oracleJetConfigJSON.translation &&
-            Object.keys(oracleJetConfigJSON.translation).every((entry) => ['type', 'options'].includes(entry))));
+        const hasTranslationEntryInAllApps = [
+          vdomAppOracleJetConfigJSON,
+          tsAppOracleJetConfigJSON,
+          jsAppOracleJetConfigJSON
+        ].every(oracleJetConfigJSON => (oracleJetConfigJSON.translation &&
+          Object.keys(oracleJetConfigJSON.translation).every((entry) => ['type', 'options'].includes(entry))));
 
-          assert.equal(hasBuildICUTranslationBundleEntryInAllApps, true, 'buildICUTranslationBundle flag either does not exist or is set to false in the webpack apps');
-          assert.equal(hasTranslationEntryInAllApps, true, 'translation entry with needed configurations does not exist');
-        });
+        assert.equal(hasBuildICUTranslationBundleEntryInAllApps, true, 'buildICUTranslationBundle flag either does not exist or is set to false in the webpack apps');
+        assert.equal(hasTranslationEntryInAllApps, true, 'translation entry with needed configurations does not exist');
+      });
 
-        it('should build translation bundle during the build time after running the ojet add translation command', async () => {
-          const {
-            hasBundleTsFileBeforeRunningOjetBuild,
-            result,
-            hasTranslationBundleTsFile,
-            hasGeneratedSupportedLocalesFile,
-            translatedBundleHasRightContent,
-            hasGeneratedLocaleFolders
-          } = await getICUTranslationTestVariables(util.WEBPACK_APP_NAME);
+      it('should build translation bundle during the build time after running the ojet add translation command', async () => {
+        const {
+          hasBundleTsFileBeforeRunningOjetBuild,
+          result,
+          hasTranslationBundleTsFile,
+          hasGeneratedSupportedLocalesFile,
+          translatedBundleHasRightContent,
+          hasGeneratedLocaleFolders
+        } = await getICUTranslationTestVariables(util.WEBPACK_APP_NAME);
 
-          assert.equal(hasBundleTsFileBeforeRunningOjetBuild, false, 'Translation bundle ts file should exist after running ojet build.');
-          assert.equal(util.buildSuccess(result.stdout), true, result.error);
-          assert.equal(/Building ICU translation bundles finished./.test(result.stdout), true, result.error);
-          assert.equal(hasTranslationBundleTsFile, true, 'There is no translation bundle .ts file created.');
-          assert.equal(hasGeneratedSupportedLocalesFile, true, 'There is no generated supported locales file.');
-          assert.equal(translatedBundleHasRightContent, true, hasTranslationBundleTsFile ? 'The translation .ts bundle file has incorrect contenst' : 'There is no translation bundle .ts file created.');
-          assert.equal(hasGeneratedLocaleFolders, true, 'There are not generated locale folders.');
-        });
+        assert.equal(hasBundleTsFileBeforeRunningOjetBuild, false, 'Translation bundle ts file should exist after running ojet build.');
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+        assert.equal(/Building ICU translation bundles finished./.test(result.stdout), true, result.error);
+        assert.equal(hasTranslationBundleTsFile, true, 'There is no translation bundle .ts file created.');
+        assert.equal(hasGeneratedSupportedLocalesFile, true, 'There is no generated supported locales file.');
+        assert.equal(translatedBundleHasRightContent, true, hasTranslationBundleTsFile ? 'The translation .ts bundle file has incorrect contenst' : 'There is no translation bundle .ts file created.');
+        assert.equal(hasGeneratedLocaleFolders, true, 'There are not generated locale folders.');
+      });
+      it('should build translation bundle during the build time after running the ojet add translation command', async () => {
+        const {
+          hasBundleTsFileBeforeRunningOjetBuild,
+          result,
+          hasTranslationBundleTsFile,
+          hasGeneratedSupportedLocalesFile,
+          translatedBundleHasRightContent,
+          hasGeneratedLocaleFolders
+        } = await getICUTranslationTestVariables(util.WEBPACK_TS_APP_NAME);
 
-        it('should build translation bundle during the build time after running the ojet add translation command', async () => {
-          const {
-            hasBundleTsFileBeforeRunningOjetBuild,
-            result,
-            hasTranslationBundleTsFile,
-            hasGeneratedSupportedLocalesFile,
-            translatedBundleHasRightContent,
-            hasGeneratedLocaleFolders
-          } = await getICUTranslationTestVariables(util.WEBPACK_TS_APP_NAME);
+        assert.equal(hasBundleTsFileBeforeRunningOjetBuild, false, 'Translation bundle ts file should exist after running ojet build.');
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+        assert.equal(/Building ICU translation bundles finished./.test(result.stdout), true, result.error);
+        assert.equal(hasTranslationBundleTsFile, true, 'There is no translation bundle .ts file created.');
+        assert.equal(hasGeneratedSupportedLocalesFile, true, 'There is no generated supported locales file.');
+        assert.equal(translatedBundleHasRightContent, true, hasTranslationBundleTsFile ? 'The translation .ts bundle file has incorrect contenst' : 'There is no translation bundle .ts file created.');
+        assert.equal(hasGeneratedLocaleFolders, true, 'There are not generated locale folders.');
+      });
+      it('should build translation bundle during the build time after running the ojet add translation command', async () => {
+        const {
+          hasBundleTsFileBeforeRunningOjetBuild,
+          result,
+          hasTranslationBundleJsFile,
+          hasGeneratedSupportedLocalesFile,
+          translatedBundleHasRightContent,
+          hasGeneratedLocaleFolders
+        } = await getICUTranslationTestVariables(util.WEBPACK_JS_APP_NAME);
 
-          assert.equal(hasBundleTsFileBeforeRunningOjetBuild, false, 'Translation bundle ts file should exist after running ojet build.');
-          assert.equal(util.buildSuccess(result.stdout), true, result.error);
-          assert.equal(/Building ICU translation bundles finished./.test(result.stdout), true, result.error);
-          assert.equal(hasTranslationBundleTsFile, true, 'There is no translation bundle .ts file created.');
-          assert.equal(hasGeneratedSupportedLocalesFile, true, 'There is no generated supported locales file.');
-          assert.equal(translatedBundleHasRightContent, true, hasTranslationBundleTsFile ? 'The translation .ts bundle file has incorrect contenst' : 'There is no translation bundle .ts file created.');
-          assert.equal(hasGeneratedLocaleFolders, true, 'There are not generated locale folders.');
-        });
-
-        it('should build translation bundle during the build time after running the ojet add translation command', async () => {
-          const {
-            hasBundleTsFileBeforeRunningOjetBuild,
-            result,
-            hasTranslationBundleJsFile,
-            hasGeneratedSupportedLocalesFile,
-            translatedBundleHasRightContent,
-            hasGeneratedLocaleFolders
-          } = await getICUTranslationTestVariables(util.WEBPACK_JS_APP_NAME);
-
-          assert.equal(hasBundleTsFileBeforeRunningOjetBuild, false, 'Translation bundle ts file should exist after running ojet build.');
-          assert.equal(util.buildSuccess(result.stdout), true, result.error);
-          assert.equal(/Building ICU translation bundles finished./.test(result.stdout), true, result.error);
-          assert.equal(hasTranslationBundleJsFile, true, 'There is no translation bundle .js file created.');
-          assert.equal(hasGeneratedSupportedLocalesFile, true, 'There is no generated supported locales file.');
-          assert.equal(translatedBundleHasRightContent, true, hasTranslationBundleJsFile ? 'The translation .ts bundle file has incorrect contenst' : 'There is no translation bundle .ts file created.');
-          assert.equal(hasGeneratedLocaleFolders, true, 'There are not generated locale folders.');
-        });
-      }
-    });
+        assert.equal(hasBundleTsFileBeforeRunningOjetBuild, false, 'Translation bundle ts file should exist after running ojet build.');
+        assert.equal(util.buildSuccess(result.stdout), true, result.error);
+        assert.equal(/Building ICU translation bundles finished./.test(result.stdout), true, result.error);
+        assert.equal(hasTranslationBundleJsFile, true, 'There is no translation bundle .js file created.');
+        assert.equal(hasGeneratedSupportedLocalesFile, true, 'There is no generated supported locales file.');
+        assert.equal(translatedBundleHasRightContent, true, hasTranslationBundleJsFile ? 'The translation .ts bundle file has incorrect contenst' : 'There is no translation bundle .ts file created.');
+        assert.equal(hasGeneratedLocaleFolders, true, 'There are not generated locale folders.');
+      });
+    }
   });
 });

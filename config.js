@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 /**
-  Copyright (c) 2015, 2025, Oracle and/or its affiliates.
+  Copyright (c) 2015, 2026, Oracle and/or its affiliates.
   Licensed under The Universal Permissive License (UPL), Version 1.0
   as shown at https://oss.oracle.com/licenses/upl/
 
@@ -98,7 +98,17 @@ const config = {
         testing: {
           description: 'Adds test environment and templates (Mocha for MVVM and Jest for VDOM) to the app.' + // eslint-disable-line
                        newLine + 'Run \'npm run test\' for test results.',
-          examples: ['ojet add testing']
+          examples: ['ojet add testing'],
+          options: {
+            'skip-installation': {
+              description: 'Skips the installation of test libraries',
+              examples: ['ojet add testing --skip-installation']
+            },
+            'view-models': {
+              description: 'Adds files and necessary configuration to test view models',
+              examples: ['ojet add testing --view-models']
+            },
+          }
         },
         pwa: {
           description: 'Adds pwa support to the app',

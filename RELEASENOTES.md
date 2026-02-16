@@ -1,5 +1,18 @@
 ﻿## Release Notes for ojet-cli ##
 
+### 20.0.0
+
+* remove 'add web' as a command, as it is not needed
+* --view-models and --skip-installation flags for the ojet add testing command are introduced. The --view-models flag adds test configurations for view models, while the --skip-installation flag skips the installation of test libraries.
+* Updated glob version to 12.0.0
+* Introduces a --multi-locale flag for Webpack projects: when used (during create or via ojet add webpack --multi-locale), it sets multiLocaleSupport: true in oraclejetconfig.json and generates an init-root (JS/TS) or init-index (VDOM) file alongside your entry; with multiLocaleSupport enabled, Webpack boots from the init-* entry to preload v1 translation bundles before the app starts.
+* When multiLocaleSupport is enabled in oraclejetconfig.json, the init-* file is auto-generated during build if it does not already exist.
+* Add support to configure the default locale for the ojL10n webpack loader via oraclejetconfig.json using the key `defaultWebpackOjL10nLocale`. When `multiLocaleSupport` is disabled, the loader uses this value; otherwise, it uses `multi`.
+
+### 19.0.1
+
+* Updated glob version to 12.0.0
+
 ### 19.0.0
 
 * update typescript to 5.8.3
@@ -10,6 +23,19 @@ command; otherwise, it does not.
 * Running ojet migrate command now adds a log file that includes explanations of what has been migrated and what has not. This log file is located in the project root directory and is named ojet.migrate.log.
 * Added an override entry in the package.json file of generated JET applications to pin @types/minimatch to version 5.1.2, ensuring compatibility and preventing errors caused by the latest deprecated version.
 
+### 18.1.1
+
+* Updated glob version to 12.0.0
+* Project templates now include an override for @types/minimatch (set to version 5.1.2) in package.json
+
+### 18.1.0
+
+
+### 18.0.1
+
+* Updated glob version to 12.0.0
+* Project templates now include an override for @types/minimatch (set to version 5.1.2) in package.json
+
 ### 18.0.0
 
 * node-sass updated to 9.0.0
@@ -19,6 +45,20 @@ command; otherwise, it does not.
 * Introduced a new flag enableDocGen in oraclejetconfig.json to control API documentation generation. Running ojet add docgen will add this flag and set it to true, allowing API documentation to be generated. Setting enableDocGen to false will disable API documentation generation.
 * Added a new entry for jsdocLibraries in oraclejetconfig.json to facilitate maintenance of packages required for API documentation generation.
 * Update typescript to 5.7.2
+
+### 17.1.1
+
+* Updated glob version to 12.0.0
+* Project templates now include an override for @types/minimatch (set to version 5.1.2) in package.json
+
+### 17.1.0
+
+* node-sass updated to 9.0.0
+
+### 17.0.1
+
+* Updated glob version to 12.0.0
+* Project templates now include an override for @types/minimatch (set to version 5.1.2) in package.json
 
 ### 17.0.0
 

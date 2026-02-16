@@ -17,7 +17,7 @@
     "lib": ["dom", "es2021"],
     "moduleResolution": "node",
     "module": "amd",
-    "target": "es6",
+    "target": "es6"
   },
   "include": [
     "../src/ts/jet-composites/**/__tests__/**/*.ts",
