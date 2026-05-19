@@ -61,6 +61,51 @@ module.exports = {
 
           testFileContent = testFileContent.replace('@component-name@/@component-name@', replaceText);
           fs.writeFileSync(pathToTestFile, testFileContent);
+        } else if (testType === 'test-karma') {
+          // Adjust Karma test templates to correctly import viewModel and loader
+          // - Prefer alias for loader: <pack>/<component>/loader when in a pack,
+          //   otherwise @component-name@/loader
+          const knockoutSpecPath = path.join(pathToTestFolder, '@component@-knockout.spec.ts');
+          const viewModelSpecPath = path.join(pathToTestFolder, '@component@-viewmodel.spec.ts');
+          const uiSpecPath = path.join(pathToTestFolder, '@component@-ui.spec.ts');
+
+          const updateLoaderImport = (filePath) => {
+            if (fs.existsSync(filePath)) {
+              let content = fs.readFileSync(filePath, 'utf8');
+              if (pack) {
+                // Replace loader alias to include pack name
+                content = content.replace(
+                  /import\s+['"]@component-name@\/loader['"];?/,
+                  `import '${pack}/${componentName}/loader';`
+                );
+              }
+              fs.writeFileSync(filePath, content);
+            }
+          };
+
+          // Update loader imports where present
+          updateLoaderImport(knockoutSpecPath);
+          updateLoaderImport(uiSpecPath);
+
+          // Update viewmodel spec: fix both loader and viewModel import path
+          if (fs.existsSync(viewModelSpecPath)) {
+            let content = fs.readFileSync(viewModelSpecPath, 'utf8');
+            if (pack) {
+              // Prefer alias mapping for viewModel when in a pack
+              content = content.replace(
+                /from\s+['"]@component-name@\/@component-name@-viewModel['"];?/,
+                `from "${pack}/${componentName}/${componentName}-viewModel";`
+              );
+              content = content.replace(
+                /import\s+['"]@component-name@\/loader['"];?/,
+                `import '${pack}/${componentName}/loader';`
+              );
+            } else {
+              // Keep existing alias for non-pack components
+              // No change necessary for viewModel path in this case
+            }
+            fs.writeFileSync(viewModelSpecPath, content);
+          }
         }
       }
 
