@@ -818,55 +818,6 @@ function _manageMappedLocalReferencePackPathTest({
      });
   };
 
-// function _doNotOverWriteOjCPathMappingTest({
-//     appName,
-//     scriptsFolder,
-//     buildType
-//   }) {
-//       describe('check that oj-c path in main.js is not overwritten', () => {
-//         it('should not overwrite paths in main.js if component exists both in node_modules and jet_components', async () => {
-//           const appDir = util.getAppDir(appName);
-//           const {
-//             pathToExchangeComponents
-//           } = util.getAppPathData(appName, scriptsFolder);
-//           await util.execCmd(`${util.OJET_APP_COMMAND} add component oj-c`, { cwd: appDir }, true, true);
-//           const pathToOjCInJetComponents = path.join(pathToExchangeComponents, 'oj-c');
-//           const result = buildType === 'release' ? await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true) : 
-//             await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(appName) }, true);
-//           fs.removeSync(pathToOjCInJetComponents);
-//           assert.ok(/Either use 'oj-c' from exchange or node_modules/.test(result.stdout), result.stdout);
-//           assert.ok(!fs.existsSync(pathToOjCInJetComponents), 'oj-c is not deleted from the jet_components folder.')
-//         });
-//       });
-//     };
-
-function _manageMappedLocalReferencePackPathTest({
-    appName,
-    scriptsFolder,
-    pack
-  }) {
-    if (!util.noScaffold()) {
-      _beforePackTest({
-        task: 'create',
-        app: appName,
-        pack,
-        scriptsFolder
-      });
-    }
-    describe('check that a locally created reference component has mapped path in main.js', () => {
-      it('should have mapped path in main.js for local reference component', async () => {
-        const appDir = util.getAppDir(appName);
-        const {
-          pathToSourceComponents,
-          pathToMainJs
-        } = util.getAppPathData(appName, scriptsFolder);
-        const mainJsReferencesPackMappedPath = await _checkRefCompPathInMainJs(pathToSourceComponents, pack, appDir, pathToMainJs);
-        assert.ok(!fs.existsSync(path.join(pathToSourceComponents, pack)), `${pack} not deleted successfully.`)
-        assert.ok(mainJsReferencesPackMappedPath, 'Local reference pack not mapped in main.js.');
-      })
-    });
-  };
-
 function _ojetListTest({ appName, scriptsFolder }) {
   it('should list components', async () => {
     const appDir = util.getAppDir(appName);
@@ -1123,6 +1074,85 @@ function _packagePackTest({
       });
     }
   };
+
+// Verify test spec imports for a component created inside a pack (TS/MVVM)
+function _verifyPackKarmaSpecImportsTest({
+  appName,
+  scriptsFolder,
+  pack,
+  component
+}) {
+  describe('verify generated Karma spec imports for pack component', () => {
+    it('should use pack aliases for loader and viewModel imports in __tests__ specs', () => {
+      const { pathToSourceComponents } = util.getAppPathData(appName, scriptsFolder);
+      const testsDir = path.join(pathToSourceComponents, pack, component, '__tests__');
+      const vmSpec = path.join(testsDir, `${component}-viewmodel.spec.ts`);
+      const koSpec = path.join(testsDir, `${component}-knockout.spec.ts`);
+      const uiSpec = path.join(testsDir, `${component}-ui.spec.ts`);
+
+      // Ensure files exist (requires 'ojet add testing' executed earlier in suite)
+      assert.ok(fs.existsSync(vmSpec), `${vmSpec} not found`);
+      assert.ok(fs.existsSync(koSpec), `${koSpec} not found`);
+      assert.ok(fs.existsSync(uiSpec), `${uiSpec} not found`);
+
+      const vmContent = fs.readFileSync(vmSpec, 'utf8');
+      const koContent = fs.readFileSync(koSpec, 'utf8');
+      const uiContent = fs.readFileSync(uiSpec, 'utf8');
+
+      // Expect pack-based alias for loader and viewModel
+      const expectedVmImport = `from "${pack}/${component}/${component}-viewModel"`;
+      const expectedLoaderImport = `import '${pack}/${component}/loader'`;
+
+      assert.ok(vmContent.includes(expectedVmImport), `Missing viewModel pack import in ${vmSpec}: ${expectedVmImport}`);
+      assert.ok(vmContent.includes(expectedLoaderImport), `Missing loader pack import in ${vmSpec}: ${expectedLoaderImport}`);
+      assert.ok(koContent.includes(expectedLoaderImport), `Missing loader pack import in ${koSpec}: ${expectedLoaderImport}`);
+      assert.ok(uiContent.includes(expectedLoaderImport), `Missing loader pack import in ${uiSpec}: ${expectedLoaderImport}`);
+    });
+  });
+}
+
+// Verify spec imports when 'ojet add testing' is run AFTER the component already exists in a pack (TS/MVVM)
+function _verifyPackKarmaSpecImportsAfterAddTestingTest({
+  appName,
+  scriptsFolder,
+  pack,
+  component
+}) {
+  describe('verify Karma spec imports when add testing runs after component creation (pack component)', () => {
+    it('should use pack aliases for loader and viewModel imports in __tests__ specs', async () => {
+      const appDir = util.getAppDir(appName);
+      const { pathToSourceComponents } = util.getAppPathData(appName, scriptsFolder);
+      const testsDir = path.join(pathToSourceComponents, pack, component, '__tests__');
+
+      // Ensure test files are injected now (post-creation)
+      await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+
+      const vmSpec = path.join(testsDir, `${component}-viewmodel.spec.ts`);
+      const koSpec = path.join(testsDir, `${component}-knockout.spec.ts`);
+      const uiSpec = path.join(testsDir, `${component}-ui.spec.ts`);
+
+      // Files must exist after add testing
+      assert.ok(fs.existsSync(vmSpec), `${vmSpec} not found`);
+      assert.ok(fs.existsSync(koSpec), `${koSpec} not found`);
+      assert.ok(fs.existsSync(uiSpec), `${uiSpec} not found`);
+
+      const vmContent = fs.readFileSync(vmSpec, 'utf8');
+      const koContent = fs.readFileSync(koSpec, 'utf8');
+      const uiContent = fs.readFileSync(uiSpec, 'utf8');
+
+      const expectedVmImport = `from "${pack}/${component}/${component}-viewModel"`;
+      const expectedLoaderImportS = [
+        `import '${pack}/${component}/loader'`,
+        `import "${pack}/${component}/loader"`
+      ];
+
+      assert.ok(vmContent.includes(expectedVmImport), `Missing viewModel pack import in ${vmSpec}: ${expectedVmImport}`);
+      assert.ok(expectedLoaderImportS.some(sig => vmContent.includes(sig)), `Missing loader pack import in ${vmSpec}`);
+      assert.ok(expectedLoaderImportS.some(sig => koContent.includes(sig)), `Missing loader pack import in ${koSpec}`);
+      assert.ok(expectedLoaderImportS.some(sig => uiContent.includes(sig)), `Missing loader pack import in ${uiSpec}`);
+    });
+  });
+}
 
   function _buildMonoPackTest({
     appName,
@@ -3278,6 +3308,18 @@ module.exports = {
         describe('valid pack name', () => {
           util.runComponentTestInTestApp(appConfig, {
             test: _createComponentInPackTest,
+            pack: PACK_NAME,
+            component: COMPONENT_NAME
+          });
+          // Verify generated test spec imports for the created pack component
+          util.runComponentTestInTestApp(appConfig, {
+            test: _verifyPackKarmaSpecImportsTest,
+            pack: PACK_NAME,
+            component: COMPONENT_NAME
+          });
+          // Verify imports when add testing is executed after component creation
+          util.runComponentTestInTestApp(appConfig, {
+            test: _verifyPackKarmaSpecImportsAfterAddTestingTest,
             pack: PACK_NAME,
             component: COMPONENT_NAME
           });

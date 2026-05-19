@@ -119,7 +119,10 @@ describe('Migration Test', () => {
   });
 
   describe('Migration Tests for Non-Webpack Application', () => {
-    const { pathToApp, sourceFolder, javascriptFolder } = util.getAppPathData(util.MIGRATION_APP_NAME);
+    let pathToApp, sourceFolder, javascriptFolder;
+    before(() => {
+      ({ pathToApp, sourceFolder, javascriptFolder } = util.getAppPathData(util.MIGRATION_APP_NAME));
+    });
 
     describe('Index HTML File Validation Test', () => {
       it('should log an error if the injector:theme flag is missing in index.html', async () => {
@@ -374,7 +377,10 @@ describe('Migration Test', () => {
   });
 
   describe('Migration Tests for Webpack Application', () => {
-    const { pathToApp } = util.getAppPathData(util.WEBPACK_MIGRATION_APP_NAME);
+    let pathToApp;
+    before(() => {
+      ({ pathToApp } = util.getAppPathData(util.WEBPACK_MIGRATION_APP_NAME));
+    });
 
     describe('Path Mapping Test', () => {
       it('should show a warning about the presence of the path_mapping.json file', async () => {
@@ -465,11 +471,10 @@ describe('Migration Test', () => {
     });
 
     describe('ojet.config.js Validation', () => {
-      const { pathToApp: webpackAppPath } = util.getAppPathData(util.WEBPACK_MIGRATION_APP_NAME);
-      const pathToOjetConfig = path.join(webpackAppPath, 'ojet.config.js');
-
+      let pathToOjetConfig;
       let originalConfig;
       before(() => {
+        pathToOjetConfig = path.join(pathToApp, 'ojet.config.js');
         originalConfig = fs.readFileSync(pathToOjetConfig, 'utf8');
       });
 
