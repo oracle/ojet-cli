@@ -41,7 +41,7 @@ module.exports = function(config) {
         watched: false
       },
       {
-        pattern: 'web/css/**/oj-alta-notag.css',
+        pattern: 'web/css/**/*.css',
         included: false,
         watched: false
       },

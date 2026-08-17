@@ -1,6 +1,70 @@
-﻿## Release Notes for ojet-cli ##
+## Release Notes for ojet-cli ##
+
+### 21.0.0
+
+* Updated `adm-zip` to 0.6.0 to resolve CVE-2026-39244, which could allow a crafted template ZIP to exhaust CLI process memory.
+* Generated app templates no longer install the unused `extract-zip` dependency.
+* Webpack-enabled generated projects now use Webpack 5.101.0, compatible with the current webpack-dev-server peer-dependency requirements.
+* Unsupported legacy theme requests now fail with a clear error, and generated test and migration fixtures now use current theme CSS paths.
+* Removed the deprecated build and serve `svg` option, which only controlled legacy Alta SVG recompilation. SVG sprite optimization remains available through theme assets and hook-configured `svgSprite` options.
+* Added the `--allow-reference-component-install` option for `ojet add component`, `ojet add pack`, and `ojet restore` to explicitly allow npm installs derived from downloaded Exchange reference component metadata.
+* `ojet serve` now binds to `127.0.0.1` by default, and directory listing is disabled by default. To intentionally expose the development server or enable directory listing, set `connectOpts.hostname` or `connectOpts.directoryListing` in a trusted `before_serve` hook.
+* `ojet create --template=<URL|local zip|local directory>` security handling has been tightened:
+  * URL and local templates now fail before app creation if they contain npm lifecycle scripts or `scripts/hooks` entries; use `--allow-template-code-execution` for trusted templates.
+  * Remote template URLs must use HTTPS, except for loopback HTTP URLs used for local development.
+  * Remote template downloads now fail clearly on unsuccessful HTTP responses, oversized responses, or download timeouts.
+  * Local directory templates now preserve symlinks instead of dereferencing them into generated app files.
+* Template ZIP extraction now rejects path traversal entries, and the `adm-zip` and `minimist` dependency ranges have been updated.
+
+### 20.1.3
+
+* Updated adm-zip to 0.6.0 to resolve CVE-2026-39244, which could allow a crafted template ZIP to exhaust CLI process memory. The CLI now requires Node.js 14 or later.
+* Generated app templates no longer install the unused extract-zip dependency.
+* Webpack-enabled generated projects now use Webpack 5.101.0, compatible with the current webpack-dev-server peer-dependency requirements.
+
+### 20.1.2
+
+* Generated app templates now use extract-zip 2.0.1.
+
+### 20.1.1
+
+* Added the `--allow-reference-component-install` option for `ojet add component`, `ojet add pack`, and `ojet restore` to explicitly allow npm installs derived from downloaded Exchange reference component metadata.
+* `ojet serve` now binds to `127.0.0.1` by default, and directory listing is disabled by default. To intentionally expose the development server or enable directory listing, set `connectOpts.hostname` or `connectOpts.directoryListing` in a trusted `before_serve` hook.
+* `ojet create --template=<URL|local zip|local directory>` security handling has been tightened:
+  * URL and local templates now fail before app creation if they contain npm lifecycle scripts or `scripts/hooks` entries; use `--allow-template-code-execution` for trusted templates.
+  * Remote template URLs must use HTTPS, except for loopback HTTP URLs used for local development.
+  * Remote template downloads now fail clearly on unsuccessful HTTP responses, oversized responses, or download timeouts.
+  * Local directory templates now preserve symlinks instead of dereferencing them into generated app files.
+* Template ZIP extraction now rejects path traversal entries, and the `adm-zip` and `minimist` dependency ranges have been updated.
 
 ### 20.1.0
+
+* No changes
+
+### 20.0.4
+
+* Updated adm-zip to 0.6.0 to resolve CVE-2026-39244, which could allow a crafted template ZIP to exhaust CLI process memory. The CLI now requires Node.js 14 or later.
+* Generated app templates no longer install the unused extract-zip dependency.
+* Webpack-enabled generated projects now use Webpack 5.101.0, compatible with the current webpack-dev-server peer-dependency requirements.
+
+### 20.0.3
+
+* Generated app templates now use extract-zip 2.0.1.
+
+### 20.0.2
+
+* Added the `--allow-reference-component-install` option for `ojet add component`, `ojet add pack`, and `ojet restore` to explicitly allow npm installs derived from downloaded Exchange reference component metadata.
+* `ojet serve` now binds to `127.0.0.1` by default, and directory listing is disabled by default. To intentionally expose the development server or enable directory listing, set `connectOpts.hostname` or `connectOpts.directoryListing` in a trusted `before_serve` hook.
+* `ojet create --template=<URL|local zip|local directory>` security handling has been tightened:
+  * URL and local templates now fail before app creation if they contain npm lifecycle scripts or `scripts/hooks` entries; use `--allow-template-code-execution` for trusted templates.
+  * Remote template URLs must use HTTPS, except for loopback HTTP URLs used for local development.
+  * Remote template downloads now fail clearly on unsuccessful HTTP responses, oversized responses, or download timeouts.
+  * Local directory templates now preserve symlinks instead of dereferencing them into generated app files.
+* Template ZIP extraction now rejects path traversal entries, and the `adm-zip` and `minimist` dependency ranges have been updated.
+
+### 20.0.1
+
+* No changes
 
 ### 20.0.0
 
@@ -10,6 +74,31 @@
 * Introduces a --multi-locale flag for Webpack projects: when used (during create or via ojet add webpack --multi-locale), it sets multiLocaleSupport: true in oraclejetconfig.json and generates an init-root (JS/TS) or init-index (VDOM) file alongside your entry; with multiLocaleSupport enabled, Webpack boots from the init-* entry to preload v1 translation bundles before the app starts.
 * When multiLocaleSupport is enabled in oraclejetconfig.json, the init-* file is auto-generated during build if it does not already exist.
 * Add support to configure the default locale for the ojL10n webpack loader via oraclejetconfig.json using the key `defaultWebpackOjL10nLocale`. When `multiLocaleSupport` is disabled, the loader uses this value; otherwise, it uses `multi`.
+
+### 19.0.5
+
+* Updated adm-zip to 0.6.0 to resolve CVE-2026-39244, which could allow a crafted template ZIP to exhaust CLI process memory. The CLI now requires Node.js 14 or later.
+* Generated app templates no longer install the unused extract-zip dependency.
+* Webpack-enabled generated projects now use Webpack 5.101.0, compatible with the current webpack-dev-server peer-dependency requirements.
+
+### 19.0.4
+
+* Generated app templates now use extract-zip 2.0.1.
+
+### 19.0.3
+
+* Added the `--allow-reference-component-install` option for `ojet add component`, `ojet add pack`, and `ojet restore` to explicitly allow npm installs derived from downloaded Exchange reference component metadata.
+* `ojet serve` now binds to `127.0.0.1` by default, and directory listing is disabled by default. To intentionally expose the development server or enable directory listing, set `connectOpts.hostname` or `connectOpts.directoryListing` in a trusted `before_serve` hook.
+* `ojet create --template=<URL|local zip|local directory>` security handling has been tightened:
+  * URL and local templates now fail before app creation if they contain npm lifecycle scripts or `scripts/hooks` entries; use `--allow-template-code-execution` for trusted templates.
+  * Remote template URLs must use HTTPS, except for loopback HTTP URLs used for local development.
+  * Remote template downloads now fail clearly on unsuccessful HTTP responses, oversized responses, or download timeouts.
+  * Local directory templates now preserve symlinks instead of dereferencing them into generated app files.
+* Template ZIP extraction now rejects path traversal entries, and the `adm-zip` and `minimist` dependency ranges have been updated.
+
+### 19.0.2
+
+* No changes
 
 ### 19.0.1
 
@@ -25,6 +114,21 @@ command; otherwise, it does not.
 * Running ojet migrate command now adds a log file that includes explanations of what has been migrated and what has not. This log file is located in the project root directory and is named ojet.migrate.log.
 * Added an override entry in the package.json file of generated JET applications to pin @types/minimatch to version 5.1.2, ensuring compatibility and preventing errors caused by the latest deprecated version.
 
+### 18.1.3
+
+* Added the `--allow-reference-component-install` option for `ojet add component`, `ojet add pack`, and `ojet restore` to explicitly allow npm installs derived from downloaded Exchange reference component metadata.
+* `ojet serve` now binds to `127.0.0.1` by default, and directory listing is disabled by default. To intentionally expose the development server or enable directory listing, set `connectOpts.hostname` or `connectOpts.directoryListing` in a trusted `before_serve` hook.
+* `ojet create --template=<URL|local zip|local directory>` security handling has been tightened:
+  * URL and local templates now fail before app creation if they contain npm lifecycle scripts or `scripts/hooks` entries; use `--allow-template-code-execution` for trusted templates.
+  * Remote template URLs must use HTTPS, except for loopback HTTP URLs used for local development.
+  * Remote template downloads now fail clearly on unsuccessful HTTP responses, oversized responses, or download timeouts.
+  * Local directory templates now preserve symlinks instead of dereferencing them into generated app files.
+* Template ZIP extraction now rejects path traversal entries, and the `adm-zip` and `minimist` dependency ranges have been updated.
+
+### 18.1.2
+
+* No changes
+
 ### 18.1.1
 
 * Updated glob version to 12.0.0
@@ -32,6 +136,22 @@ command; otherwise, it does not.
 
 ### 18.1.0
 
+* No changes
+
+### 18.0.3
+
+* Added the `--allow-reference-component-install` option for `ojet add component`, `ojet add pack`, and `ojet restore` to explicitly allow npm installs derived from downloaded Exchange reference component metadata.
+* `ojet serve` now binds to `127.0.0.1` by default, and directory listing is disabled by default. To intentionally expose the development server or enable directory listing, set `connectOpts.hostname` or `connectOpts.directoryListing` in a trusted `before_serve` hook.
+* `ojet create --template=<URL|local zip|local directory>` security handling has been tightened:
+  * URL and local templates now fail before app creation if they contain npm lifecycle scripts or `scripts/hooks` entries; use `--allow-template-code-execution` for trusted templates.
+  * Remote template URLs must use HTTPS, except for loopback HTTP URLs used for local development.
+  * Remote template downloads now fail clearly on unsuccessful HTTP responses, oversized responses, or download timeouts.
+  * Local directory templates now preserve symlinks instead of dereferencing them into generated app files.
+* Template ZIP extraction now rejects path traversal entries, and the `adm-zip` and `minimist` dependency ranges have been updated.
+
+### 18.0.2
+
+* No changes
 
 ### 18.0.1
 
@@ -42,7 +162,7 @@ command; otherwise, it does not.
 
 * node-sass updated to 9.0.0
 * Building applications where npm dependencies are hoisted to any level of parent directory is now supported (monorepo directory structure)
-* Remove alta based theme creation
+* Remove unsupported legacy theme creation
 * Install 'sass' instead of 'node-sass' for theme building.  Use 'node-sass' only if 'sass' is not present
 * Introduced a new flag enableDocGen in oraclejetconfig.json to control API documentation generation. Running ojet add docgen will add this flag and set it to true, allowing API documentation to be generated. Setting enableDocGen to false will disable API documentation generation.
 * Added a new entry for jsdocLibraries in oraclejetconfig.json to facilitate maintenance of packages required for API documentation generation.
@@ -185,7 +305,7 @@ If 'middleware' is specified, then that is used exclusively and replaces the def
 
 ### 9.1.0
 
-* svg-sprite will no longer be installed by default.  If you have altered JET alta theme .svg files, builds will fail without svg-sprite installed and recommend manual installation of svg-sprite
+* svg-sprite will no longer be installed by default. If you have altered legacy theme .svg files, builds will fail without svg-sprite installed and recommend manual installation of svg-sprite
 * ojet build will now return a non-zero error code if optimization fails
 
 ### 9.0.0

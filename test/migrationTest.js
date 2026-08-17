@@ -42,7 +42,14 @@ function migrateApp(appName, extraArgs = []) {
  * @param {string} command
  */
 function execInApp(appName, command) {
-  return util.execCmd(`${util.OJET_APP_COMMAND} ${command}`, { cwd: util.getAppDir(appName) }, true, true);
+  const allowReferenceComponentInstall = /^(add component|add pack|restore\b)/.test(command) ?
+    ` ${util.ALLOW_REFERENCE_COMPONENT_INSTALL_FLAG}` : '';
+  return util.execCmd(
+    `${util.OJET_APP_COMMAND} ${command}${allowReferenceComponentInstall}`,
+    { cwd: util.getAppDir(appName) },
+    true,
+    true
+  );
 }
 
 function checkUrl(url, version) {
@@ -82,6 +89,7 @@ describe('Migration Test', () => {
 
     util.removeAppDir(util.MIGRATION_APP_NAME);
     util.removeAppDir(util.WEBPACK_MIGRATION_APP_NAME);
+    util.removeAppDir(util.VDOM_MIGRATION_APP_NAME);
 
     const ojet = new Ojet({ cwd: util.testDir, logs: false });
     try {
@@ -89,7 +97,8 @@ describe('Migration Test', () => {
         task: 'create',
         parameters: [util.MIGRATION_APP_NAME],
         options: {
-          template: path.join(util.getTemplatesDir(), util.MIGRATION_APP_NAME)
+          template: path.join(util.getTemplatesDir(), util.MIGRATION_APP_NAME),
+          'allow-template-code-execution': true
         }
       });
 
@@ -97,7 +106,17 @@ describe('Migration Test', () => {
         task: 'create',
         parameters: [util.WEBPACK_MIGRATION_APP_NAME],
         options: {
-          template: path.join(util.getTemplatesDir(), util.WEBPACK_MIGRATION_APP_NAME)
+          template: path.join(util.getTemplatesDir(), util.WEBPACK_MIGRATION_APP_NAME),
+          'allow-template-code-execution': true
+        }
+      });
+
+      await ojet.execute({
+        task: 'create',
+        parameters: [util.VDOM_MIGRATION_APP_NAME],
+        options: {
+          template: 'basic',
+          vdom: true
         }
       });
 
@@ -373,6 +392,36 @@ describe('Migration Test', () => {
         const result = await migrateApp(util.MIGRATION_APP_NAME);
         assert.equal(/Validating main\.js file task finished\./.test(result.stdout), true, result.stdout);
       });
+    });
+  });
+
+  describe('Migration Tests for VDOM Application', () => {
+    it('should not add baseUrl to the path_mapping.json file', async () => {
+      const pathToPathMappingJson = path.join(
+        util.getAppDir(util.VDOM_MIGRATION_APP_NAME),
+        util.PATH_MAPPING_JSON
+      );
+
+      const originalJson = fs.readJSONSync(pathToPathMappingJson);
+      assert.equal(
+        Object.prototype.hasOwnProperty.call(originalJson, 'baseUrl'),
+        false,
+        'The VDOM path_mapping.json file should not have baseUrl before migration.'
+      );
+
+      const result = await migrateApp(util.VDOM_MIGRATION_APP_NAME);
+      assert.equal(
+        /Validating and updating path_mapping\.json file task finished\./.test(result.stdout),
+        true,
+        result.stdout
+      );
+
+      const updatedJson = fs.readJSONSync(pathToPathMappingJson);
+      assert.equal(
+        Object.prototype.hasOwnProperty.call(updatedJson, 'baseUrl'),
+        false,
+        'The VDOM path_mapping.json file should not have baseUrl after migration.'
+      );
     });
   });
 

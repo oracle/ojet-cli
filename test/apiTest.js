@@ -5,11 +5,24 @@
 
 */
 const assert = require('assert');
+const childProcess = require('child_process');
 const fs = require('fs-extra');
 const path = require('path');
 const util = require('./util');
 const Ojet = require('../ojet');
 const _DUMMY = 'dummy_dir';
+
+function _resolveToolingModule(modulePath) {
+  try {
+    return require.resolve(`@oracle/oraclejet-tooling/${modulePath}`);
+  } catch (e) {
+    return require.resolve(path.join(__dirname, '..', '..', '..', 'oraclejet-tooling', modulePath));
+  }
+}
+
+const TOOLING_UTIL_MODULE = _resolveToolingModule('lib/util');
+const BUILD_ICU_TRANSLATIONS_MODULE = _resolveToolingModule('lib/buildICUTranslations');
+const toolingUtil = require(TOOLING_UTIL_MODULE);
 
 describe('CLI API Tests', () => {
   before(async () => {
@@ -24,6 +37,7 @@ describe('CLI API Tests', () => {
           parameters: [util.API_APP_NAME],
           options: {
             template: path.join(util.getTemplatesDir(), util.API_APP_NAME),
+            'allow-template-code-execution': true
           }
         });
         assert.ok(true);
@@ -231,7 +245,12 @@ describe('CLI API Tests', () => {
     it('should run `ojet.execute({ task: "restore" })`', async () => {
       const ojet = new Ojet({ cwd: util.getAppDir(util.API_APP_NAME), logs: false });
       try {
-        await ojet.execute({ task: 'restore' });
+        await ojet.execute({
+          task: 'restore',
+          options: {
+            'allow-reference-component-install': true
+          }
+        });
         assert.ok(true);
       } catch (e) {
         console.log(e);
@@ -243,8 +262,13 @@ describe('CLI API Tests', () => {
       const oracleJetConfigJSON = util.getOracleJetConfigJson(util.API_APP_NAME);
       oracleJetConfigJSON.enableLegacyPeerDeps = true;
       util.writeOracleJetConfigJson(util.API_APP_NAME, oracleJetConfigJSON);
-  
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} restore`, { cwd: appDir }, false, true);
+
+      const result = await util.execCmd(
+        `${util.OJET_APP_COMMAND} restore ${util.ALLOW_REFERENCE_COMPONENT_INSTALL_FLAG}`,
+        { cwd: appDir },
+        false,
+        true
+      );
   
       assert.equal(/--legacy-peer-deps/.test(result.stdout), true, result.error);
     });
@@ -301,6 +325,94 @@ describe('CLI API Tests', () => {
       const pathToJetComponents =  pathToApp.pathToExchangeComponents;
       assert.ok(fs.existsSync(pathToNodeModules), pathToNodeModules);
       assert.ok(fs.existsSync(pathToJetComponents), pathToJetComponents);
+    });
+  });
+
+  describe('ICU translation build regression', () => {
+    let buildICUTranslations;
+    let capturedExecFile;
+    let originalExecFile;
+    let originalBuildICUTranslationsBundle;
+    let originalGetIcuL10nPath;
+    let originalGetOraclejetConfigJson;
+    let originalExistsSync;
+
+    beforeEach(() => {
+      originalExecFile = childProcess.execFile;
+      originalBuildICUTranslationsBundle = toolingUtil.buildICUTranslationsBundle;
+      originalGetIcuL10nPath = toolingUtil.getIcuL10nPath;
+      originalGetOraclejetConfigJson = toolingUtil.getOraclejetConfigJson;
+      originalExistsSync = fs.existsSync;
+
+      capturedExecFile = undefined;
+      childProcess.execFile = (file, args, callback) => {
+        capturedExecFile = { file, args };
+        callback(null);
+        return {};
+      };
+
+      toolingUtil.buildICUTranslationsBundle = () => true;
+      toolingUtil.getIcuL10nPath = () => '/tmp/oraclejet-icu-l10n';
+      toolingUtil.getOraclejetConfigJson = () => ({
+        buildICUTranslationsBundle: true,
+        translation: {
+          type: 'icu',
+          options: {
+            rootDir: 'src/resources/nls',
+            outDir: 'web/resources/nls',
+            bundleName: 'translationBundle.json',
+            locale: '$(touch exploited)',
+            supportedLocales: 'en-US, fr-FR'
+          }
+        }
+      });
+      fs.existsSync = () => true;
+
+      delete require.cache[BUILD_ICU_TRANSLATIONS_MODULE];
+      buildICUTranslations = require(BUILD_ICU_TRANSLATIONS_MODULE);
+    });
+
+    afterEach(() => {
+      childProcess.execFile = originalExecFile;
+      toolingUtil.buildICUTranslationsBundle = originalBuildICUTranslationsBundle;
+      toolingUtil.getIcuL10nPath = originalGetIcuL10nPath;
+      toolingUtil.getOraclejetConfigJson = originalGetOraclejetConfigJson;
+      fs.existsSync = originalExistsSync;
+      delete require.cache[BUILD_ICU_TRANSLATIONS_MODULE];
+    });
+
+    it('should pass translation options as literal execFile arguments', async () => {
+      await buildICUTranslations.buildICUTranslationsBundleAtAppLevel({});
+
+      assert.ok(capturedExecFile);
+      assert.strictEqual(capturedExecFile.file, process.execPath);
+      assert.strictEqual(
+        capturedExecFile.args[0],
+        path.join('/tmp/oraclejet-icu-l10n', 'l10nBundleBuilder.js')
+      );
+      assert.ok(capturedExecFile.args.includes('--rootDir=src/resources/nls'));
+      assert.ok(capturedExecFile.args.includes('--outDir=web/resources/nls'));
+      assert.ok(capturedExecFile.args.includes('--bundleName=translationBundle.json'));
+      assert.ok(capturedExecFile.args.includes('--locale=$(touch exploited)'));
+      assert.ok(capturedExecFile.args.includes('--supportedLocales=en-US,fr-FR'));
+    });
+
+    it('should add the default locale as a separate argument when none is configured', async () => {
+      toolingUtil.getOraclejetConfigJson = () => ({
+        buildICUTranslationsBundle: true,
+        translation: {
+          type: 'icu',
+          options: {
+            rootDir: 'src/resources/nls',
+            outDir: 'web/resources/nls',
+            bundleName: 'translationBundle.json'
+          }
+        }
+      });
+
+      await buildICUTranslations.buildICUTranslationsBundleAtAppLevel({});
+
+      assert.ok(capturedExecFile.args.includes('--locale=en-US'));
     });
   });
 });

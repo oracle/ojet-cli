@@ -49,6 +49,9 @@ const config = {
             password: {
               aliases: ['p'],
               description: 'The user\'s registered password'
+            },
+            'allow-reference-component-install': {
+              description: 'Allows installing npm packages referenced by downloaded Exchange component metadata'
             }
           },
           examples: ['ojet add component flipcard']
@@ -70,6 +73,9 @@ const config = {
             password: {
               aliases: ['p'],
               description: 'The user\'s registered password'
+            },
+            'allow-reference-component-install': {
+              description: 'Allows installing npm packages referenced by downloaded Exchange component metadata'
             }
           },
           examples: ['ojet add pack oj-dvt']
@@ -147,11 +153,6 @@ const config = {
               description: 'Enable SASS compilation',
               parameters: '[true|false](--no-sass)',
               default: 'true'
-            },
-            svg: {
-              description: 'Enable SVG re-compilation for JET Alta Theme',
-              parameters: '[true|false]',
-              default: 'false'
             },
             theme: {
               description: 'Specify the theme to be used by the app,' + // eslint-disable-line
@@ -249,9 +250,14 @@ const config = {
               description: 'Create a web app (default)'
             },
             template: {
-              description: 'Use a pre-defined app template',
+              description: 'Use a pre-defined app template. Remote template URLs must use HTTPS, except localhost' + // eslint-disable-line
+                newLine + ' HTTP URLs for local development. URL and local templates are rejected by default if they contain' + // eslint-disable-line
+                newLine + ' npm lifecycle scripts or scripts/hooks entries; use --allow-template-code-execution for trusted templates.',
               parameters: 'blank[-ts]|basic[-ts|-vdom][:web]|navbar[-ts][:web]|' + // eslint-disable-line
-                newLine + ' navdrawer[-ts][:web]|<URL_to_zip_file>'
+                newLine + ' navdrawer[-ts][:web]|<URL_to_zip_file>|<local_zip_file>|<local_directory>'
+            },
+            'allow-template-code-execution': {
+              description: 'Allow URL or local templates to include npm lifecycle scripts and scripts/hooks entries.'
             },
             typescript: {
               description: 'Create a typescript-based app',
@@ -273,7 +279,8 @@ const config = {
             'ojet create myWebApp --template=navbar',
             'ojet create myWebApp --template=navbar --typescript',
             'ojet create myWebApp --template=navbar --pwa',
-            'ojet create FixItFast --template=http://www.oracle.com/webfolder/technetwork/jet/public_samples/FixItFast.zip'
+            'ojet create FixItFast --template=https://www.oracle.com/webfolder/technetwork/jet/public_samples/FixItFast.zip',
+            'ojet create myWebApp --template=./trusted-template.zip --allow-template-code-execution'
           ]
         },
         component: {
@@ -563,6 +570,9 @@ const config = {
               description: 'Restore the Exchange components without running npm install',
               parameters: '[true|false]',
               default: 'true'
+            },
+            'allow-reference-component-install': {
+              description: 'Allows installing npm packages referenced by downloaded Exchange component metadata during restore'
             }
           },
           examples: [
@@ -635,11 +645,6 @@ const config = {
               description: 'Specify the server port',
               parameters: '<integer>',
               default: '8000'
-            },
-            svg: {
-              description: 'Enable SVG re-compilation for JET Alta Theme',
-              parameters: '[true|false]',
-              default: 'false'
             },
             theme: {
               description: 'Specify the theme to be used by the app,' + // eslint-disable-line

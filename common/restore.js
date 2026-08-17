@@ -10,6 +10,7 @@ const execSync = require('child_process').execSync;
 const fs = require('fs-extra');
 const path = require('path');
 const commonMessages = require('./messages');
+const templateSecurity = require('./template/security');
 const constants = require('../lib/util/constants');
 const utils = require('../lib/util/utils');
 
@@ -35,7 +36,6 @@ module.exports =
   },
 
   npmInstall: function _npmInstall(app, opt) {
-    const installer = utils.getInstallerCommand(opt);
     const configPath = path.join(process.cwd(), constants.APP_CONFIG_JSON);
     let configJson;
 
@@ -43,17 +43,27 @@ module.exports =
       configJson = utils.readJsonAndReturnObject(configPath);
     }
 
-    const { enableLegacyPeerDeps } = configJson || {};
-
-    let command = `${installer.installer} ${installer.verbs.install}`;
-
-    if (enableLegacyPeerDeps && installer.installer === 'npm') {
-      command += ` ${installer.flags.legacy}`; // putting extra space to ensure the flag is properly appended
-    }
+    const command = _getInstallCommand(app, opt, configJson);
 
     fs.ensureDirSync(path.join('node_modules'));
     execSync(command, null);
     return Promise.resolve();
-  }
+  },
+
+  _getInstallCommand
 };
 
+function _getInstallCommand(app, opt, configJson) {
+  const installer = utils.getInstallerCommand(opt);
+  const { enableLegacyPeerDeps } = configJson || {};
+  let command = `${installer.installer} ${installer.verbs.install}`;
+
+  if (enableLegacyPeerDeps && installer.installer === 'npm') {
+    command += ` ${installer.flags.legacy}`; // putting extra space to ensure the flag is properly appended
+  }
+  if (!templateSecurity.isCodeExecutionAllowed(app)) {
+    command += ` ${installer.flags.ignoreScripts}`;
+  }
+
+  return command;
+}

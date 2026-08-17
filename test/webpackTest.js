@@ -84,6 +84,32 @@ async function getICUTranslationTestVariables(appName) {
   };
 }
 
+function setWebpackDevServerPort(appName, port) {
+  const appDir = util.getAppDir(appName);
+  const fileName = path.resolve(appDir, 'ojet.config.js');
+  const returnStatement = 'return { context, webpack: config };';
+  let configRead = fs.readFileSync(fileName, 'utf-8');
+
+  assert.ok(
+    configRead.includes(returnStatement),
+    `Expected ${fileName} to contain the standard webpack configuration return statement.`
+  );
+  configRead = configRead.replace(
+    returnStatement,
+    `if (config && config.devServer) config.devServer.port = ${port}; ${returnStatement}`
+  );
+  fs.writeFileSync(fileName, configRead);
+}
+
+function formatScaffoldError(error) {
+  const errorText = error && error.stack ? error.stack : String(error);
+  const stderr = error && error.stderr ? error.stderr.toString() : '';
+  if (stderr && !errorText.includes(stderr)) {
+    return `${errorText}\n${stderr}`;
+  }
+  return errorText;
+}
+
 describe('Webpack Test', () => {
   before(async function () {
     this.timeout(20000000);
@@ -100,7 +126,8 @@ describe('Webpack Test', () => {
           task: 'create',
           parameters: [util.WEBPACK_LEGACY_APP_NAME],
           options: {
-            template: path.join(util.getTemplatesDir(), util.WEBPACK_LEGACY_APP_NAME)
+            template: path.join(util.getTemplatesDir(), util.WEBPACK_LEGACY_APP_NAME),
+            'allow-template-code-execution': true
           }
         };
         console.log(`Start scaffolding ${util.WEBPACK_LEGACY_APP_NAME}`);
@@ -109,7 +136,10 @@ describe('Webpack Test', () => {
         console.log(`Finish scaffolding ${util.WEBPACK_LEGACY_APP_NAME}`);
       } catch (e) {
         console.log(e);
-        assert.ok(false, `Error running ojet.execute with ${executeOptions}`);
+        assert.ok(
+          false,
+          `Error running ojet.execute with ${executeOptions}: ${formatScaffoldError(e)}`
+        );
       }
     }
 
@@ -135,7 +165,10 @@ describe('Webpack Test', () => {
         console.log(`Finish scaffolding ${util.WEBPACK_APP_NAME}`);
       } catch (e) {
         console.log(e);
-        assert.ok(false, `Error running ojet.execute with ${executeOptions}`);
+        assert.ok(
+          false,
+          `Error running ojet.execute with ${executeOptions}: ${formatScaffoldError(e)}`
+        );
       }
     }
 
@@ -160,18 +193,15 @@ describe('Webpack Test', () => {
         console.log(`Finish scaffolding ${util.WEBPACK_JS_APP_NAME}`);
 
         // Change the port in ojet.config.js
-        const testDir = util.getAppDir(util.WEBPACK_JS_APP_NAME);
-        const fileName = path.resolve(testDir, 'ojet.config.js');
-        let configRead = fs.readFileSync(fileName, 'utf-8');
-        configRead = configRead.replace('return config;', 'if (config && config.devServer) config.devServer.port = 8001; return config;');
-        // write it back out
-        fs.unlinkSync(fileName);
-        fs.writeFileSync(fileName, configRead);
+        setWebpackDevServerPort(util.WEBPACK_JS_APP_NAME, 8001);
 
         assert.ok(true);
       } catch (e) {
         console.log(e);
-        assert.ok(false, `Error running ojet.execute with ${executeOptions}`);
+        assert.ok(
+          false,
+          `Error running ojet.execute with ${executeOptions}: ${formatScaffoldError(e)}`
+        );
       }
     }
 
@@ -196,18 +226,15 @@ describe('Webpack Test', () => {
         console.log(`Finish scaffolding ${util.WEBPACK_TS_APP_NAME}`);
 
         // Change the port in ojet.config.js
-        const testDir = util.getAppDir(util.WEBPACK_TS_APP_NAME);
-        const fileName = path.resolve(testDir, 'ojet.config.js');
-        let configRead = fs.readFileSync(fileName, 'utf-8');
-        configRead = configRead.replace('return config;', 'if (config && config.devServer) config.devServer.port = 8002; return config;');
-        // write it back out
-        fs.unlinkSync(fileName);
-        fs.writeFileSync(fileName, configRead);
+        setWebpackDevServerPort(util.WEBPACK_TS_APP_NAME, 8002);
 
         assert.ok(true);
       } catch (e) {
         console.log(e);
-        assert.ok(false, `Error running ojet.execute with ${executeOptions}`);
+        assert.ok(
+          false,
+          `Error running ojet.execute with ${executeOptions}: ${formatScaffoldError(e)}`
+        );
       }
     }
   });
@@ -659,7 +686,6 @@ describe('Webpack Test', () => {
       })
     });
   });
-
   describe('Build translation bundles', () => {
     if (!util.noBuild()) {
       it('should not have translation configurations in the oraclejetconfig.json file before running ojet add translation', async () => {

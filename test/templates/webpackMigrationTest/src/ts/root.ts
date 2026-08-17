@@ -10,7 +10,7 @@ export = class Root {
   static init(): void {
     function _init(): void {
       // bind your ViewModel for the content of the whole page body.
-      ko.applyBindings(rootViewModel, document.getElementById("globalBody"));
+      ko.applyBindings(rootViewModel, document.getElementById("globalBody")!);
     }
     // if running in a hybrid (e.g. Cordova) environment, we need to wait for the deviceready
     // event before executing any code that might interact with Cordova APIs or plugins.
