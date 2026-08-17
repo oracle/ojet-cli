@@ -10,7 +10,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const exec = require('child_process').exec;
+const { exec, spawn } = require('child_process');
 
 const TEST_DIR = 'test_result';
 
@@ -71,9 +71,120 @@ const COMPONENT_JSON = 'component.json';
 const OJET_CONFIG_JS = 'ojet.config.js';
 const TSCONFIG_JSON = 'tsconfig.json';
 
+function _createServeError(message, result, cause) {
+  const stdout = result.stdout || '<empty>';
+  const stderr = result.stderr || '<empty>';
+  const error = new Error(`${message}\nstdout:\n${stdout}\nstderr:\n${stderr}`);
+  error.result = result;
+  if (cause) {
+    error.cause = cause;
+  }
+  return error;
+}
+
+function _runOjetServe(args, options = {}) {
+  const ojetPath = path.resolve(__dirname, '..', '..', 'bin', 'ojet');
+  const timeout = options.timeout || 60000;
+  const readyPattern = options.readyPattern || /Running after_serve hook\./i;
+  const readyWhen = options.readyWhen || (stdout => readyPattern.test(stdout));
+  const commandArgs = [ojetPath, ...args];
+  console.log(`${process.execPath} ${commandArgs.map(argument => JSON.stringify(argument)).join(' ')}`);
+
+  return new Promise((resolve, reject) => {
+    let stdout = '';
+    let stderr = '';
+    let ready = false;
+    let timedOut = false;
+    let settled = false;
+    let forceKillTimer;
+    let readyCheckTimer;
+
+    const child = spawn(process.execPath, commandArgs, {
+      cwd: options.cwd,
+      env: options.env || process.env,
+      shell: false,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true
+    });
+
+    const timeoutTimer = setTimeout(() => {
+      timedOut = true;
+      stopChild();
+    }, timeout);
+
+    function getResult(code, signal) {
+      return {
+        code,
+        signal,
+        stdout,
+        stderr,
+        process: child
+      };
+    }
+
+    function stopChild() {
+      clearTimeout(timeoutTimer);
+      clearInterval(readyCheckTimer);
+      if (child.exitCode === null && child.signalCode === null) {
+        clearTimeout(forceKillTimer);
+        child.kill('SIGTERM');
+        forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 5000);
+      }
+    }
+
+    function checkReady() {
+      if (!ready && !timedOut && readyWhen(stdout, stderr)) {
+        ready = true;
+        stopChild();
+      }
+    }
+
+    child.stdout.on('data', (data) => {
+      stdout += data.toString();
+      checkReady();
+    });
+
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+      checkReady();
+    });
+
+    readyCheckTimer = setInterval(checkReady, 100);
+
+    child.once('error', (error) => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(timeoutTimer);
+        clearInterval(readyCheckTimer);
+        clearTimeout(forceKillTimer);
+        reject(_createServeError(`Unable to start ojet serve: ${error.message}`, getResult(), error));
+      }
+    });
+
+    child.once('close', (code, signal) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timeoutTimer);
+      clearInterval(readyCheckTimer);
+      clearTimeout(forceKillTimer);
+      const result = getResult(code, signal);
+      if (timedOut) {
+        reject(_createServeError(`ojet serve did not become ready within ${timeout} ms.`, result));
+      } else if (ready) {
+        resolve(result);
+      } else {
+        reject(_createServeError(`ojet serve exited before it became ready (code: ${code}, signal: ${signal}).`, result));
+      }
+    });
+  });
+}
+
 module.exports = {
   OJET_COMMAND: 'node ../ojet-cli/bin/ojet',
   OJET_APP_COMMAND: 'node ../../ojet-cli/bin/ojet',
+  ALLOW_REFERENCE_COMPONENT_INSTALL_FLAG: '--allow-reference-component-install',
   testDir: td,
   APP_NAME: 'webJsTest',
   OJC_APP_NAME: 'ojcTest',
@@ -82,6 +193,7 @@ module.exports = {
   THEME_APP_NAME: 'webJsThemeTest',
   MIGRATION_APP_NAME: 'webMigrationTest',
   WEBPACK_MIGRATION_APP_NAME: 'webpackMigrationTest',
+  VDOM_MIGRATION_APP_NAME: 'vdomMigrationTest',
   PWA_APP_NAME: 'webJsPwaTest',
   API_APP_NAME: 'webTsApiTest',
   VDOM_APP_NAME: 'vdomTest',
@@ -119,8 +231,10 @@ module.exports = {
           resolve(result);
         }
       });
-    })
+    });
   },
+
+  runOjetServe: _runOjetServe,
 
   makePackageSymlink: function _makePackageSymlink() {
     function _updateTemplatePackageFile(dir) {

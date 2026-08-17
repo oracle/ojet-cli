@@ -9,7 +9,7 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs-extra');
-const extract = require('extract-zip');
+const AdmZip = require('adm-zip');
 const _ = require('lodash');
 
 const util = require('./util');
@@ -246,7 +246,7 @@ function _consumeCssFileFromReferenceComponentTest({
 
         // Add oj-sp-ref-maplibre-gl component
         let result = await util.execCmd(
-          `${util.OJET_APP_COMMAND} add component oj-sp-ref-maplibre-gl`,
+          `${util.OJET_APP_COMMAND} add component oj-sp-ref-maplibre-gl ${util.ALLOW_REFERENCE_COMPONENT_INSTALL_FLAG}`,
           { cwd: appDir },
           false,
           true
@@ -779,7 +779,12 @@ function _doNotOverWriteOjCPathMappingTest({
           const {
             pathToExchangeComponents
           } = util.getAppPathData(appName, scriptsFolder);
-          await util.execCmd(`${util.OJET_APP_COMMAND} add component oj-c`, { cwd: appDir }, true, true);
+          await util.execCmd(
+            `${util.OJET_APP_COMMAND} add component oj-c ${util.ALLOW_REFERENCE_COMPONENT_INSTALL_FLAG}`,
+            { cwd: appDir },
+            true,
+            true
+          );
           const pathToOjCInJetComponents = path.join(pathToExchangeComponents, 'oj-c');
           const result = buildType === 'release' ? await util.execCmd(`${util.OJET_APP_COMMAND} build --release`, { cwd: appDir }, true) : 
             await util.execCmd(`${util.OJET_APP_COMMAND} build`, { cwd: util.getAppDir(appName) }, true);
@@ -855,7 +860,11 @@ function _ojetRestoreCommandTest({ appName, scriptsFolder }) {
       })
       it('should restore exchange components but not running npm install after running ojet restore --exchange-only', async () => {
         const appDir = util.getAppDir(appName);
-        const result = await util.execCmd(`${util.OJET_APP_COMMAND} restore --exchange-only`, { cwd: appDir }, true);
+        const result = await util.execCmd(
+          `${util.OJET_APP_COMMAND} restore --exchange-only ${util.ALLOW_REFERENCE_COMPONENT_INSTALL_FLAG}`,
+          { cwd: appDir },
+          true
+        );
         assert.ok(/Skipping 'npm install'./.test(result.stdout), result.stdout);
         assert.ok(/Success: Restore complete/.test(result.stdout), result.stdout);
       })
@@ -1028,7 +1037,7 @@ function _packagePackTest({
           const hasTheDirs = _.isEqual([ 'docs', 'min', 'types' ], filteredDirs);
           assert.equal(hasTheDirs, true, 'Does not have  docs, min, and types folder in web before packaging the mono-pack');
         });
-         it(`should have docs, min, and types folder in the dist folder after packaging the mono-pack`, (done) => {
+         it(`should have docs, min, and types folder in the dist folder after packaging the mono-pack`, async () => {
           const packagedPackPath = util.getAppDir(path.join(
             util.getAppDir(appName),
             'dist',
@@ -1042,17 +1051,15 @@ function _packagePackTest({
           if (!fs.existsSync(unPackagedPackPath)) {
             fs.mkdirSync(unPackagedPackPath);
           }
-          extract(packagedPackPath, { dir: unPackagedPackPath }, (error) => {
-            if(error) {
-              const errorMessage = 'Did not extract the packaged component successfully.'
-              assert.equal(false, true, `${errorMessage}\n${error}`);
-            } else {
-              const filteredDirs = fs.readdirSync(unPackagedPackPath).filter((dirItem) => ['min', 'types', 'docs'].includes(dirItem));
-              const hasTheDirs = _.isEqual([ 'docs', 'min', 'types' ], filteredDirs);
-              assert.equal(hasTheDirs, true, 'Does not have  docs, min, and types folder in web before packaging the mono-pack');
-            }
-            done();
-          });
+          new AdmZip(packagedPackPath).extractAllTo(unPackagedPackPath, true);
+          const filteredDirs = fs.readdirSync(unPackagedPackPath)
+            .filter(dirItem => ['min', 'types', 'docs'].includes(dirItem));
+          const hasTheDirs = _.isEqual([ 'docs', 'min', 'types' ], filteredDirs);
+          assert.equal(
+            hasTheDirs,
+            true,
+            'Does not have docs, min, and types folder in web before packaging the mono-pack'
+          );
         });
         it(`should not package intermediate files after packaging the mono-pack`, () => {
           const unPackagedPackPath = util.getAppDir(path.join(
@@ -2019,6 +2026,36 @@ function _vcomponentApiDocumentationComponentTest({
       
           assert.equal(/--legacy-peer-deps/.test(result.stdout), true, result.error);
         });
+        it('should not execute shell metacharacters from jsdocLibraries in oraclejetconfig.json', async () => {
+          const oracleJetConfigJSON = util.getOracleJetConfigJson(appName);
+          const originalLibraries = oracleJetConfigJSON.jsdocLibraries;
+          const pathToMarkerFile = path.join(appDir, 'tvm26239-jsdoc-marker.txt');
+
+          oracleJetConfigJSON.jsdocLibraries = 'jsdoc@3.5.5 && touch tvm26239-jsdoc-marker.txt';
+          util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+          fs.removeSync(pathToMarkerFile);
+
+          try {
+            const result = await util.execCmd(`${util.OJET_APP_COMMAND} add docgen`, {
+              cwd: appDir
+            }, true, true);
+
+            assert.equal(fs.existsSync(pathToMarkerFile), false, `Unexpected marker file created at ${pathToMarkerFile}`);
+            assert.ok(
+              /Invalid dependency spec '&&' found in oraclejetconfig\.json\./.test(result.stdout + result.stderr),
+              result.stdout + result.stderr
+            );
+            assert.equal(
+              /Executing: npm(?:\.cmd)? install jsdoc@3\.5\.5 && touch tvm26239-jsdoc-marker\.txt/.test(result.stdout + result.stderr),
+              false,
+              result.stdout + result.stderr
+            );
+          } finally {
+            oracleJetConfigJSON.jsdocLibraries = originalLibraries;
+            util.writeOracleJetConfigJson(appName, oracleJetConfigJSON);
+            fs.removeSync(pathToMarkerFile);
+          }
+        });
         it('should have apidoc_templates html files after running ojet add docgen', () => {
           const {
             sourceFolder,
@@ -2480,8 +2517,12 @@ function _execPackCommand({
     version,
     flags = ''
   }) {
+    const commandFlags = [flags];
+    if (task === 'add') {
+      commandFlags.unshift(util.ALLOW_REFERENCE_COMPONENT_INSTALL_FLAG);
+    }
     return util.execCmd(
-      `${util.OJET_APP_COMMAND} ${task} pack ${pack}${version ? `@${version}` : ''} ${flags}`, {
+      `${util.OJET_APP_COMMAND} ${task} pack ${pack}${version ? `@${version}` : ''} ${commandFlags.filter(Boolean).join(' ')}`, {
         cwd: util.getAppDir(app)
       },
       false,
@@ -2672,6 +2713,32 @@ function _addComponentTest({
           assert.ok(hasEntryInTsconfigJson, `${tsconfigJsonEntry} not found in ${appName}/tsconfig.json`);
         });
       }
+    });
+  };
+
+function _referenceComponentInstallRequiresApprovalTest({
+    appName
+  }) {
+    describe('reference component install approval', () => {
+      it('should block installing a reference component without the allow flag in non-interactive mode', async () => {
+        const appDir = util.getAppDir(appName);
+        const result = await util.execCmd(
+          `${util.OJET_APP_COMMAND} add component oj-sp-ref-maplibre-gl`,
+          { cwd: appDir },
+          true,
+          true
+        );
+        const combinedOutput = `${result.stdout || ''}\n${result.stderr || ''}`;
+        assert.ok(result.error, 'Expected add component command to fail without allow flag.');
+        assert.ok(
+          /Blocked installation of npm package .* downloaded Exchange component metadata/.test(combinedOutput),
+          combinedOutput
+        );
+        assert.ok(
+          /--allow-reference-component-install/.test(combinedOutput),
+          combinedOutput
+        );
+      });
     });
   };
 
@@ -2871,7 +2938,11 @@ function _execComponentCommand({
     component,
     flags = ''
   }) {
-    return util.execCmd(`${util.OJET_APP_COMMAND} ${task} component ${component} ${flags}`, {
+    const commandFlags = [flags];
+    if (task === 'add') {
+      commandFlags.unshift(util.ALLOW_REFERENCE_COMPONENT_INSTALL_FLAG);
+    }
+    return util.execCmd(`${util.OJET_APP_COMMAND} ${task} component ${component} ${commandFlags.filter(Boolean).join(' ')}`, {
       cwd: util.getAppDir(app)
     }, true, true);
   };
@@ -3015,6 +3086,11 @@ module.exports = {
             util.runComponentTestInTestApp(appConfig, {
             test: _addComponentTest,
             component: EXCHANGE_COMPONENT_NAME
+            });
+        });
+        describe('ojet add reference component without allow flag', () => {
+            util.runComponentTestInTestApp(appConfig, {
+            test: _referenceComponentInstallRequiresApprovalTest
             });
         });
         describe('ojet add testing', () => {

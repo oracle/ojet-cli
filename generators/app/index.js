@@ -11,6 +11,7 @@ const commonHookRunner = require('../../common/hookRunner');
 const commonMessages = require('../../common/messages');
 const commonRestore = require('../../common/restore');
 const templateHandler = require('../../common/template');
+const templateSecurity = require('../../common/template/security');
 const scopesApp = require('../../lib/scopes/app');
 const utils = require('../../lib/util/utils');
 const fs = require('fs');
@@ -46,6 +47,9 @@ module.exports = function (parameters, opt) {
     .then((validAppDir) => {
       app.appDir = path.basename(validAppDir);
       app.options.appname = app.appDir;
+      return templateHandler.prepareTemplate(app);
+    })
+    .then(() => {
       fs.mkdirSync(path.resolve(app.appDir));
     })
     .then(() => common.switchToAppDirectory(app))
@@ -64,7 +68,13 @@ module.exports = function (parameters, opt) {
           .then(() => common.addpwa(app))
           .then(() => common.addwebpack(app, opt))
           .then(scopesApp.addComponents)
-          .then(commonHookRunner.runAfterAppCreateHook)
+          .then(() => {
+            if (templateSecurity.isCodeExecutionAllowed(app)) {
+              return commonHookRunner.runAfterAppCreateHook();
+            }
+            utils.log.warning('Skipping after_app_create hook because template code execution is not enabled.');
+            return Promise.resolve();
+          })
           .then(() => {
             utils.log(
               commonMessages.restoreComplete(
@@ -80,6 +90,6 @@ module.exports = function (parameters, opt) {
       if (err) {
         utils.log.error(err);
       }
-      return Promise.reject();
+      return Promise.reject(err);
     });
 };

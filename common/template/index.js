@@ -10,6 +10,7 @@ const urlTemplate = require('./url');
 const commonTemplate = require('./common');
 const npmTemplate = require('./npm');
 const localTemplate = require('./local');
+const templateSecurity = require('./security');
 const path = require('path');
 const utils = require('../../lib/util/utils');
 const constants = require('../../lib/util/constants');
@@ -23,35 +24,86 @@ module.exports =
     utils.log(`Processing template: ${template}`);
     const templateHandler = _getHandler(generator, template, templateDestDirectory);
     return commonTemplate.handle(templateHandler, generator.options.namespace);
-  }
+  },
+  prepareTemplate: function _prepareTemplate(generator) {
+    const template = generator.options.template || constants.BLANK_TEMPLATE;
+    const templateInfo = _resolveTemplateInfo(template);
+    return templateSecurity.prepareTemplate(generator, templateInfo);
+  },
+  _toTemplateUrl,
+  _resolveTemplateInfo
 };
 
 function _getHandler(generator, template, templateDestDirectory) {
-  const templateUrl = _toTemplateUrl(template);
-  const templateLocalPath = _getLocalFileAbsolutePath(template);
+  const templateInfo = generator.templateInfo || _resolveTemplateInfo(template);
 
-  if (templateUrl) {
-    return urlTemplate.handle(generator, templateUrl, templateDestDirectory);
+  if (templateInfo.kind === 'url') {
+    return urlTemplate.handle(generator, templateInfo.templateUrl, templateDestDirectory);
   }
 
   // Template is an existing local path, but can not point to application itself
-  if (templateLocalPath && constants.NPM_TEMPLATES.indexOf(template) === -1) {
-    return localTemplate.handle(generator, templateLocalPath, templateDestDirectory);
+  if (templateInfo.kind === 'local') {
+    return localTemplate.handle(generator, templateInfo.localPath, templateDestDirectory);
   }
   const templateSpec = _resolveTemplateSpec(generator, template);
   return npmTemplate.handle(generator, templateDestDirectory, templateSpec);
 }
 
-function _isUrl(url) {
-  return /^https?:\/\/[^\s$.?#].[^\s]*$/i.test(url);
+function _resolveTemplateInfo(template) {
+  const templateUrl = _toTemplateUrl(template);
+  const templateLocalPath = _getLocalFileAbsolutePath(template);
+
+  if (templateUrl) {
+    return {
+      kind: 'url',
+      template,
+      templateUrl,
+      trusted: false
+    };
+  }
+
+  if (templateLocalPath && constants.NPM_TEMPLATES.indexOf(template) === -1) {
+    return {
+      kind: 'local',
+      template,
+      localPath: templateLocalPath,
+      trusted: false
+    };
+  }
+
+  return {
+    kind: 'npm',
+    template,
+    trusted: true
+  };
+}
+
+function _isLoopbackHttpTemplateUrl(templateUrl) {
+  return templateUrl.protocol === 'http:' &&
+    ['localhost', '127.0.0.1', '[::1]'].indexOf(templateUrl.hostname) > -1;
+}
+
+function _isUrl(template) {
+  return /^https?:\/\//i.test(template);
 }
 
 function _toTemplateUrl(template) {
-  if (_isUrl(template)) {
+  if (!_isUrl(template)) {
+    return null;
+  }
+
+  const templateUrl = new URL(template);
+  if (templateUrl.protocol === 'https:' || _isLoopbackHttpTemplateUrl(templateUrl)) {
     return template;
   }
 
-  return null;
+  // JET-79009: Reject plaintext remote template URLs because they allow
+  // network attackers to substitute template contents. Loopback HTTP is allowed
+  // for local development servers.
+  throw new Error(
+    'HTTP template URLs are not supported. Use HTTPS, localhost, ' +
+    'or download the template locally and pass the local zip path to --template.'
+  );
 }
 
 function _resolveTemplateSpec(generator, template) {

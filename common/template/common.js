@@ -26,6 +26,25 @@ function _getFilesToCopy(pathToTemplates, template) {
   return filesToCopy;
 }
 
+function _extractEntryTo(zip, entryName, destination) {
+  // JET-79009: adm-zip has been upgraded to a version with Zip Slip protection,
+  // but template archive extraction is an ojet-cli trust boundary. Keep an
+  // explicit caller-side invariant so entries cannot write outside the intended
+  // root. Use path.relative() instead of a raw string prefix check to avoid
+  // sibling-prefix cases such as /tmp/app2 appearing to be inside /tmp/app.
+  const targetRoot = path.resolve(destination);
+  const targetPath = path.resolve(targetRoot, entryName);
+  const relativeTargetPath = path.relative(targetRoot, targetPath);
+  if (
+    relativeTargetPath === '..' ||
+    relativeTargetPath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeTargetPath)
+  ) {
+    throw new Error(`Refusing to extract '${entryName}' outside target directory`);
+  }
+  zip.extractEntryTo(entryName, targetRoot, true, true);
+}
+
 /**
  * Inject template files into scaffolded application depending
  * on what type of template was used
@@ -151,7 +170,7 @@ module.exports =
       // Unpack the archive to the app root
       zipEntries.forEach((zipEntry) => {
         const entryName = zipEntry.entryName;
-        zip.extractEntryTo(entryName, path.join(destination, '..'), true, true);
+        _extractEntryTo(zip, entryName, path.join(destination, '..'));
       });
     } else {
       // Unpack the archive content to 'src/' except of 'scripts'
@@ -160,9 +179,9 @@ module.exports =
       zipEntries.forEach((zipEntry) => {
         const entryName = zipEntry.entryName;
         if (entryName.startsWith('scripts/')) {
-          zip.extractEntryTo(entryName, path.join(destination, '..'), true, true);
+          _extractEntryTo(zip, entryName, path.join(destination, '..'));
         } else {
-          zip.extractEntryTo(entryName, destination, true, true);
+          _extractEntryTo(zip, entryName, destination);
         }
       });
     }

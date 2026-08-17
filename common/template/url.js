@@ -15,9 +15,13 @@ module.exports = {
 
   handle: function _handle(generator, template, destination) {
     const temp = path.resolve(`${generator.appDir}/temp`);
+    const templateInfo = generator.templateInfo || {};
+    const fetchedTemplate = templateInfo.fetchedTemplate
+      ? Promise.resolve(templateInfo.fetchedTemplate)
+      : fetchZip(template);
 
     return new Promise((resolve, reject) => {
-      fetchZip(template)
+      fetchedTemplate
         .then((values) => {
           _processFetchedTemplateZip(values, temp, destination);
           return resolve(generator);

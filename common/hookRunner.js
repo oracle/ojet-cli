@@ -16,9 +16,9 @@ module.exports = {
       // Get hooks config
       const hooksConfig = _getHooksConfigObj();
       // Get after_app_prepare hook's path
-      const hookPath = hooksConfig.after_app_create;
-      if (hookPath && fs.existsSync(path.resolve(hookPath))) {
-        const hook = require(path.resolve(hookPath)); // eslint-disable-line
+      const hookPath = _resolveHookPath(hooksConfig.after_app_create);
+      if (hookPath && fs.existsSync(hookPath)) {
+        const hook = require(hookPath); // eslint-disable-line
         // Execute hook
         hook()
           .then(() => resolve())
@@ -34,9 +34,9 @@ module.exports = {
       // Get hooks config
       const hooksConfig = _getHooksConfigObj();
       // Get after_app_prepare hook's path
-      const hookPath = hooksConfig.after_component_create;
-      if (hookPath && fs.existsSync(path.resolve(hookPath))) {
-        const hook = require(path.resolve(hookPath)); // eslint-disable-line
+      const hookPath = _resolveHookPath(hooksConfig.after_component_create);
+      if (hookPath && fs.existsSync(hookPath)) {
+        const hook = require(hookPath); // eslint-disable-line
         // Execute hook
         hook(componentConfig)
           .then(() => resolve())
@@ -71,3 +71,23 @@ function _getHooksConfigObj() {
   }
   return {};
 }
+
+function _resolveHookPath(hookPath) {
+  if (typeof hookPath !== 'string' || !hookPath || path.isAbsolute(hookPath)) {
+    return undefined;
+  }
+
+  const allowedDir = path.resolve(path.dirname(constants.PATH_TO_HOOKS_CONFIG));
+  const resolvedHookPath = path.resolve(hookPath);
+  const relativeHookPath = path.relative(allowedDir, resolvedHookPath);
+  if (!relativeHookPath ||
+    relativeHookPath === '..' ||
+    relativeHookPath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeHookPath)) {
+    console.warn(`Hook path '${hookPath}' is outside '${allowedDir}'. Skipping.`);
+    return undefined;
+  }
+  return resolvedHookPath;
+}
+
+module.exports.__resolveHookPath = _resolveHookPath;

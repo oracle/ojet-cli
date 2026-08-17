@@ -338,17 +338,6 @@ describe('Paths Mapping Test', () => {
   });
 });
 
-function killServeWin() {
-  if (process.platform === 'win32') {
-    try {
-      const execSync = require('child_process').execSync;
-      execSync(`wmic process where "CommandLine like '%%ojet serve%%'" call terminate`);
-    } catch (e) {
-      console.log('trapped');
-    }
-  }  
-}
-
 describe('add theming', () => {
   it('should add pcss generator', async () => {
     const result = await util.execCmd(`${util.OJET_APP_COMMAND} add theming`, { cwd: appDir });
@@ -362,6 +351,19 @@ describe('add theming', () => {
     assert.equal(/with css variables support/.test(result.stdout), true, result.stdout);
   });  
 });
+
+function getServeOutput(result) {
+  return `${result.stdout}\nstderr:\n${result.stderr || '<empty>'}`;
+}
+
+function assertServeLogBeforeAfterHook(result, pattern) {
+  const output = getServeOutput(result);
+  const startupLogIndex = result.stdout.search(pattern);
+  const afterServeLogIndex = result.stdout.search(/Running after_serve hook\./i);
+  assert.notEqual(startupLogIndex, -1, output);
+  assert.notEqual(afterServeLogIndex, -1, output);
+  assert.ok(startupLogIndex < afterServeLogIndex, output);
+}
 
 
 if (!util.noServe()) {
@@ -381,52 +383,61 @@ if (!util.noServe()) {
             "});};";
             
       fs.writeFileSync(afterServeHookPath, newAfterServeHookContent);
-  
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --no-build`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-      assert.equal(/Watching files/i.test(result.stdout), true, result.stdout);
-      assert.equal(/Watching Interval: 1000./i.test(result.stdout), true, result.stdout);
 
-      const pathToWebIndexHTML = path.join(appDir, 'web', 'index.html');
-      const webIndexHTML = fs.readFileSync(pathToWebIndexHTML, { encoding: 'utf-8' });      
-      assert.equal(/<!-- test -->/.test(webIndexHTML), true, webIndexHTML);
-      result.process.kill();
-      killServeWin();
+      try {
+        const pathToWebIndexHTML = path.join(appDir, 'web', 'index.html');
+        const result = await util.runOjetServe(['serve', 'web', '--no-build'], {
+          cwd: appDir,
+          readyWhen: (stdout) => {
+            if (!fs.existsSync(pathToWebIndexHTML)) {
+              return false;
+            }
+            const webIndexHTML = fs.readFileSync(pathToWebIndexHTML, { encoding: 'utf-8' });
+            return /Page reloaded resume watching\./i.test(stdout) && /<!-- test -->/.test(webIndexHTML);
+          }
+        });
+        const output = getServeOutput(result);
+        assert.equal(/Watching files/i.test(result.stdout), true, output);
+        assert.equal(/Watching Interval: 1000./i.test(result.stdout), true, output);
 
-      // Replace after_serve.js hook
-      fs.writeFileSync(afterServeHookPath, defaultAfterServeHookContent);
+        const webIndexHTML = fs.readFileSync(pathToWebIndexHTML, { encoding: 'utf-8' });
+        assert.equal(/<!-- test -->/.test(webIndexHTML), true, webIndexHTML);
+      } finally {
+        // Replace after_serve.js hook
+        fs.writeFileSync(afterServeHookPath, defaultAfterServeHookContent);
+      }
     });
 
     it('should serve with the chosen watch interval value', async () => {
-      //const ac = new AbortController();
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --watchInterval=2000`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-      assert.equal(/Watching Interval: 2000./i.test(result.stdout), true, result.stdout);
-      result.process.kill();
-      killServeWin();
-      //ac.abort();
+      const result = await util.runOjetServe(['serve', 'web', '--no-build', '--watchInterval=2000'], { cwd: appDir });
+      assertServeLogBeforeAfterHook(result, /Watching Interval: 2000\./i);
+      assertServeLogBeforeAfterHook(result, /Success: Server ready:/i);
     });
 
     it('should serve from a given server url if provided', async () => {
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --server-url=http://localhost:8080`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-      assert.equal(/Connecting to http:\/\/localhost:8080/i.test(result.stdout), true, result.stdout);
-      assert.equal(/Success: Server ready: http:\/\/localhost:8080/i.test(result.stdout), true, result.stdout);
-      result.process.kill();
-      killServeWin();
+      const result = await util.runOjetServe([
+        'serve',
+        'web',
+        '--no-build',
+        '--server-url=http://localhost:8080'
+      ], { cwd: appDir });
+      const output = getServeOutput(result);
+      assert.equal(/Connecting to http:\/\/localhost:8080/i.test(result.stdout), true, output);
+      assertServeLogBeforeAfterHook(result, /Success: Server ready: http:\/\/localhost:8080/i);
     });
 
     it('should serve from http://localhost:8000 if an empty string or undefined values is provided as the server url', async () => {
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve web --server-url=`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-      assert.equal(/Connecting to http:\/\/localhost:8000/i.test(result.stdout), true, result.stdout);
-      assert.equal(/Success: Server ready: http:\/\/localhost:8000/i.test(result.stdout), true, result.stdout);
-      result.process.kill();
-      killServeWin();
+      const result = await util.runOjetServe(['serve', 'web', '--no-build', '--server-url='], { cwd: appDir });
+      const output = getServeOutput(result);
+      assert.equal(/Connecting to http:\/\/localhost:8000/i.test(result.stdout), true, output);
+      assertServeLogBeforeAfterHook(result, /Success: Server ready: http:\/\/localhost:8000/i);
     });
 
     it('should set destination to server-only when serving with the --server-only flag', async () => {
-      const result = await util.execCmd(`${util.OJET_APP_COMMAND} serve --server-only`, { cwd: appDir, maxBuffer: 1024 * 20000, timeout:30000, killSignal:'SIGTERM' }, true);
-      assert.equal(/Destination: server-only/i.test(result.stdout), true, result.stdout);
-      assert.equal(/Success: Server ready:/i.test(result.stdout), true, result.stdout);
-      result.process.kill();
-      killServeWin();
+      const result = await util.runOjetServe(['serve', '--no-build', '--server-only'], { cwd: appDir });
+      const output = getServeOutput(result);
+      assert.equal(/Destination: server-only/i.test(result.stdout), true, output);
+      assertServeLogBeforeAfterHook(result, /Success: Server ready:/i);
     });
   });
 }
@@ -453,6 +464,35 @@ describe('add testing', () => {
     const result = await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, false, true);
 
     assert.equal(/--legacy-peer-deps/.test(result.stdout), true, result.error);
+  });
+
+  it('should not execute shell metacharacters from mochaTestingLibraries in oraclejetconfig.json', async () => {
+    const oracleJetConfigJSON = util.getOracleJetConfigJson(util.APP_NAME);
+    const originalLibraries = oracleJetConfigJSON.mochaTestingLibraries;
+    const pathToMarkerFile = path.join(appDir, 'tvm26239-command-injection-marker.txt');
+
+    oracleJetConfigJSON.mochaTestingLibraries = 'karma ; echo TVM26239 > tvm26239-command-injection-marker.txt';
+    util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+    fs.removeSync(pathToMarkerFile);
+
+    try {
+      const result = await util.execCmd(`${util.OJET_APP_COMMAND} add testing`, { cwd: appDir }, true, true);
+
+      assert.equal(fs.existsSync(pathToMarkerFile), false, `Unexpected marker file created at ${pathToMarkerFile}`);
+      assert.ok(
+        /Invalid dependency spec ';' found in oraclejetconfig\.json\./.test(result.stdout + result.stderr),
+        result.stdout + result.stderr
+      );
+      assert.equal(
+        /Executing: npm(?:\.cmd)? install karma ; echo TVM26239 > tvm26239-command-injection-marker\.txt/.test(result.stdout + result.stderr),
+        false,
+        result.stdout + result.stderr
+      );
+    } finally {
+      oracleJetConfigJSON.mochaTestingLibraries = originalLibraries;
+      util.writeOracleJetConfigJson(util.APP_NAME, oracleJetConfigJSON);
+      fs.removeSync(pathToMarkerFile);
+    }
   });
 });
 

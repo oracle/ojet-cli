@@ -29,7 +29,10 @@ function _copyLocalTemplate(templatePath, destination) {
   try {
     if (fs.statSync(templatePath).isDirectory()) {
       const newTemplateFormat = fs.existsSync(path.join(templatePath, 'src'));
-      fs.copySync(templatePath, newTemplateFormat ? path.join(destination, '..') : destination, { dereference: true });
+      // JET-79009: Preserve symlinks in user-supplied local directory templates.
+      // Dereferencing them can copy sensitive files from outside the template
+      // into the generated app.
+      fs.copySync(templatePath, newTemplateFormat ? path.join(destination, '..') : destination, { dereference: false });
     } else if (path.extname(templatePath) === '.zip') {
       commonTemplateHandler._handleZippedTemplateArchive(templatePath, destination);
     } else {
