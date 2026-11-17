@@ -239,6 +239,17 @@ describe('Webpack Test', () => {
     }
   });
 
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([
+        util.WEBPACK_LEGACY_APP_NAME,
+        util.WEBPACK_APP_NAME,
+        util.WEBPACK_JS_APP_NAME,
+        util.WEBPACK_TS_APP_NAME
+      ]);
+    }
+  });
+
   describe('Webpack', () => {
     describe('Scaffold', () => {
       it('should check that webpack and its dependencies are listed in package.json - vdom app', () => {

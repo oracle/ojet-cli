@@ -25,6 +25,12 @@ describe('oj-c App Test', () => {
       assert.strictEqual(util.norestoreSuccess(result.stdout), true, result.stderr);  
     }  
   });
+
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.OJC_APP_NAME]);
+    }
+  });
   
   describe('Check essential files', () => {
     it('should have package.json', () => {

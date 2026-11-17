@@ -127,14 +127,14 @@ describe('Migration Test', () => {
     }
   });
 
-  describe('Common Migration Tests', () => {
-    it('should run common migration tests for a non-webpack application', async () => {
-      await runCommonMigrationTests(util.MIGRATION_APP_NAME);
-    });
-
-    it('should run common migration tests for a webpack application', async () => {
-      await runCommonMigrationTests(util.WEBPACK_MIGRATION_APP_NAME);
-    });
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([
+        util.MIGRATION_APP_NAME,
+        util.WEBPACK_MIGRATION_APP_NAME,
+        util.VDOM_MIGRATION_APP_NAME
+      ]);
+    }
   });
 
   describe('Migration Tests for Non-Webpack Application', () => {
@@ -564,15 +564,30 @@ describe('Migration Test', () => {
       });
     });
   });
+
+  describe('Common Migration Tests', () => {
+    describe('non-webpack application', () => {
+      runCommonMigrationTests(util.MIGRATION_APP_NAME);
+    });
+
+    describe('webpack application', () => {
+      runCommonMigrationTests(util.WEBPACK_MIGRATION_APP_NAME);
+    });
+  });
 });
 
 /**
  * Reusable migration test suite for a given application name
  * @param {string} appName
  */
-async function runCommonMigrationTests(appName) {
-  const { pathToApp } = util.getAppPathData(appName);
-  const appDir = pathToApp;
+function runCommonMigrationTests(appName) {
+  let pathToApp;
+  let appDir;
+
+  before(() => {
+    ({ pathToApp } = util.getAppPathData(appName));
+    appDir = pathToApp;
+  });
 
   describe('oraclejetconfig.json Validation and Update Test', () => {
     it('should log an error if the SASS version format is incorrect', async () => {

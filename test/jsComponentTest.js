@@ -33,6 +33,12 @@ describe('JS Component & Jet Pack Tests', () => {
     }
   });
 
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.COMPONENT_APP_NAME]);
+    }
+  });
+
   describe('JS Component Tests', () => {
     /*
     function removeComponentTest({ appName, scriptsFolder, component }) {

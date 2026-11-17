@@ -1021,6 +1021,39 @@ function _packagePackTest({
           const exists = fs.pathExistsSync(packagedComponentPath);
           assert.ok(exists, packagedComponentPath);
         });
+        it('should preserve mono-pack contents without duplicate ZIP entries', () => {
+          const packagedComponentPath = util.getAppDir(path.join(
+            util.getAppDir(appName),
+            'dist',
+            `${pack}_1-0-0.zip`,
+          ));
+          const entries = new AdmZip(packagedComponentPath).getEntries();
+          const entryCounts = new Map();
+
+          entries.forEach((entry) => {
+            entryCounts.set(entry.entryName, (entryCounts.get(entry.entryName) || 0) + 1);
+          });
+
+          const duplicateEntries = [...entryCounts.entries()]
+            .filter(([, count]) => count > 1)
+            .map(([entryName]) => entryName);
+          const entryNames = [...entryCounts.keys()];
+
+          assert.deepEqual(duplicateEntries, [], `Duplicate ZIP entries: ${duplicateEntries.join(', ')}`);
+          assert.ok(entryNames.includes('component.json'), 'Root component.json is missing from the archive');
+          assert.ok(
+            entryNames.some(entryName => entryName.startsWith('min/') && entryName.endsWith('.js')),
+            'No minified JavaScript file is present in the archive'
+          );
+          assert.ok(
+            entryNames.some(entryName => entryName.startsWith('min/') && entryName.endsWith('.js.map')),
+            'No minified JavaScript source map is present in the archive'
+          );
+          assert.ok(
+            entryNames.some(entryName => entryName.startsWith('types/') && entryName.endsWith('.d.ts')),
+            'No type definition is present in the archive'
+          );
+        });
         it(`should be not be packaged in ${appName}/dist/${pack}-${component}_1-0-0.zip`, () => {
           const packagedComponentInPackPath = util.getAppDir(path.join(
             util.getAppDir(appName),

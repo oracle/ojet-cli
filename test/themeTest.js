@@ -26,6 +26,12 @@ describe('PCSS Theme Test', () => {
     }
   });
 
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.THEME_APP_NAME]);
+    }
+  });
+
   it('should run ojet build --sass in an app with no *.scss files and not fail', async () => {
     const result = await util.execCmd(`${util.OJET_APP_COMMAND} build --sass`, {cwd: appDir});
       assert.equal(util.buildSuccess(result.stdout), true, result.error);
