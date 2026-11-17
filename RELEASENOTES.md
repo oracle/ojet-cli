@@ -1,5 +1,7 @@
 ## Release Notes for ojet-cli ##
 
+### 21.1.0
+
 ### 21.0.0
 
 * Updated `adm-zip` to 0.6.0 to resolve CVE-2026-39244, which could allow a crafted template ZIP to exhaust CLI process memory.

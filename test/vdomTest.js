@@ -39,6 +39,12 @@ describe('VDOM Test', () => {
     }
   });
 
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.VDOM_APP_NAME]);
+    }
+  });
+
   describe('Scaffold', () => {
     it('should have path_mapping.json at root of the app with no baseUrl', () => {
       const pathToPathMappingJson = path.resolve(appDir, 'path_mapping.json');

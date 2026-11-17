@@ -41,6 +41,12 @@ describe('Web Test', () => {
       assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);  
     }  
   });
+
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.APP_NAME, util.TEST_DIR]);
+    }
+  });
   
   describe('Check essential files', () => {
     it('should have package.json', () => {
@@ -241,8 +247,6 @@ describe('Web Test', () => {
       });
     }
   });
-});
-
 describe('Build with a sass file in component folder', () => {
   if (!util.noBuild()) {
     it('should not fail build if there is a sass file in component folder root', async  () => {
@@ -660,4 +664,5 @@ describe('Build with cdn', () => {
       });
     }
   });
+});
 });

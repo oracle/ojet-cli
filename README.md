@@ -1,4 +1,4 @@
-# @oracle/ojet-cli 21.0.0
+# @oracle/ojet-cli 21.1.0
 
 ## About the module
 This module contains a command line interface for Oracle JET web application development.

@@ -48,6 +48,12 @@ describe('CLI API Tests', () => {
     }
   });
 
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.API_APP_NAME]);
+    }
+  });
+
   describe('ojet build', () => {
     describe('debug', () => {
       it('should run `ojet.execute({ task: "build" })`', async () => {

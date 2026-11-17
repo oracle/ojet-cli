@@ -17,7 +17,7 @@ describe('PWA Test', () => {
       util.removeAppDir(util.PWA_APP_NAME);
   
       // Scaffold component pwa app from scratch
-      let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.PWA_APP_NAME} --use-global-tooling --template=https://ci-cloud.us.oracle.com/jenkins/uitech/job/OJET_master/lastSuccessfulBuild/artifact/apps/components/public_html/public_samples/nojet/JET-Template-Web-Blank.zip`, { cwd: util.testDir });
+      let result = await util.execCmd(`${util.OJET_COMMAND} create ${util.PWA_APP_NAME} --use-global-tooling`, { cwd: util.testDir });
       // Check output
       assert.equal(util.norestoreSuccess(result.stdout) || /Your app is/.test(result.stdout), true, result.error);
   
@@ -25,6 +25,12 @@ describe('PWA Test', () => {
       result = await util.execCmd(`${util.OJET_APP_COMMAND} add pwa`, { cwd: util.getAppDir(util.PWA_APP_NAME) });
       // check for correct output
       assert.ok(/add pwa complete/.test(result.stdout), result.error);
+    }
+  });
+
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.PWA_APP_NAME]);
     }
   });
     

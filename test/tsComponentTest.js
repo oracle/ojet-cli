@@ -33,6 +33,12 @@ describe('TS Component & Jet Pack Tests', () => {
     }
   });
 
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.COMPONENT_TS_APP_NAME]);
+    }
+  });
+
   describe('TS Component Tests', () => {
     function buildTsComponentAppWithDeclarationFalse({
       appName

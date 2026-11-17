@@ -35,6 +35,12 @@ describe('Typescript Test', () => {
     }
   });
 
+  after(() => {
+    if (!util.noScaffold()) {
+      util.removeAppDirs([util.TS_APP_NAME, util.TS_NAV_DRAWER_APP_NAME]);
+    }
+  });
+
   describe('Scaffold with norestore flag', () => {
     it('should have tsconfig.json file', () => {
       const pathToTsconfigJson = path.resolve(appDir, 'tsconfig.json');

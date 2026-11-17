@@ -388,6 +388,10 @@ module.exports = {
     fs.rmdirSync(appDir);
   },
 
+  removeAppDirs: function _removeAppDirs(appNames) {
+    appNames.forEach((appName) => this.removeAppDir(appName));
+  },
+
   runComponentTestInTestApp,
 
   getOracleJetConfigPath: function _getOracleJetConfigPath(appName) {
